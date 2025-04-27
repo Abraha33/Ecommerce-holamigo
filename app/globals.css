@@ -24,6 +24,11 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 210 100% 29%; /* EcoPlast blue */
     --radius: 0.5rem;
+
+    /* Colors for the loader */
+    --color-blue-rgb: 0, 3, 176;
+    --color-red-rgb: 227, 6, 19;
+    --color-white-rgb: 255, 255, 255;
   }
 
   .dark {
@@ -88,5 +93,35 @@
 @layer utilities {
   .main-content-with-cart {
     width: calc(100% - 18rem);
+  }
+}
+
+/* Loader animation */
+.loader-dots {
+  --color-rgb: var(--color-blue-rgb);
+}
+
+.loader-dots.loader-red {
+  --color-rgb: var(--color-red-rgb);
+}
+
+.loader-dots.loader-white {
+  --color-rgb: var(--color-white-rgb);
+}
+
+@keyframes dots-loader {
+  0% {
+    box-shadow: var(--tw-box-shadow);
+    background: currentColor;
+  }
+
+  33% {
+    box-shadow: var(--tw-box-shadow);
+    background: rgba(var(--color-rgb), 0.13);
+  }
+
+  66% {
+    box-shadow: var(--tw-box-shadow);
+    background: rgba(var(--color-rgb), 0.13);
   }
 }

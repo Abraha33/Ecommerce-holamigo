@@ -6,8 +6,8 @@ import Footer from "@/components/footer"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { CartProvider } from "@/components/cart-provider"
-// Importar el componente PersistentCartSidebar
 import { PersistentCartSidebar } from "@/components/persistent-cart-sidebar"
+import { LoaderStyles } from "@/components/ui/loader"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -17,7 +17,6 @@ export const metadata = {
     generator: 'v0.dev'
 }
 
-// Actualizar el RootLayout para incluir el carrito persistente
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -39,6 +38,7 @@ export default function RootLayout({
             <Toaster />
           </CartProvider>
         </ThemeProvider>
+        <LoaderStyles />
       </body>
     </html>
   )
