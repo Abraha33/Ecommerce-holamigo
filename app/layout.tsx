@@ -8,6 +8,8 @@ import { Toaster } from "@/components/ui/toaster"
 import { CartProvider } from "@/components/cart-provider"
 import { PersistentCartSidebar } from "@/components/persistent-cart-sidebar"
 import { LoaderStyles } from "@/components/ui/loader"
+import { LoadingProvider } from "@/contexts/loading-context"
+import { LoadingOverlay } from "@/components/ui/loading-overlay"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -26,17 +28,20 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          <CartProvider>
-            <div className="flex min-h-screen flex-col">
-              <Header />
-              <div className="flex flex-1">
-                <main className="flex-1">{children}</main>
-                <PersistentCartSidebar />
+          <LoadingProvider>
+            <CartProvider>
+              <div className="flex min-h-screen flex-col">
+                <Header />
+                <div className="flex flex-1">
+                  <main className="flex-1">{children}</main>
+                  <PersistentCartSidebar />
+                </div>
+                <Footer />
               </div>
-              <Footer />
-            </div>
-            <Toaster />
-          </CartProvider>
+              <Toaster />
+              <LoadingOverlay />
+            </CartProvider>
+          </LoadingProvider>
         </ThemeProvider>
         <LoaderStyles />
       </body>

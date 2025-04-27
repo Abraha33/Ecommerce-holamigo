@@ -1,13 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import Image from "next/image"
 import { ProductFilters } from "@/components/product-filters"
 import { Breadcrumb } from "@/components/breadcrumb"
 import { products } from "@/lib/products"
 import { ProductCard } from "@/components/product-card"
 import { Button } from "@/components/ui/button"
 import { LayoutGrid, Grid, List, SlidersHorizontal } from "lucide-react"
+import { CategoryBanner } from "@/components/category-banner"
 
 export default function ProductsPage() {
   const [sortOption, setSortOption] = useState("featured")
@@ -49,15 +49,12 @@ export default function ProductsPage() {
   return (
     <div>
       {/* Banner de categoría - altura reducida */}
-      <div className="relative h-[150px] w-full overflow-hidden">
-        <Image src="/eco-conscious-living.png" alt="Productos Sostenibles" fill className="object-cover" />
-        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-          <div className="text-center text-white">
-            <h1 className="text-3xl font-bold mb-1">Productos Sostenibles</h1>
-            <p className="text-lg">Soluciones eco-amigables para todas tus necesidades</p>
-          </div>
-        </div>
-      </div>
+      <CategoryBanner
+        title="Productos Sostenibles"
+        description="Soluciones eco-amigables para todas tus necesidades"
+        image="/eco-conscious-living.png"
+        breadcrumbs={[{ name: "Products", href: "/products" }]}
+      />
 
       <div className="container px-4 py-4 mx-auto">
         <Breadcrumb

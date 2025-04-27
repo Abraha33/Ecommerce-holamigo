@@ -55,10 +55,11 @@ const config = {
         },
         ecoplast: {
           red: "#e30613",
-          blue: "#004a93",
-          lightblue: "#0071bc",
+          blue: "#20509E",
+          lightblue: "#2A62B8",
           gray: "#58595b",
           lightgray: "#f2f2f2",
+          gold: "#CDA22A",
         },
       },
       borderRadius: {

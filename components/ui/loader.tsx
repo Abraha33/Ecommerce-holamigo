@@ -3,11 +3,11 @@ import { cn } from "@/lib/utils"
 
 interface LoaderProps {
   className?: string
-  color?: "blue" | "red" | "white"
+  color?: "primary" | "secondary" | "white"
   size?: "small" | "medium" | "large"
 }
 
-export function Loader({ className, color = "blue", size = "medium" }: LoaderProps) {
+export function Loader({ className, color = "primary", size = "medium" }: LoaderProps) {
   // Map size to pixel values
   const sizeMap = {
     small: {
@@ -29,8 +29,8 @@ export function Loader({ className, color = "blue", size = "medium" }: LoaderPro
 
   // Map color to actual color values
   const colorMap = {
-    blue: "#0003b0",
-    red: "#e30613",
+    primary: "#1f4b9b",
+    secondary: "#CDA22A",
     white: "#ffffff",
   }
 
@@ -39,7 +39,7 @@ export function Loader({ className, color = "blue", size = "medium" }: LoaderPro
 
   return (
     <div
-      className={cn("loader-dots", className)}
+      className={cn("dots", className)}
       style={{
         width: selectedSize.width,
         height: selectedSize.height,
@@ -47,7 +47,7 @@ export function Loader({ className, color = "blue", size = "medium" }: LoaderPro
         color: selectedColor,
         borderRadius: "50%",
         boxShadow: selectedSize.boxShadow.replace(/(\d+px)/g, `$1 ${selectedColor}`),
-        animation: "dots-loader 1s infinite linear alternate",
+        animation: "dots-u8fzftmd 1s infinite linear alternate",
       }}
     />
   )
@@ -57,20 +57,20 @@ export function Loader({ className, color = "blue", size = "medium" }: LoaderPro
 export function LoaderStyles() {
   return (
     <style jsx global>{`
-      @keyframes dots-loader {
+      @keyframes dots-u8fzftmd {
         0% {
-          box-shadow: var(--tw-box-shadow);
-          background: var(--tw-bg-opacity);
+          box-shadow: 22.4px 0, -22.4px 0;
+          background: currentColor;
         }
         
         33% {
-          box-shadow: var(--tw-box-shadow);
-          background: rgba(var(--color-rgb), 0.13);
+          box-shadow: 22.4px 0, -22.4px 0 rgba(31, 75, 155, 0.13);
+          background: rgba(31, 75, 155, 0.13);
         }
         
         66% {
-          box-shadow: var(--tw-box-shadow);
-          background: rgba(var(--color-rgb), 0.13);
+          box-shadow: 22.4px 0 rgba(31, 75, 155, 0.13), -22.4px 0;
+          background: rgba(31, 75, 155, 0.13);
         }
       }
     `}</style>

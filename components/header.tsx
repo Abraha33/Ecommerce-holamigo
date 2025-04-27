@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useCart } from "@/components/cart-provider"
 import { useTheme } from "next-themes"
-import { Search, ShoppingCart, Menu, Phone, Mail, User, MapPin, Bell, Moon, Sun } from "lucide-react"
+import { Search, ShoppingCart, Menu, Phone, Mail, User, MapPin, Bell, Printer } from "lucide-react"
 
 const navigation = [
   { name: "Inicio", href: "/" },
@@ -49,16 +49,16 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-40 w-full">
       {/* Main header - Estilo Éxito */}
-      <div className="bg-[#004a93] dark:bg-gray-900 text-white">
-        <div className="container mx-auto px-4 pr-72">
+      <div className="bg-[#20509E] dark:bg-gray-900 text-white">
+        <div className="container mx-auto px-4">
           <div className="flex items-center h-14">
             {/* Logo y Menú */}
             <div className="flex items-center">
               {/* Botón de menú móvil */}
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="text-white mr-2 md:mr-4">
-                    <Menu className="h-6 w-6" />
+                  <Button variant="ghost" size="icon" className="text-white mr-2 md:mr-4 group">
+                    <Menu className="h-6 w-6 drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] transition-transform group-hover:scale-110" />
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="dark:bg-gray-900 dark:text-white">
@@ -71,9 +71,9 @@ export default function Header() {
                       <Input
                         type="search"
                         placeholder="¿Qué estás buscando?"
-                        className="w-full pr-10 border-[#004a93] dark:border-gray-700 rounded-full dark:bg-gray-800"
+                        className="w-full pr-10 border-[#20509E] dark:border-gray-700 rounded-full dark:bg-gray-800"
                       />
-                      <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#004a93] dark:text-gray-400" />
+                      <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#20509E] dark:text-gray-400" />
                     </div>
 
                     <nav className="flex flex-col gap-2">
@@ -83,8 +83,8 @@ export default function Header() {
                           href={item.href}
                           className={`px-2 py-2 rounded-md ${
                             pathname === item.href
-                              ? "bg-[#f2f2f2] text-[#004a93] dark:bg-gray-800 dark:text-white font-medium"
-                              : "hover:bg-blue-800 dark:hover:bg-gray-800"
+                              ? "bg-[#f2f2f2] text-[#20509E] dark:bg-gray-800 dark:text-white font-medium"
+                              : "hover:bg-[#184589] dark:hover:bg-gray-800"
                           }`}
                         >
                           {item.name}
@@ -92,7 +92,7 @@ export default function Header() {
                       ))}
                     </nav>
 
-                    <div className="mt-auto pt-6 border-t border-blue-800 dark:border-gray-700">
+                    <div className="mt-auto pt-6 border-t border-[#184589] dark:border-gray-700">
                       <div className="flex flex-col gap-2 text-sm">
                         <div className="flex items-center gap-2">
                           <Phone className="h-4 w-4" />
@@ -122,7 +122,7 @@ export default function Header() {
             </div>
 
             {/* Barra de búsqueda - estilo Éxito */}
-            <div className="flex-1 max-w-xl mx-4">
+            <div className="flex-1 max-w-4xl mx-4">
               <div className="relative">
                 <Input
                   type="search"
@@ -138,33 +138,33 @@ export default function Header() {
               </div>
             </div>
 
-            {/* Ubicación - estilo Éxito */}
-            <div className="hidden lg:flex items-center mr-4 text-sm">
-              <MapPin className="h-5 w-5 mr-1" />
-              <div className="flex flex-col">
-                <span className="text-xs">¿Cómo quieres</span>
-                <span className="font-medium">recibir tu pedido?</span>
-              </div>
-              <span className="ml-1">›</span>
-            </div>
-
             {/* Iconos de usuario - estilo Éxito */}
-            <div className="flex items-center gap-6 ml-auto">
-              {/* Botón de cambio de tema */}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="text-white hover:bg-blue-800 dark:hover:bg-gray-800"
-              >
-                {mounted && theme === "dark" ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
-                <span className="sr-only">Cambiar tema</span>
-              </Button>
+            <div className="flex items-center gap-4 ml-auto">
+              {/* Ubicación - estilo Éxito */}
+              <div className="hidden lg:flex items-center mr-2 text-sm">
+                <MapPin className="h-5 w-5 mr-1" />
+                <div className="flex flex-col">
+                  <span className="text-xs">¿Cómo quieres</span>
+                  <span className="font-medium">recibir tu pedido?</span>
+                </div>
+                <span className="ml-1">›</span>
+              </div>
+
+              {/* Icono de PrintFlow Manager */}
+              <Link href="/dashboard" className="flex flex-col items-center">
+                <div className="relative">
+                  <Printer className="h-6 w-6" />
+                  <span className="absolute -top-1 -right-1 bg-[#CDA22A] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    5
+                  </span>
+                </div>
+                <span className="text-xs hidden md:block">PrintFlow Manager</span>
+              </Link>
 
               <Link href="/notifications" className="flex flex-col items-center">
                 <div className="relative">
                   <Bell className="h-6 w-6" />
-                  <span className="absolute -top-1 -right-1 bg-[#e30613] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 bg-[#CDA22A] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                     3
                   </span>
                 </div>
@@ -180,7 +180,7 @@ export default function Header() {
                 <div className="relative">
                   <ShoppingCart className="h-6 w-6" />
                   {cartItemsCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-[#e30613] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 bg-[#CDA22A] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                       {cartItemsCount}
                     </span>
                   )}
@@ -193,15 +193,15 @@ export default function Header() {
       </div>
 
       {/* Navegación - Categorías */}
-      <div className="bg-[#003a73] dark:bg-gray-800 text-white hidden md:block">
+      <div className="bg-[#184589] dark:bg-gray-800 text-white hidden md:block">
         <div className="container mx-auto px-4 pr-72">
           <nav className="flex">
             {navigation.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
-                className={`px-4 py-2 text-sm font-medium transition-colors duration-200 hover:bg-[#004a93] hover:text-white dark:hover:bg-gray-700 dark:hover:text-white ${
-                  pathname === item.href ? "bg-[#004a93] dark:bg-gray-700" : ""
+                className={`px-4 py-2 text-sm font-medium transition-colors duration-200 hover:bg-[#20509E] hover:text-white dark:hover:bg-gray-700 dark:hover:text-white ${
+                  pathname === item.href ? "bg-[#20509E] dark:bg-gray-700" : ""
                 }`}
               >
                 {item.name}

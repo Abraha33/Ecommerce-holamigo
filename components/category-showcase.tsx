@@ -7,35 +7,36 @@ const categories = [
     id: 1,
     name: "Kitchen & Storage",
     description: "Eco-friendly containers and kitchen essentials",
-    image: "/placeholder.svg?height=400&width=600&query=eco+kitchen+storage",
+    image: "/sustainable-pantry-organization.png",
     href: "/categories/kitchen-storage",
   },
   {
     id: 2,
     name: "Garden & Outdoor",
     description: "Sustainable solutions for your garden",
-    image: "/placeholder.svg?height=400&width=600&query=eco+garden+products",
+    image: "/thriving-eco-garden.png",
     href: "/categories/garden-outdoor",
   },
   {
     id: 3,
     name: "Home Decor",
     description: "Beautiful and sustainable home accessories",
-    image: "/placeholder.svg?height=400&width=600&query=eco+home+decor",
+    image: "/sustainable-living-room.png",
     href: "/categories/home-decor",
   },
 ]
 
 export function CategoryShowcase() {
   return (
-    <section className="py-12 bg-gray-50">
+    <section className="py-8 bg-gray-50">
       <div className="container mx-auto px-4">
-        <h2 className="text-3xl font-bold text-center mb-12">Shop by Category</h2>
+        <h2 className="text-2xl font-bold text-center mb-6">Shop by Category</h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {categories.map((category) => (
             <div key={category.id} className="group relative overflow-hidden rounded-lg">
-              <div className="relative h-80 w-full overflow-hidden">
+              {/* Reducimos la altura de 80 a 60 */}
+              <div className="relative h-60 w-full overflow-hidden">
                 <Image
                   src={category.image || "/placeholder.svg"}
                   alt={category.name}
@@ -44,10 +45,10 @@ export function CategoryShowcase() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
               </div>
-              <div className="absolute bottom-0 left-0 right-0 p-6">
-                <h3 className="text-xl font-semibold text-white mb-2">{category.name}</h3>
-                <p className="text-white/80 mb-4">{category.description}</p>
-                <Button asChild>
+              <div className="absolute bottom-0 left-0 right-0 p-4">
+                <h3 className="text-lg font-semibold text-white mb-1">{category.name}</h3>
+                <p className="text-white/80 mb-3 text-sm">{category.description}</p>
+                <Button asChild size="sm">
                   <Link href={category.href}>Explore</Link>
                 </Button>
               </div>
