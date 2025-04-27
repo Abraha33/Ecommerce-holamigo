@@ -31,82 +31,84 @@ export function PersistentCartSidebar() {
   }, [cart, cartLength])
 
   return (
-    <div className="fixed right-0 top-[120px] bottom-0 z-40 w-72 bg-white border-l border-gray-200 shadow-lg flex flex-col">
-      <div className="p-4 border-b bg-[#004a93] text-white">
-        <h2 className="font-semibold flex items-center gap-2">
-          <ShoppingCart className="h-5 w-5" />
-          Mi Carrito ({itemCount})
-        </h2>
-      </div>
-
-      {cart.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-          <ShoppingCart className="h-16 w-16 text-gray-300 mb-4" />
-          <p className="text-gray-500 mb-4">Tu carrito está vacío</p>
-          <Button asChild className="bg-[#004a93] hover:bg-[#0071bc]">
-            <Link href="/products">Ver Productos</Link>
-          </Button>
+    <div className="fixed right-0 top-0 bottom-0 z-40 w-72 bg-white border-l border-gray-200 shadow-lg flex flex-col">
+      <div className="pt-[120px]">
+        <div className="p-4 border-b bg-[#004a93] text-white">
+          <h2 className="font-semibold flex items-center gap-2">
+            <ShoppingCart className="h-5 w-5" />
+            Mi Carrito ({itemCount})
+          </h2>
         </div>
-      ) : (
-        <>
-          <div className="flex-1 overflow-auto p-4">
-            {cart.map((item) => (
-              <div
-                key={`${item.id}-${item.variant}`}
-                className={`flex py-3 border-b transition-colors ${highlightedItem === item.id ? "bg-blue-50" : ""}`}
-              >
-                <div className="relative h-16 w-16 rounded overflow-hidden bg-gray-100 flex-shrink-0">
-                  <Image src={item.image || "/placeholder.svg"} alt={item.name} fill className="object-contain" />
-                </div>
-                <div className="ml-3 flex-1">
-                  <h4 className="font-medium text-sm">{item.name}</h4>
-                  <p className="text-xs text-gray-500">{item.variant}</p>
-                  <div className="flex justify-between items-center mt-1">
-                    <div className="flex items-center border rounded">
-                      <button
-                        onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
-                        className="px-1 py-0.5 text-gray-600 hover:bg-gray-100"
-                      >
-                        <Minus className="h-3 w-3" />
-                      </button>
-                      <span className="px-2 text-sm">{item.quantity}</span>
-                      <button
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        className="px-1 py-0.5 text-gray-600 hover:bg-gray-100"
-                      >
-                        <Plus className="h-3 w-3" />
-                      </button>
-                    </div>
-                    <span className="font-medium text-sm text-[#e30613]">
-                      {formatCurrency(item.price * item.quantity)}
-                    </span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => removeItem(item.id)}
-                  className="ml-2 text-gray-400 hover:text-[#e30613] self-start"
+
+        {cart.length === 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+            <ShoppingCart className="h-16 w-16 text-gray-300 mb-4" />
+            <p className="text-gray-500 mb-4">Tu carrito está vacío</p>
+            <Button asChild className="bg-[#004a93] hover:bg-[#0071bc]">
+              <Link href="/products">Ver Productos</Link>
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div className="flex-1 overflow-auto p-4">
+              {cart.map((item) => (
+                <div
+                  key={`${item.id}-${item.variant}`}
+                  className={`flex py-3 border-b transition-colors ${highlightedItem === item.id ? "bg-blue-50" : ""}`}
                 >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-          <div className="p-4 border-t bg-gray-50">
-            <div className="flex justify-between mb-4">
-              <span className="font-medium">Subtotal:</span>
-              <span className="font-bold text-[#e30613]">{formatCurrency(subtotal)}</span>
+                  <div className="relative h-16 w-16 rounded overflow-hidden bg-gray-100 flex-shrink-0">
+                    <Image src={item.image || "/placeholder.svg"} alt={item.name} fill className="object-contain" />
+                  </div>
+                  <div className="ml-3 flex-1">
+                    <h4 className="font-medium text-sm">{item.name}</h4>
+                    <p className="text-xs text-gray-500">{item.variant}</p>
+                    <div className="flex justify-between items-center mt-1">
+                      <div className="flex items-center border rounded">
+                        <button
+                          onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                          className="px-1 py-0.5 text-gray-600 hover:bg-gray-100"
+                        >
+                          <Minus className="h-3 w-3" />
+                        </button>
+                        <span className="px-2 text-sm">{item.quantity}</span>
+                        <button
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          className="px-1 py-0.5 text-gray-600 hover:bg-gray-100"
+                        >
+                          <Plus className="h-3 w-3" />
+                        </button>
+                      </div>
+                      <span className="font-medium text-sm text-[#e30613]">
+                        {formatCurrency(item.price * item.quantity)}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => removeItem(item.id)}
+                    className="ml-2 text-gray-400 hover:text-[#e30613] self-start"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
             </div>
-            <Button asChild className="w-full bg-[#004a93] hover:bg-[#0071bc]">
-              <Link href="/checkout" className="flex items-center justify-center">
-                Finalizar Compra <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="w-full mt-2 border-[#004a93] text-[#004a93]">
-              <Link href="/cart">Ver Carrito</Link>
-            </Button>
-          </div>
-        </>
-      )}
+            <div className="p-4 border-t bg-gray-50">
+              <div className="flex justify-between mb-4">
+                <span className="font-medium">Subtotal:</span>
+                <span className="font-bold text-[#e30613]">{formatCurrency(subtotal)}</span>
+              </div>
+              <Button asChild className="w-full bg-[#004a93] hover:bg-[#0071bc]">
+                <Link href="/checkout" className="flex items-center justify-center">
+                  Finalizar Compra <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="w-full mt-2 border-[#004a93] text-[#004a93]">
+                <Link href="/cart">Ver Carrito</Link>
+              </Button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   )
 }

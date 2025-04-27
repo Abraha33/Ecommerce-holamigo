@@ -269,8 +269,8 @@ export function ProductCard({ product }: ProductCardProps) {
             ) : null}
           </div>
 
-          {/* Barras de ahorro */}
-          <div className="mt-3 grid grid-cols-4 gap-1 text-xs">
+          {/* Barras de ahorro - ahora en disposición horizontal */}
+          <div className="mt-3 flex flex-wrap gap-2 text-xs">
             {packageTypes.map((pkg) => {
               const unitPrice = calculateUnitPrice(pkg)
               const unitSavings = calculateUnitSavings(pkg)
@@ -280,7 +280,7 @@ export function ProductCard({ product }: ProductCardProps) {
                 <motion.div
                   key={pkg.value}
                   onClick={() => handlePackageSelect(pkg.value)}
-                  className={`cursor-pointer rounded p-1 text-center transition-all relative ${
+                  className={`cursor-pointer rounded p-2 transition-all relative flex-1 min-w-[80px] ${
                     isActive
                       ? isSelected
                         ? "bg-[#004a93] text-white ring-2 ring-[#004a93] ring-offset-1"
@@ -290,12 +290,16 @@ export function ProductCard({ product }: ProductCardProps) {
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                 >
-                  <div className="font-medium truncate">{pkg.label.split(" ")[0]}</div>
-                  <div className="text-[0.65rem] opacity-80">x{pkg.factor}</div>
-                  <div
-                    className={`${isSelected ? "text-white" : isActive ? "text-[#004a93]" : "text-[#e30613]"} font-semibold`}
-                  >
-                    {formatCurrency(unitPrice)}
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <div className="font-medium">{pkg.label.split(" ")[0]}</div>
+                      <div className="text-[0.65rem] opacity-80">x{pkg.factor}</div>
+                    </div>
+                    <div
+                      className={`${isSelected ? "text-white" : isActive ? "text-[#004a93]" : "text-[#e30613]"} font-semibold`}
+                    >
+                      {formatCurrency(unitPrice)}
+                    </div>
                   </div>
                   {isSelected && (
                     <motion.div

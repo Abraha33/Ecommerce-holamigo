@@ -31,7 +31,7 @@ export default function RootLayout({
             <div className="flex min-h-screen flex-col">
               <Header />
               <div className="flex flex-1">
-                <main className="flex-1 pr-72">{children}</main>
+                <main className="flex-1">{children}</main>
                 <PersistentCartSidebar />
               </div>
               <Footer />

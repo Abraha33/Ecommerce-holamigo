@@ -67,7 +67,7 @@ export default function Header() {
 
       {/* Main header */}
       <div className={`bg-white border-b transition-shadow ${isScrolled ? "shadow-md" : ""}`}>
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 pr-72">
           <div className="flex items-center justify-between py-4">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2">
@@ -168,7 +168,7 @@ export default function Header() {
           </div>
 
           {/* Navigation - Desktop */}
-          <div className="hidden md:flex w-full border-t border-b">
+          <div className="hidden md:flex w-full border-t border-b pr-72">
             <nav className="flex items-center flex-1">
               {navigation.map((item) => (
                 <Link
