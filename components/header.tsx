@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useCart } from "@/components/cart-provider"
-import { Search, ShoppingCart, Menu, Phone, Mail, User, MapPin, List } from "lucide-react"
+import { Search, ShoppingCart, Menu, Phone, Mail, User, MapPin, List, Bell } from "lucide-react"
 
 const navigation = [
   { name: "Inicio", href: "/" },
@@ -92,6 +92,15 @@ export default function Header() {
             <div className="flex items-center gap-2">
               <Link href="/account" className="p-2 hidden md:flex items-center">
                 <User className="h-5 w-5 text-[#004a93]" />
+              </Link>
+
+              <Link href="/notifications" className="p-2 hidden md:flex items-center">
+                <div className="relative h-8 w-8 bg-gray-100 rounded-full flex items-center justify-center">
+                  <Bell className="h-5 w-5 text-[#004a93]" />
+                  <span className="absolute -top-1 -right-1 bg-[#e30613] text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                    3
+                  </span>
+                </div>
               </Link>
 
               <Link href="/wishlists" className="p-2 hidden md:flex items-center">
