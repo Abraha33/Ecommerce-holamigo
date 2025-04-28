@@ -5,7 +5,7 @@ import Image from "next/image"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { formatCurrency } from "@/lib/utils"
-import { ShoppingCart, Heart, Star, Check, Minus, Plus, ChevronLeft, ChevronRight } from "lucide-react"
+import { ShoppingCart, ListPlus, Star, Check, Minus, Plus, ChevronLeft, ChevronRight } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { useCart } from "@/components/cart-provider"
 import { Input } from "@/components/ui/input"
@@ -52,6 +52,7 @@ export function ProductDetailsModal({ isOpen, onClose, product }: ProductDetails
   const { toast } = useToast()
   const { addItem } = useCart()
   const [selectedUnit, setSelectedUnit] = useState(product?.units ? product.units[0] : null)
+  const [showBrands, setShowBrands] = useState(false)
 
   // Estado para la galería de imágenes
   const productImages = getAdditionalImages(product?.image || "/placeholder.svg")
@@ -63,6 +64,15 @@ export function ProductDetailsModal({ isOpen, onClose, product }: ProductDetails
     { id: "blue", name: "Azul", hex: "#3b82f6" },
     { id: "green", name: "Verde", hex: "#22c55e" },
   ]
+
+  // Marcas disponibles
+  const availableBrands = [
+    { id: "darnel", name: "Darnel", logo: "/abstract-geometric-logo.png" },
+    { id: "fabol", name: "Fabol", logo: "/abstract-geometric-logo.png" },
+    { id: "fadevesa", name: "Fadevesa", logo: "/Abstract Geometric Logo.png" },
+    { id: "carvajal", name: "Carvajal", logo: "/abstract-geometric-logo.png" },
+  ]
+  const [selectedBrand, setSelectedBrand] = useState(availableBrands[0].id)
 
   // Calcular el precio base por unidad (sin descuentos)
   const baseUnitPrice = product?.price || 0
@@ -125,10 +135,11 @@ export function ProductDetailsModal({ isOpen, onClose, product }: ProductDetails
       price: calculateUnitPrice(selectedPackage),
       image: product.image,
       quantity: quantity * selectedPackage.factor,
-      variant:
+      variant: `${availableBrands.find((b) => b.id === selectedBrand)?.name} - ${
         selectedColor !== "default"
           ? `${availableColors.find((c) => c.id === selectedColor)?.name} - ${selectedPackage.label}`
-          : selectedPackage.label,
+          : selectedPackage.label
+      }`,
     })
 
     toast({
@@ -353,6 +364,76 @@ export function ProductDetailsModal({ isOpen, onClose, product }: ProductDetails
                     </div>
                   </div>
 
+                  {/* Selector de tamaño */}
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">Tamaño:</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {["S", "M", "L", "XL"].map((size) => (
+                        <button
+                          key={size}
+                          className="w-10 h-10 rounded-md border flex items-center justify-center hover:border-[#004a93] hover:bg-blue-50"
+                        >
+                          {size}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Selector de modelo */}
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">Modelo:</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {["Estándar", "Premium", "Eco"].map((model) => (
+                        <button
+                          key={model}
+                          className="px-3 py-1 rounded-md border flex items-center justify-center hover:border-[#004a93] hover:bg-blue-50"
+                        >
+                          {model}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Selector de marca */}
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">Marca:</h4>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-between bg-blue-50 border-[#004a93] text-[#004a93]"
+                      onClick={() => setShowBrands(!showBrands)}
+                    >
+                      {availableBrands.find((b) => b.id === selectedBrand)?.name}
+                      {showBrands ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                    </Button>
+
+                    {showBrands && (
+                      <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 border rounded-md bg-white">
+                        {availableBrands.map((brand) => (
+                          <div
+                            key={brand.id}
+                            className={`cursor-pointer flex flex-col items-center p-2 rounded-full ${
+                              selectedBrand === brand.id ? "bg-blue-100 ring-2 ring-[#004a93]" : "hover:bg-gray-100"
+                            }`}
+                            onClick={() => {
+                              setSelectedBrand(brand.id)
+                              setShowBrands(false)
+                            }}
+                          >
+                            <div className="relative w-16 h-16 rounded-full overflow-hidden mb-1">
+                              <Image
+                                src={brand.logo || "/placeholder.svg"}
+                                alt={brand.name}
+                                fill
+                                className="object-contain p-2"
+                              />
+                            </div>
+                            <span className="text-xs font-medium">{brand.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
                   {/* Control de cantidad */}
                   <div>
                     <h4 className="text-sm font-medium mb-2">Cantidad ({selectedPackage.label}):</h4>
@@ -473,8 +554,8 @@ export function ProductDetailsModal({ isOpen, onClose, product }: ProductDetails
             {/* Botones de acción */}
             <div className="mt-6 grid grid-cols-2 gap-3 pt-4 border-t">
               <Button variant="outline" className="flex items-center justify-center gap-2">
-                <Heart className="h-4 w-4" />
-                Favorito
+                <ListPlus className="h-4 w-4" />
+                Agregar a lista
               </Button>
               <Button
                 className="bg-[#004a93] hover:bg-[#0071bc] flex items-center justify-center gap-2"

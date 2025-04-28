@@ -213,8 +213,8 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
 
   // Función para abrir el modal de detalles
   const openDetailsModal = (e) => {
+    // Solo prevenir el comportamiento predeterminado, no detener la propagación
     e.preventDefault()
-    e.stopPropagation()
     setIsDetailsModalOpen(true)
   }
 
@@ -225,10 +225,7 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
           viewMode === "list" ? "flex-row" : "h-full"
         } border border-gray-200`}
       >
-        <div
-          className={`relative ${viewMode === "list" ? "w-40 min-w-40" : "pt-[90%]"} group cursor-pointer`}
-          onClick={openDetailsModal}
-        >
+        <div className={`relative ${viewMode === "list" ? "w-40 min-w-40" : "pt-[90%]"} group`}>
           <Image src={product.image || "/placeholder.svg"} alt={product.name} fill className="object-contain p-1" />
 
           {/* Badges y botones flotantes */}

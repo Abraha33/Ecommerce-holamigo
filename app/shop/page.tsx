@@ -11,7 +11,7 @@ import { CategoryBanner } from "@/components/category-banner"
 
 export default function ProductsPage() {
   const [sortOption, setSortOption] = useState("featured")
-  const [viewMode, setViewMode] = useState("grid-5")
+  const [viewMode, setViewMode] = useState("grid-6")
   const [showFilters, setShowFilters] = useState(true)
 
   // Ordenar productos según la opción seleccionada
@@ -37,12 +37,12 @@ export default function ProductsPage() {
         return "grid-cols-1 sm:grid-cols-2"
       case "grid-3":
         return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-      case "grid-5":
-        return "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+      case "grid-6":
+        return "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6"
       case "list":
         return "grid-cols-1 gap-y-4" // Asegurar que el modo lista tenga una sola columna
       default:
-        return "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+        return "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6"
     }
   }
 
@@ -113,16 +113,18 @@ export default function ProductsPage() {
                 <LayoutGrid className="h-4 w-4" />
               </Button>
               <Button
-                variant={viewMode === "grid-5" ? "default" : "outline"}
+                variant={viewMode === "grid-6" ? "default" : "outline"}
                 size="icon"
-                onClick={() => setViewMode("grid-5")}
+                onClick={() => setViewMode("grid-6")}
                 className="h-9 w-9 rounded-full bg-[#004a93] text-white hover:bg-[#003a73]"
               >
-                <div className="grid grid-cols-2 gap-0.5">
-                  <div className="w-1.5 h-1.5 bg-current rounded-sm"></div>
-                  <div className="w-1.5 h-1.5 bg-current rounded-sm"></div>
-                  <div className="w-1.5 h-1.5 bg-current rounded-sm"></div>
-                  <div className="w-1.5 h-1.5 bg-current rounded-sm"></div>
+                <div className="grid grid-cols-3 gap-0.5">
+                  <div className="w-1 h-1 bg-current rounded-sm"></div>
+                  <div className="w-1 h-1 bg-current rounded-sm"></div>
+                  <div className="w-1 h-1 bg-current rounded-sm"></div>
+                  <div className="w-1 h-1 bg-current rounded-sm"></div>
+                  <div className="w-1 h-1 bg-current rounded-sm"></div>
+                  <div className="w-1 h-1 bg-current rounded-sm"></div>
                 </div>
               </Button>
             </div>

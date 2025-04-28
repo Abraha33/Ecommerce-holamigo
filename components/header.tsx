@@ -199,27 +199,7 @@ export default function Header() {
                 </PopoverContent>
               </Popover>
 
-              {/* Icono de PrintFlow Manager */}
-              <Link href="/dashboard" className="flex flex-col items-center">
-                <div className="relative">
-                  <Printer className="h-6 w-6" />
-                  <span className="absolute -top-1 -right-1 bg-[#ffff1a] text-black text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    5
-                  </span>
-                </div>
-                <span className="text-xs hidden md:block">PrintFlow Manager</span>
-              </Link>
-
-              <Link href="/notifications" className="flex flex-col items-center">
-                <div className="relative">
-                  <Bell className="h-6 w-6" />
-                  <span className="absolute -top-1 -right-1 bg-[#ffff1a] text-black text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    3
-                  </span>
-                </div>
-                <span className="text-xs hidden md:block">Notificaciones</span>
-              </Link>
-
+              {/* Iconos reorganizados: cuenta, carrito, notificaciones, PrintFlow Manager */}
               <Link href="/account" className="flex flex-col items-center">
                 <User className="h-6 w-6" />
                 <span className="text-xs hidden md:block">Mi cuenta</span>
@@ -235,6 +215,27 @@ export default function Header() {
                   )}
                 </div>
                 <span className="text-xs hidden md:block">Carrito</span>
+              </Link>
+
+              <Link href="/notifications" className="flex flex-col items-center">
+                <div className="relative">
+                  <Bell className="h-6 w-6" />
+                  <span className="absolute -top-1 -right-1 bg-[#ffff1a] text-black text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    3
+                  </span>
+                </div>
+                <span className="text-xs hidden md:block">Notificaciones</span>
+              </Link>
+
+              {/* Icono de PrintFlow Manager */}
+              <Link href="/dashboard" className="flex flex-col items-center">
+                <div className="relative">
+                  <Printer className="h-6 w-6" />
+                  <span className="absolute -top-1 -right-1 bg-[#ffff1a] text-black text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    5
+                  </span>
+                </div>
+                <span className="text-xs hidden md:block">PrintFlow Manager</span>
               </Link>
             </div>
           </div>

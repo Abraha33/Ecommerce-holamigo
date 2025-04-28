@@ -31,7 +31,7 @@ export function ProductGrid({ products, viewMode = "grid" }: ProductGridProps) {
 
   return (
     <div
-      className={`grid ${viewMode === "list" ? "grid-cols-1 gap-y-4" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"} gap-4`}
+      className={`grid ${viewMode === "list" ? "grid-cols-1 gap-y-4" : "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6"} gap-4`}
     >
       {products.map((product) => (
         <Card
