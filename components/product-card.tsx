@@ -30,6 +30,7 @@ interface ProductCardProps {
     slug: string
     price: number
     image: string
+    images: string[]
     isNew?: boolean
     isSale?: boolean
     originalPrice?: number
@@ -240,7 +241,7 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
             <WishlistButton
               productId={product.id}
               productName={product.name}
-              productImage={product.image}
+              productImage={product.images[0]}
               productPrice={product.price}
               className="rounded-full h-8 w-8 p-0 flex items-center justify-center"
             />

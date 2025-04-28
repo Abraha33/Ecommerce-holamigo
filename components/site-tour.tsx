@@ -1,8 +1,28 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { usePathname } from "next/navigation"
-import Joyride, { type CallBackProps, STATUS, type Step } from "react-joyride"
+import {
+  useFloating,
+  autoUpdate,
+  offset,
+  flip,
+  shift,
+  arrow,
+  useClick,
+  useDismiss,
+  useRole,
+  useInteractions,
+  FloatingArrow,
+  FloatingFocusManager,
+  useId,
+} from "@floating-ui/react"
+
+interface TourStep {
+  targetSelector: string
+  content: string
+  placement?: "top" | "bottom" | "left" | "right"
+}
 
 interface SiteTourProps {
   isOpen?: boolean
@@ -10,216 +30,135 @@ interface SiteTourProps {
 }
 
 export function SiteTour({ isOpen = false, onClose }: SiteTourProps) {
-  const [run, setRun] = useState(isOpen)
-  const [steps, setSteps] = useState<Step[]>([])
+  const [active, setActive] = useState(isOpen)
+  const [currentStepIndex, setCurrentStepIndex] = useState(0)
+  const [steps, setSteps] = useState<TourStep[]>([])
+  const [currentTarget, setCurrentTarget] = useState<Element | null>(null)
+  const arrowRef = useRef(null)
   const pathname = usePathname()
 
+  const headingId = useId()
+  const descriptionId = useId()
+
+  // Configuración de Floating UI
+  const { refs, floatingStyles, context } = useFloating({
+    open: active && currentTarget !== null,
+    onOpenChange: setActive,
+    middleware: [offset(10), flip(), shift(), arrow({ element: arrowRef })],
+    whileElementsMounted: autoUpdate,
+    elements: {
+      reference: currentTarget,
+    },
+  })
+
+  const click = useClick(context)
+  const dismiss = useDismiss(context)
+  const role = useRole(context)
+
+  const { getReferenceProps, getFloatingProps } = useInteractions([click, dismiss, role])
+
+  // Efecto para actualizar el estado activo cuando cambia isOpen
   useEffect(() => {
-    setRun(isOpen)
+    setActive(isOpen)
+    if (isOpen) {
+      setCurrentStepIndex(0)
+    }
   }, [isOpen])
 
+  // Efecto para definir los pasos según la ruta actual
   useEffect(() => {
     // Definir los pasos según la ruta actual
-    const commonSteps: Step[] = [
+    const commonSteps: TourStep[] = [
       {
-        target: ".header-logo",
+        targetSelector: ".header-logo",
         content: "Bienvenido a Envax. Haz clic en nuestro logo para volver a la página principal en cualquier momento.",
-        disableBeacon: true,
         placement: "bottom",
       },
       {
-        target: ".search-bar",
+        targetSelector: ".search-bar",
         content:
           "Busca productos por nombre, categoría o descripción. Prueba términos como 'eco', 'biodegradable' o 'reciclado'.",
         placement: "bottom",
       },
       {
-        target: ".categories-menu",
+        targetSelector: ".categories-menu",
         content: "Explora nuestras categorías de productos organizadas para facilitar tu búsqueda.",
         placement: "bottom",
       },
       {
-        target: ".account-icon",
+        targetSelector: ".account-icon",
         content: "Accede a tu cuenta para ver tus pedidos, direcciones guardadas y lista de deseos.",
         placement: "bottom",
       },
       {
-        target: ".cart-icon",
+        targetSelector: ".cart-icon",
         content: "Revisa los productos en tu carrito y procede al pago cuando estés listo.",
-        placement: "bottom-end",
+        placement: "bottom",
       },
     ]
 
     // Pasos específicos para la página principal
-    const homeSteps: Step[] = [
+    const homeSteps: TourStep[] = [
       ...commonSteps,
       {
-        target: ".hero-section",
+        targetSelector: ".hero-section",
         content: "Descubre nuestras ofertas destacadas y novedades en esta sección principal.",
         placement: "bottom",
       },
       {
-        target: ".category-circles",
+        targetSelector: ".category-circles",
         content: "Accede rápidamente a nuestras categorías principales desde estos círculos.",
         placement: "top",
       },
       {
-        target: ".featured-products",
+        targetSelector: ".featured-products",
         content: "Estos son nuestros productos más populares y recomendados.",
         placement: "top",
       },
       {
-        target: ".newsletter-section",
+        targetSelector: ".newsletter-section",
         content: "Suscríbete a nuestro boletín para recibir ofertas exclusivas y novedades.",
         placement: "top",
       },
     ]
 
     // Pasos específicos para la página de tienda/productos
-    const shopSteps: Step[] = [
+    const shopSteps: TourStep[] = [
       ...commonSteps,
       {
-        target: ".filter-section",
+        targetSelector: ".filter-section",
         content: "Filtra los productos por marca, precio, disponibilidad y más características.",
         placement: "right",
       },
       {
-        target: ".sort-options",
+        targetSelector: ".sort-options",
         content: "Ordena los productos por precio, popularidad o novedades.",
         placement: "bottom",
       },
       {
-        target: ".view-toggle",
-        content: "Cambia entre vista de cuadrícula o lista según tu preferencia.",
-        placement: "bottom",
-      },
-      {
-        target: ".product-grid",
+        targetSelector: ".product-grid",
         content: "Explora nuestra selección de productos. Pasa el cursor sobre un producto para ver opciones rápidas.",
         placement: "top",
-      },
-      {
-        target: ".product-card",
-        content:
-          "Cada tarjeta muestra información básica del producto. Haz clic en 'Ver detalles' para más información o en 'Añadir al carrito' para comprarlo.",
-        placement: "right",
       },
     ]
 
     // Pasos específicos para la página de carrito
-    const cartSteps: Step[] = [
+    const cartSteps: TourStep[] = [
       ...commonSteps,
       {
-        target: ".cart-items",
+        targetSelector: ".cart-items",
         content: "Aquí puedes ver todos los productos que has añadido a tu carrito.",
         placement: "top",
       },
       {
-        target: ".quantity-selector",
-        content: "Ajusta la cantidad de cada producto según tus necesidades.",
-        placement: "right",
-      },
-      {
-        target: ".cart-summary",
+        targetSelector: ".cart-summary",
         content: "Revisa el resumen de tu pedido, incluyendo subtotal, descuentos y total.",
         placement: "left",
       },
       {
-        target: ".checkout-button",
+        targetSelector: ".checkout-button",
         content: "Haz clic aquí para proceder al pago cuando estés listo para completar tu compra.",
         placement: "top",
-      },
-    ]
-
-    // Pasos específicos para la página de checkout
-    const checkoutSteps: Step[] = [
-      {
-        target: ".delivery-options",
-        content: "Selecciona tu método de entrega preferido.",
-        disableBeacon: true,
-        placement: "right",
-      },
-      {
-        target: ".address-section",
-        content: "Ingresa o selecciona la dirección de entrega para tu pedido.",
-        placement: "right",
-      },
-      {
-        target: ".payment-methods",
-        content: "Elige tu método de pago preferido entre las opciones disponibles.",
-        placement: "left",
-      },
-      {
-        target: ".order-summary",
-        content: "Revisa el resumen final de tu pedido antes de confirmar.",
-        placement: "left",
-      },
-      {
-        target: ".place-order-button",
-        content: "Haz clic aquí para confirmar y finalizar tu compra.",
-        placement: "top",
-      },
-    ]
-
-    // Pasos específicos para la página de cuenta
-    const accountSteps: Step[] = [
-      ...commonSteps,
-      {
-        target: ".account-sidebar",
-        content: "Navega entre las diferentes secciones de tu cuenta desde este menú lateral.",
-        disableBeacon: true,
-        placement: "right",
-      },
-      {
-        target: ".profile-section",
-        content: "Actualiza tu información personal y preferencias de cuenta.",
-        placement: "right",
-      },
-      {
-        target: ".orders-section",
-        content: "Revisa el historial de tus pedidos y su estado actual.",
-        placement: "right",
-      },
-      {
-        target: ".addresses-section",
-        content: "Gestiona tus direcciones de entrega guardadas.",
-        placement: "right",
-      },
-      {
-        target: ".payment-section",
-        content: "Administra tus métodos de pago guardados.",
-        placement: "right",
-      },
-      {
-        target: ".wishlist-section",
-        content: "Accede a los productos que has guardado en tu lista de deseos.",
-        placement: "right",
-      },
-    ]
-
-    // Pasos específicos para la página de promociones
-    const promoSteps: Step[] = [
-      ...commonSteps,
-      {
-        target: ".promo-hero",
-        content: "Descubre nuestras mejores ofertas y promociones destacadas.",
-        disableBeacon: true,
-        placement: "bottom",
-      },
-      {
-        target: ".promo-tabs",
-        content: "Navega entre diferentes categorías de promociones: destacadas, outlet, liquidación y más.",
-        placement: "bottom",
-      },
-      {
-        target: ".promo-grid",
-        content: "Explora todos los productos en promoción. ¡No te pierdas estas ofertas!",
-        placement: "top",
-      },
-      {
-        target: ".flash-sale",
-        content: "Ofertas por tiempo limitado. ¡Date prisa antes de que se acaben!",
-        placement: "right",
       },
     ]
 
@@ -230,78 +169,105 @@ export function SiteTour({ isOpen = false, onClose }: SiteTourProps) {
       setSteps(shopSteps)
     } else if (pathname === "/cart") {
       setSteps(cartSteps)
-    } else if (pathname === "/checkout") {
-      setSteps(checkoutSteps)
-    } else if (pathname === "/account") {
-      setSteps(accountSteps)
-    } else if (pathname.includes("/promos")) {
-      setSteps(promoSteps)
     } else {
       setSteps(commonSteps)
     }
   }, [pathname])
 
-  const handleJoyrideCallback = (data: CallBackProps) => {
-    const { status } = data
-    const finishedStatuses: string[] = [STATUS.FINISHED, STATUS.SKIPPED]
+  // Efecto para actualizar el elemento objetivo cuando cambia el paso actual
+  useEffect(() => {
+    if (!active || steps.length === 0) return
 
-    if (finishedStatuses.includes(status)) {
-      setRun(false)
-      if (onClose) onClose()
+    const currentStep = steps[currentStepIndex]
+    if (!currentStep) return
+
+    const targetElement = document.querySelector(currentStep.targetSelector)
+    setCurrentTarget(targetElement)
+  }, [active, currentStepIndex, steps])
+
+  // Manejadores para la navegación del tour
+  const handleNext = () => {
+    if (currentStepIndex < steps.length - 1) {
+      setCurrentStepIndex(currentStepIndex + 1)
+    } else {
+      handleFinish()
     }
   }
 
+  const handlePrev = () => {
+    if (currentStepIndex > 0) {
+      setCurrentStepIndex(currentStepIndex - 1)
+    }
+  }
+
+  const handleFinish = () => {
+    setActive(false)
+    if (onClose) onClose()
+  }
+
+  const handleSkip = () => {
+    handleFinish()
+  }
+
+  // Si no estamos en el navegador o no hay pasos, no renderizar nada
+  if (typeof window === "undefined" || steps.length === 0 || !active) {
+    return null
+  }
+
+  const currentStep = steps[currentStepIndex]
+  const isFirstStep = currentStepIndex === 0
+  const isLastStep = currentStepIndex === steps.length - 1
+
   return (
-    <Joyride
-      callback={handleJoyrideCallback}
-      continuous
-      hideCloseButton
-      run={run}
-      scrollToFirstStep
-      showProgress
-      showSkipButton
-      steps={steps}
-      styles={{
-        options: {
-          zIndex: 10000,
-          primaryColor: "#20509E",
-          backgroundColor: "#ffffff",
-          arrowColor: "#ffffff",
-          textColor: "#333",
-        },
-        tooltip: {
-          borderRadius: "8px",
-          fontSize: "16px",
-          padding: "16px",
-          maxWidth: "350px",
-        },
-        buttonNext: {
-          backgroundColor: "#20509E",
-          borderRadius: "4px",
-          color: "#fff",
-          fontSize: "14px",
-          padding: "8px 16px",
-        },
-        buttonBack: {
-          color: "#20509E",
-          marginRight: "10px",
-          fontSize: "14px",
-        },
-        buttonSkip: {
-          color: "#666",
-          fontSize: "14px",
-        },
-        spotlight: {
-          backgroundColor: "rgba(0, 0, 0, 0.4)",
-        },
-      }}
-      locale={{
-        back: "Anterior",
-        close: "Cerrar",
-        last: "Finalizar",
-        next: "Siguiente",
-        skip: "Saltar tour",
-      }}
-    />
+    <>
+      {/* Overlay para oscurecer el fondo */}
+      <div className="fixed inset-0 bg-black/50 z-[9999]" onClick={handleSkip} aria-hidden="true" />
+
+      {/* Tooltip del tour */}
+      {currentTarget && (
+        <FloatingFocusManager context={context} modal={false}>
+          <div
+            ref={refs.setFloating}
+            style={floatingStyles}
+            className="z-[10000] bg-white rounded-lg shadow-lg p-4 max-w-[350px]"
+            aria-labelledby={headingId}
+            aria-describedby={descriptionId}
+            {...getFloatingProps()}
+          >
+            <FloatingArrow ref={arrowRef} context={context} fill="#ffffff" />
+
+            <div className="mb-4">
+              <p id={headingId} className="text-lg font-medium text-gray-900">
+                Paso {currentStepIndex + 1} de {steps.length}
+              </p>
+              <p id={descriptionId} className="text-gray-700 mt-1">
+                {currentStep.content}
+              </p>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <button onClick={handleSkip} className="text-sm text-gray-500 hover:text-gray-700">
+                Saltar tour
+              </button>
+
+              <div className="flex space-x-2">
+                {!isFirstStep && (
+                  <button onClick={handlePrev} className="px-3 py-1 text-sm text-blue-600 hover:text-blue-800">
+                    Anterior
+                  </button>
+                )}
+
+                <button
+                  onClick={handleNext}
+                  className="px-4 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  {isLastStep ? "Finalizar" : "Siguiente"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </FloatingFocusManager>
+      )}
+    </>
   )
 }

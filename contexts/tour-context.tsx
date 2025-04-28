@@ -3,25 +3,16 @@
 import { createContext, useContext, useState, type ReactNode } from "react"
 
 interface TourContextType {
-  isTourOpen: boolean
-  startTour: () => void
-  closeTour: () => void
+  showTour: boolean
+  setShowTour: (show: boolean) => void
 }
 
 const TourContext = createContext<TourContextType | undefined>(undefined)
 
 export function TourProvider({ children }: { children: ReactNode }) {
-  const [isTourOpen, setIsTourOpen] = useState(false)
+  const [showTour, setShowTour] = useState(false)
 
-  const startTour = () => {
-    setIsTourOpen(true)
-  }
-
-  const closeTour = () => {
-    setIsTourOpen(false)
-  }
-
-  return <TourContext.Provider value={{ isTourOpen, startTour, closeTour }}>{children}</TourContext.Provider>
+  return <TourContext.Provider value={{ showTour, setShowTour }}>{children}</TourContext.Provider>
 }
 
 export function useTour() {
