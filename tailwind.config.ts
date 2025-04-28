@@ -60,6 +60,7 @@ const config = {
           gray: "#58595b",
           lightgray: "#f2f2f2",
           gold: "#CDA22A",
+          yellow: "#ffff1a",
         },
       },
       borderRadius: {

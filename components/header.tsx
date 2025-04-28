@@ -5,11 +5,25 @@ import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useCart } from "@/components/cart-provider"
 import { useTheme } from "next-themes"
-import { Search, ShoppingCart, Menu, Phone, Mail, User, MapPin, Bell, Printer } from "lucide-react"
+import {
+  Menu,
+  Phone,
+  Mail,
+  User,
+  MapPin,
+  Bell,
+  Printer,
+  ChevronDown,
+  Home,
+  Truck,
+  Clock,
+  ShoppingCart,
+} from "lucide-react"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { SearchBar } from "@/components/search-bar"
 
 const navigation = [
   { name: "Inicio", href: "/" },
@@ -26,6 +40,7 @@ export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false)
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
+  const [deliveryOption, setDeliveryOption] = useState("delivery")
 
   const cartItemsCount = cart.reduce((count, item) => count + item.quantity, 0)
 
@@ -67,14 +82,7 @@ export default function Header() {
                       <Image src={logoSrc || "/placeholder.svg"} alt="Envax Logo" fill className="object-contain" />
                     </div>
 
-                    <div className="relative w-full">
-                      <Input
-                        type="search"
-                        placeholder="¿Qué estás buscando?"
-                        className="w-full pr-10 border-[#20509E] dark:border-gray-700 rounded-full dark:bg-gray-800"
-                      />
-                      <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#20509E] dark:text-gray-400" />
-                    </div>
+                    <SearchBar placeholder="¿Qué estás buscando?" />
 
                     <nav className="flex flex-col gap-2">
                       {navigation.map((item) => (
@@ -121,40 +129,79 @@ export default function Header() {
               </Link>
             </div>
 
-            {/* Barra de búsqueda - estilo Éxito */}
+            {/* Barra de búsqueda mejorada */}
             <div className="flex-1 max-w-4xl mx-4">
-              <div className="relative">
-                <Input
-                  type="search"
-                  placeholder="Buscar en envax.com"
-                  className="w-full pr-10 border-0 rounded-md h-10 text-black dark:text-white dark:bg-gray-800"
-                />
-                <Button
-                  className="absolute right-0 top-0 h-full bg-gray-300 hover:bg-gray-400 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white rounded-l-none rounded-r-md"
-                  size="icon"
-                >
-                  <Search className="h-5 w-5" />
-                </Button>
-              </div>
+              <SearchBar placeholder="Buscar en envax.com" darkMode={true} />
             </div>
 
             {/* Iconos de usuario - estilo Éxito */}
             <div className="flex items-center gap-4 ml-auto">
-              {/* Ubicación - estilo Éxito */}
-              <div className="hidden lg:flex items-center mr-2 text-sm">
-                <MapPin className="h-5 w-5 mr-1" />
-                <div className="flex flex-col">
-                  <span className="text-xs">¿Cómo quieres</span>
-                  <span className="font-medium">recibir tu pedido?</span>
-                </div>
-                <span className="ml-1">›</span>
-              </div>
+              {/* Ubicación - estilo Éxito con Popover */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <div className="hidden lg:flex items-center mr-2 text-sm cursor-pointer hover:text-gray-200">
+                    <MapPin className="h-5 w-5 mr-1" />
+                    <div className="flex flex-col">
+                      <span className="text-xs">¿Cómo quieres</span>
+                      <span className="font-medium">recibir tu pedido?</span>
+                    </div>
+                    <ChevronDown className="h-4 w-4 ml-1" />
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-0">
+                  <div className="p-4 border-b">
+                    <h3 className="font-medium text-lg">Elige cómo recibir tu pedido</h3>
+                  </div>
+                  <div className="p-4 space-y-4">
+                    <div
+                      className={`flex items-center gap-3 p-3 rounded-md cursor-pointer border ${deliveryOption === "delivery" ? "border-[#20509E] bg-blue-50" : "border-gray-200"}`}
+                      onClick={() => setDeliveryOption("delivery")}
+                    >
+                      <div className="bg-[#20509E] text-white p-2 rounded-full">
+                        <Truck className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium">Entrega a domicilio</h4>
+                        <p className="text-sm text-gray-500">Recibe tu pedido en la comodidad de tu hogar</p>
+                      </div>
+                    </div>
+
+                    <div
+                      className={`flex items-center gap-3 p-3 rounded-md cursor-pointer border ${deliveryOption === "pickup" ? "border-[#20509E] bg-blue-50" : "border-gray-200"}`}
+                      onClick={() => setDeliveryOption("pickup")}
+                    >
+                      <div className="bg-[#20509E] text-white p-2 rounded-full">
+                        <Home className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium">Recoge en tienda</h4>
+                        <p className="text-sm text-gray-500">Recoge tu pedido en nuestra tienda más cercana</p>
+                      </div>
+                    </div>
+
+                    <div
+                      className={`flex items-center gap-3 p-3 rounded-md cursor-pointer border ${deliveryOption === "express" ? "border-[#20509E] bg-blue-50" : "border-gray-200"}`}
+                      onClick={() => setDeliveryOption("express")}
+                    >
+                      <div className="bg-[#20509E] text-white p-2 rounded-full">
+                        <Clock className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium">Entrega express</h4>
+                        <p className="text-sm text-gray-500">Recibe tu pedido en menos de 2 horas</p>
+                      </div>
+                    </div>
+
+                    <Button className="w-full bg-[#20509E]">Confirmar</Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
 
               {/* Icono de PrintFlow Manager */}
               <Link href="/dashboard" className="flex flex-col items-center">
                 <div className="relative">
                   <Printer className="h-6 w-6" />
-                  <span className="absolute -top-1 -right-1 bg-[#CDA22A] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 bg-[#ffff1a] text-black text-xs rounded-full h-5 w-5 flex items-center justify-center">
                     5
                   </span>
                 </div>
@@ -164,7 +211,7 @@ export default function Header() {
               <Link href="/notifications" className="flex flex-col items-center">
                 <div className="relative">
                   <Bell className="h-6 w-6" />
-                  <span className="absolute -top-1 -right-1 bg-[#CDA22A] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 bg-[#ffff1a] text-black text-xs rounded-full h-5 w-5 flex items-center justify-center">
                     3
                   </span>
                 </div>
@@ -180,7 +227,7 @@ export default function Header() {
                 <div className="relative">
                   <ShoppingCart className="h-6 w-6" />
                   {cartItemsCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-[#CDA22A] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 bg-[#ffff1a] text-black text-xs rounded-full h-5 w-5 flex items-center justify-center">
                       {cartItemsCount}
                     </span>
                   )}
