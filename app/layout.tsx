@@ -13,6 +13,7 @@ import { LoadingOverlay } from "@/components/ui/loading-overlay"
 import { TourProvider } from "@/contexts/tour-context"
 import { SiteTour } from "@/components/site-tour"
 import { TourButton } from "@/components/tour-button"
+import { WishlistProvider } from "@/components/wishlist-provider"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -33,20 +34,22 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <LoadingProvider>
             <CartProvider>
-              <TourProvider>
-                <div className="flex min-h-screen flex-col">
-                  <Header />
-                  <div className="flex flex-1">
-                    <main className="flex-1">{children}</main>
-                    <PersistentCartSidebar />
+              <WishlistProvider>
+                <TourProvider>
+                  <div className="flex min-h-screen flex-col">
+                    <Header />
+                    <div className="flex flex-1">
+                      <main className="flex-1">{children}</main>
+                      <PersistentCartSidebar />
+                    </div>
+                    <Footer />
                   </div>
-                  <Footer />
-                </div>
-                <Toaster />
-                <LoadingOverlay />
-                <SiteTour />
-                <TourButton />
-              </TourProvider>
+                  <Toaster />
+                  <LoadingOverlay />
+                  <SiteTour />
+                  <TourButton />
+                </TourProvider>
+              </WishlistProvider>
             </CartProvider>
           </LoadingProvider>
         </ThemeProvider>

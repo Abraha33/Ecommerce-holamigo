@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect } from "react"
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 
 type WishlistItem = {
   id: string | number
@@ -20,24 +20,28 @@ type WishlistContextType = {
 
 const WishlistContext = createContext<WishlistContextType | undefined>(undefined)
 
-export function WishlistProvider({ children }) {
+export function WishlistProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<WishlistItem[]>([])
 
   // Cargar wishlist del localStorage al iniciar
   useEffect(() => {
-    const savedWishlist = localStorage.getItem("wishlist")
-    if (savedWishlist) {
-      try {
-        setItems(JSON.parse(savedWishlist))
-      } catch (error) {
-        console.error("Error parsing wishlist from localStorage:", error)
+    if (typeof window !== "undefined") {
+      const savedWishlist = localStorage.getItem("wishlist")
+      if (savedWishlist) {
+        try {
+          setItems(JSON.parse(savedWishlist))
+        } catch (error) {
+          console.error("Error parsing wishlist from localStorage:", error)
+        }
       }
     }
   }, [])
 
   // Guardar wishlist en localStorage cuando cambia
   useEffect(() => {
-    localStorage.setItem("wishlist", JSON.stringify(items))
+    if (typeof window !== "undefined") {
+      localStorage.setItem("wishlist", JSON.stringify(items))
+    }
   }, [items])
 
   const addToWishlist = (item: WishlistItem) => {

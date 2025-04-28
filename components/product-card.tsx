@@ -6,13 +6,13 @@ import { Card, CardContent } from "@/components/ui/card"
 import { formatCurrency } from "@/lib/utils"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { ShoppingCart, Plus, Minus, Check, Eye, ChevronLeft, ChevronRight } from "lucide-react"
+import { ShoppingCart, Plus, Minus, Check, Eye, ChevronLeft, ChevronRight, Heart } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/components/ui/use-toast"
 import { useCart } from "@/components/cart-provider"
 import { motion, AnimatePresence } from "framer-motion"
 import { Badge } from "@/components/ui/badge"
-import { WishlistButton } from "@/components/wishlist-button"
+import { useWishlist } from "@/components/wishlist-provider"
 import { ProductDetailsModal } from "@/components/product-details-modal"
 
 // Definir los tipos de empaque disponibles
@@ -30,7 +30,6 @@ interface ProductCardProps {
     slug: string
     price: number
     image: string
-    images: string[]
     isNew?: boolean
     isSale?: boolean
     originalPrice?: number
@@ -46,7 +45,40 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
   const [isAdding, setIsAdding] = useState(false)
   const { toast } = useToast()
   const { addItem } = useCart()
+  const { addToWishlist, isInWishlist, removeFromWishlist } = useWishlist()
+  const [isInList, setIsInList] = useState(false)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
+
+  // Verificar si el producto está en la lista de deseos
+  useEffect(() => {
+    setIsInList(isInWishlist(product.id))
+  }, [isInWishlist, product.id])
+
+  // Manejar la adición/eliminación de la lista de deseos
+  const handleToggleWishlist = (e) => {
+    e.stopPropagation()
+    e.preventDefault()
+
+    if (isInList) {
+      removeFromWishlist(product.id)
+      toast({
+        title: "Producto eliminado",
+        description: `${product.name} ha sido eliminado de tu lista de deseos`,
+      })
+    } else {
+      addToWishlist({
+        id: product.id,
+        name: product.name,
+        image: product.image,
+        price: product.price,
+      })
+      toast({
+        title: "Producto añadido",
+        description: `${product.name} ha sido añadido a tu lista de deseos`,
+      })
+    }
+    setIsInList(!isInList)
+  }
 
   // Dentro del componente ProductCard, añadir estas opciones de unidades
   const unitOptions = [
@@ -238,13 +270,15 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
           </div>
 
           <div className="absolute top-2 right-2">
-            <WishlistButton
-              productId={product.id}
-              productName={product.name}
-              productImage={product.images[0]}
-              productPrice={product.price}
-              className="rounded-full h-8 w-8 p-0 flex items-center justify-center"
-            />
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`rounded-full ${isInList ? "text-red-500 hover:text-red-600" : "text-gray-500 hover:text-gray-700"} bg-white/80 shadow-sm`}
+              onClick={handleToggleWishlist}
+              aria-label={isInList ? "Eliminar de lista de deseos" : "Añadir a lista de deseos"}
+            >
+              <Heart className={`h-5 w-5 ${isInList ? "fill-current" : ""}`} />
+            </Button>
           </div>
 
           {/* Quick view button y navegación de galería */}
