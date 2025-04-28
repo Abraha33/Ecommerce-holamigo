@@ -199,10 +199,20 @@ export default function Header() {
                 </PopoverContent>
               </Popover>
 
-              {/* Iconos reorganizados: cuenta, carrito, notificaciones, PrintFlow Manager */}
+              {/* Iconos reorganizados: cuenta (extremo derecho), notificaciones, carrito, PrintFlow Manager */}
               <Link href="/account" className="flex flex-col items-center">
                 <User className="h-6 w-6" />
                 <span className="text-xs hidden md:block">Mi cuenta</span>
+              </Link>
+
+              <Link href="/notifications" className="flex flex-col items-center">
+                <div className="relative">
+                  <Bell className="h-6 w-6" />
+                  <span className="absolute -top-1 -right-1 bg-[#ffff1a] text-black text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    3
+                  </span>
+                </div>
+                <span className="text-xs hidden md:block">Notificaciones</span>
               </Link>
 
               <Link href="/cart" className="flex flex-col items-center">
@@ -215,16 +225,6 @@ export default function Header() {
                   )}
                 </div>
                 <span className="text-xs hidden md:block">Carrito</span>
-              </Link>
-
-              <Link href="/notifications" className="flex flex-col items-center">
-                <div className="relative">
-                  <Bell className="h-6 w-6" />
-                  <span className="absolute -top-1 -right-1 bg-[#ffff1a] text-black text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    3
-                  </span>
-                </div>
-                <span className="text-xs hidden md:block">Notificaciones</span>
               </Link>
 
               {/* Icono de PrintFlow Manager */}
@@ -243,15 +243,15 @@ export default function Header() {
       </div>
 
       {/* Navegación - Categorías */}
-      <div className="bg-[#184589] dark:bg-gray-800 text-white hidden md:block">
+      <div className="bg-white dark:bg-gray-800 text-gray-800 hidden md:block shadow-sm">
         <div className="container mx-auto px-4 pr-72">
           <nav className="flex">
             {navigation.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
-                className={`px-4 py-2 text-sm font-medium transition-colors duration-200 hover:bg-[#20509E] hover:text-white dark:hover:bg-gray-700 dark:hover:text-white ${
-                  pathname === item.href ? "bg-[#20509E] dark:bg-gray-700" : ""
+                className={`px-4 py-2 text-sm font-medium transition-colors duration-200 hover:bg-gray-200 hover:text-gray-900 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white ${
+                  pathname === item.href ? "bg-gray-200 text-gray-900 dark:bg-gray-700" : ""
                 }`}
               >
                 {item.name}
