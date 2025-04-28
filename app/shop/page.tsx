@@ -8,6 +8,7 @@ import { ProductCard } from "@/components/product-card"
 import { Button } from "@/components/ui/button"
 import { LayoutGrid, Grid, List, SlidersHorizontal } from "lucide-react"
 import { CategoryBanner } from "@/components/category-banner"
+import { BrandCircles } from "@/components/brand-circles"
 
 export default function ProductsPage() {
   const [sortOption, setSortOption] = useState("featured")
@@ -85,6 +86,9 @@ export default function ProductsPage() {
               <SlidersHorizontal className="h-4 w-4" />
               Filtros
             </Button>
+
+            {/* Botón de marcas */}
+            <BrandCircles />
 
             {/* Botones de vista - ahora circulares */}
             <div className="flex items-center space-x-2">

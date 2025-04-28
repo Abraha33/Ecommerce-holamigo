@@ -271,26 +271,6 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
               )}
             </div>
 
-            {/* Indicador de stock */}
-            <div className="mt-1">
-              {product.stockStatus === "in_stock" ? (
-                <span className="text-xs text-green-600 flex items-center">
-                  <div className="w-2 h-2 rounded-full bg-green-600 mr-1"></div>
-                  En stock
-                </span>
-              ) : product.stockStatus === "low_stock" ? (
-                <span className="text-xs text-amber-600 flex items-center">
-                  <div className="w-2 h-2 rounded-full bg-amber-600 mr-1"></div>
-                  Pocas unidades
-                </span>
-              ) : product.stockStatus === "out_of_stock" ? (
-                <span className="text-xs text-red-600 flex items-center">
-                  <div className="w-2 h-2 rounded-full bg-red-600 mr-1"></div>
-                  Agotado
-                </span>
-              ) : null}
-            </div>
-
             {/* Barras de ahorro - ahora en disposición horizontal */}
             <div className="mt-3 flex flex-wrap gap-2 text-xs">
               {packageTypes.map((pkg) => {

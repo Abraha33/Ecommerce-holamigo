@@ -1,8 +1,13 @@
+"use client"
+
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ShoppingCart, Star } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
+import { ShoppingCart, Star, Eye } from "lucide-react"
+import { useState } from "react"
+import { ProductDetailsModal } from "@/components/product-details-modal"
 
 // Datos de categorías
 const categories = [
@@ -192,72 +197,85 @@ const RatingStars = ({ rating }) => {
 
 // Componente para mostrar un producto en oferta
 const DealProduct = ({ product }) => {
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
+
   return (
-    <div className="relative border rounded-lg overflow-hidden bg-white">
-      {/* Badge de descuento */}
-      <div className="absolute top-2 left-2 z-10">
-        <Badge className="bg-[#00bbf0] text-white">{product.discount}%</Badge>
-      </div>
-
-      {/* Badge de recomendado */}
-      {product.recommended && (
-        <div className="absolute top-2 right-2 z-10">
-          <Badge className="bg-gray-700 text-white">RECOMENDADO</Badge>
-        </div>
-      )}
-
-      {/* Badge de orgánico */}
-      {product.organic && (
-        <div className="absolute top-2 right-2 z-10">
-          <Badge className="bg-green-600 text-white">ORGÁNICO</Badge>
-        </div>
-      )}
-
-      <div className="p-4">
-        <div className="relative h-40 mb-3">
-          <Image src={product.image || "/placeholder.svg"} alt={product.name} fill className="object-contain" />
+    <>
+      <Card className="relative border rounded-lg overflow-hidden bg-white shadow-md hover:shadow-xl transition-all group">
+        {/* Badge de descuento */}
+        <div className="absolute top-2 left-2 z-10">
+          <Badge className="bg-[#00bbf0] text-white">{product.discount}%</Badge>
         </div>
 
-        <div className="space-y-2">
-          <div className="flex items-center">
-            <RatingStars rating={product.rating} />
-            <span className="text-xs text-gray-500 ml-1">1</span>
+        {/* Badge de recomendado */}
+        {product.recommended && (
+          <div className="absolute top-2 right-2 z-10">
+            <Badge className="bg-gray-700 text-white">RECOMENDADO</Badge>
+          </div>
+        )}
+
+        {/* Badge de orgánico */}
+        {product.organic && (
+          <div className="absolute top-2 right-2 z-10">
+            <Badge className="bg-green-600 text-white">ORGÁNICO</Badge>
+          </div>
+        )}
+
+        <CardContent className="p-4">
+          <div className="relative h-40 mb-3 cursor-pointer" onClick={() => setIsDetailsModalOpen(true)}>
+            <Image src={product.image || "/placeholder.svg"} alt={product.name} fill className="object-contain" />
+
+            {/* Quick view button - aparece al hacer hover */}
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="bg-white/80 backdrop-blur-sm shadow-md rounded-full flex items-center gap-1"
+                onClick={() => setIsDetailsModalOpen(true)}
+              >
+                <Eye className="h-3.5 w-3.5" />
+                <span>Ver detalles</span>
+              </Button>
+            </div>
           </div>
 
-          <h3 className="font-medium text-sm line-clamp-2 h-10">{product.name}</h3>
+          <div className="space-y-2">
+            <div className="flex items-center">
+              <RatingStars rating={product.rating} />
+              <span className="text-xs text-gray-500 ml-1">1</span>
+            </div>
 
-          <div className="flex items-center">
-            {product.stock ? (
-              <span className="text-xs text-green-600 flex items-center">
-                <div className="w-2 h-2 rounded-full bg-green-600 mr-1"></div>
-                EN STOCK
-              </span>
-            ) : (
-              <span className="text-xs text-red-600 flex items-center">
-                <div className="w-2 h-2 rounded-full bg-red-600 mr-1"></div>
-                AGOTADO
-              </span>
-            )}
+            <h3
+              className="font-medium text-sm line-clamp-2 h-10 cursor-pointer hover:text-[#004a93]"
+              onClick={() => setIsDetailsModalOpen(true)}
+            >
+              {product.name}
+            </h3>
+
+            <div className="flex items-center gap-2">
+              <span className="text-gray-400 line-through text-sm">${product.originalPrice.toFixed(2)}</span>
+              <span className="text-black font-bold">${product.price.toFixed(2)}</span>
+            </div>
+
+            <Button className="w-full bg-[#004a93] hover:bg-[#0071bc] text-white">
+              <ShoppingCart className="h-4 w-4 mr-2" />
+              Añadir al carrito
+            </Button>
           </div>
+        </CardContent>
+      </Card>
 
-          <div className="flex items-center gap-2">
-            <span className="text-gray-400 line-through text-sm">${product.originalPrice.toFixed(2)}</span>
-            <span className="text-[#e30613] font-bold">${product.price.toFixed(2)}</span>
-          </div>
-
-          <Button className="w-full bg-[#ffcc00] hover:bg-[#e6b800] text-black">
-            <ShoppingCart className="h-4 w-4 mr-2" />
-            Añadir al carrito
-          </Button>
-        </div>
-      </div>
-    </div>
+      {/* Modal de detalles del producto */}
+      <ProductDetailsModal isOpen={isDetailsModalOpen} onClose={() => setIsDetailsModalOpen(false)} product={product} />
+    </>
   )
 }
 
 export default function PromosPage() {
   return (
     <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-6">Promociones y Ofertas Especiales</h1>
+
       {/* Categorías en cuadrícula */}
       <div className="border rounded-lg overflow-hidden mb-8">
         <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 divide-x divide-y">
@@ -265,15 +283,15 @@ export default function PromosPage() {
             <Link
               key={category.id}
               href={`/categories/${category.id}`}
-              className={`flex p-4 hover:bg-gray-50 transition-colors ${
+              className={`flex p-4 hover:bg-blue-50 transition-all duration-300 ${
                 index < 5 ? "border-b" : ""
-              } ${index % 5 === 0 ? "" : "border-l"}`}
+              } ${index % 5 === 0 ? "" : "border-l"} group`}
             >
-              <div className="relative w-20 h-20 mr-3">
+              <div className="relative w-20 h-20 mr-3 transition-transform group-hover:scale-105 duration-300">
                 <Image src={category.image || "/placeholder.svg"} alt={category.name} fill className="object-contain" />
               </div>
               <div>
-                <h3 className="font-medium text-sm">{category.name}</h3>
+                <h3 className="font-medium text-sm group-hover:text-[#004a93] transition-colors">{category.name}</h3>
                 <p className="text-xs text-gray-500">{category.items} productos</p>
               </div>
             </Link>
@@ -284,7 +302,7 @@ export default function PromosPage() {
       {/* Ofertas de la semana */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         {/* Contador de ofertas */}
-        <div className="md:col-span-1 border border-[#e30613] rounded-lg p-4 bg-white">
+        <div className="md:col-span-1 border border-[#e30613] rounded-lg p-4 bg-white shadow-md">
           <h2 className="text-xl font-bold mb-4">
             Ofertas de la <span className="text-[#004a93]">semana!</span>
           </h2>
@@ -311,7 +329,7 @@ export default function PromosPage() {
           <p className="text-xs text-gray-500 mb-4">Tiempo restante hasta el fin de la oferta</p>
 
           {/* Producto destacado */}
-          <div className="relative">
+          <div className="relative group cursor-pointer" onClick={() => {}}>
             <Badge className="absolute top-2 left-2 z-10 bg-[#e30613]">19%</Badge>
             <div className="relative h-48 mb-3">
               <Image
@@ -320,22 +338,29 @@ export default function PromosPage() {
                 fill
                 className="object-contain"
               />
+
+              {/* Quick view button - aparece al hacer hover */}
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="bg-white/80 backdrop-blur-sm shadow-md rounded-full flex items-center gap-1"
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                  <span>Ver detalles</span>
+                </Button>
+              </div>
             </div>
-            <h3 className="font-medium mb-2">Yogurt Griego Completo Vainilla</h3>
+            <h3 className="font-medium mb-2 group-hover:text-[#004a93] transition-colors">
+              Yogurt Griego Completo Vainilla
+            </h3>
             <div className="flex items-center mb-2">
               <RatingStars rating={5} />
               <span className="text-xs text-gray-500 ml-1">1</span>
             </div>
             <div className="flex items-center gap-2 mb-3">
               <span className="text-gray-400 line-through">$5.49</span>
-              <span className="text-[#e30613] font-bold">$4.49</span>
-            </div>
-            <div className="flex items-center justify-between text-xs text-gray-600 mb-3">
-              <span>1 kg</span>
-              <span className="flex items-center">
-                <div className="w-2 h-2 rounded-full bg-green-600 mr-1"></div>
-                EN STOCK
-              </span>
+              <span className="text-black font-bold">$4.49</span>
             </div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs text-gray-600">DISPONIBLE: 15</span>
@@ -355,7 +380,7 @@ export default function PromosPage() {
       </div>
 
       {/* Banner de ahorro */}
-      <div className="bg-[#fff8e6] rounded-lg p-4 text-center mb-8">
+      <div className="bg-[#fff8e6] rounded-lg p-4 text-center mb-8 shadow-md">
         <h2 className="text-lg font-bold">AHORRA UN 5-10% EXTRA EN CADA PEDIDO AUTOMÁTICO</h2>
       </div>
 
@@ -368,7 +393,7 @@ export default function PromosPage() {
 
       {/* Banners promocionales */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div className="relative h-[200px] rounded-lg overflow-hidden">
+        <div className="relative h-[200px] rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-all">
           <Image src="/colorful-market-bags.png" alt="Descuento de fin de semana 40%" fill className="object-cover" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#004a93]/70 to-transparent p-6 flex flex-col justify-center">
             <span className="text-white text-sm font-medium mb-1">DESCUENTO DE FIN DE SEMANA 40%</span>
@@ -378,7 +403,7 @@ export default function PromosPage() {
           </div>
         </div>
 
-        <div className="relative h-[200px] rounded-lg overflow-hidden">
+        <div className="relative h-[200px] rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-all">
           <Image
             src="/sustainable-living-banner.png"
             alt="Descuento de fin de semana 30%"
