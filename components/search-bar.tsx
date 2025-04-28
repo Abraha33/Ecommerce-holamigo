@@ -165,7 +165,7 @@ export function SearchBar({
     <div ref={searchRef} className={`relative ${className}`}>
       <div className="relative">
         <Input
-          type="search"
+          type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setShowSuggestions(true)}

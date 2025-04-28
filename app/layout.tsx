@@ -10,6 +10,9 @@ import { PersistentCartSidebar } from "@/components/persistent-cart-sidebar"
 import { LoaderStyles } from "@/components/ui/loader"
 import { LoadingProvider } from "@/contexts/loading-context"
 import { LoadingOverlay } from "@/components/ui/loading-overlay"
+import { TourProvider } from "@/contexts/tour-context"
+import { SiteTour } from "@/components/site-tour"
+import { TourButton } from "@/components/tour-button"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -30,16 +33,20 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <LoadingProvider>
             <CartProvider>
-              <div className="flex min-h-screen flex-col">
-                <Header />
-                <div className="flex flex-1">
-                  <main className="flex-1">{children}</main>
-                  <PersistentCartSidebar />
+              <TourProvider>
+                <div className="flex min-h-screen flex-col">
+                  <Header />
+                  <div className="flex flex-1">
+                    <main className="flex-1">{children}</main>
+                    <PersistentCartSidebar />
+                  </div>
+                  <Footer />
                 </div>
-                <Footer />
-              </div>
-              <Toaster />
-              <LoadingOverlay />
+                <Toaster />
+                <LoadingOverlay />
+                <SiteTour />
+                <TourButton />
+              </TourProvider>
             </CartProvider>
           </LoadingProvider>
         </ThemeProvider>

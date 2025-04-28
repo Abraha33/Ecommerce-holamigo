@@ -5,13 +5,14 @@ import Image from "next/image"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { formatCurrency } from "@/lib/utils"
-import { ShoppingCart, ListPlus, Star, Check, Minus, Plus, ChevronLeft, ChevronRight } from "lucide-react"
+import { ShoppingCart, Star, Check, Minus, Plus, ChevronLeft, ChevronRight } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { useCart } from "@/components/cart-provider"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { motion, AnimatePresence } from "framer-motion"
+import { WishlistButton } from "@/components/wishlist-button"
 
 interface ProductDetailsModalProps {
   isOpen: boolean
@@ -266,26 +267,6 @@ export function ProductDetailsModal({ isOpen, onClose, product }: ProductDetails
                         {formatCurrency(product.originalPrice)}
                       </span>
                     )}
-                  </div>
-
-                  {/* Indicador de stock */}
-                  <div>
-                    {product.stockStatus === "in_stock" ? (
-                      <span className="text-sm text-green-600 flex items-center">
-                        <div className="w-2 h-2 rounded-full bg-green-600 mr-1"></div>
-                        En stock
-                      </span>
-                    ) : product.stockStatus === "low_stock" ? (
-                      <span className="text-sm text-amber-600 flex items-center">
-                        <div className="w-2 h-2 rounded-full bg-amber-600 mr-1"></div>
-                        Pocas unidades
-                      </span>
-                    ) : product.stockStatus === "out_of_stock" ? (
-                      <span className="text-sm text-red-600 flex items-center">
-                        <div className="w-2 h-2 rounded-full bg-red-600 mr-1"></div>
-                        Agotado
-                      </span>
-                    ) : null}
                   </div>
 
                   <p className="text-sm text-gray-600">
@@ -553,10 +534,14 @@ export function ProductDetailsModal({ isOpen, onClose, product }: ProductDetails
 
             {/* Botones de acción */}
             <div className="mt-6 grid grid-cols-2 gap-3 pt-4 border-t">
-              <Button variant="outline" className="flex items-center justify-center gap-2">
-                <ListPlus className="h-4 w-4" />
-                Agregar a lista
-              </Button>
+              <WishlistButton
+                productId={product.id}
+                productName={product.name}
+                productImage={product.image}
+                productPrice={product.price}
+                variant="full"
+                className="w-full"
+              />
               <Button
                 className="bg-[#004a93] hover:bg-[#0071bc] flex items-center justify-center gap-2"
                 onClick={handleAddToCart}
