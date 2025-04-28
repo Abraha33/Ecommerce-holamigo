@@ -30,7 +30,7 @@ export function BrandCircles() {
       <Button
         variant="outline"
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 bg-[#004a93] text-white hover:bg-[#003a73]"
+        className="flex items-center gap-2 bg-[#20509E] text-white hover:bg-white hover:text-black border-[#20509E] m-2 shadow-md"
       >
         <Tag className="h-4 w-4" />
         Marcas

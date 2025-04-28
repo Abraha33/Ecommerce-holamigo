@@ -21,6 +21,7 @@ import {
   Truck,
   Clock,
   ShoppingCart,
+  Search,
 } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { SearchBar } from "@/components/search-bar"
@@ -43,6 +44,7 @@ export default function Header() {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [deliveryOption, setDeliveryOption] = useState("delivery")
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
 
   const cartItemsCount = cart.reduce((count, item) => count + item.quantity, 0)
 
@@ -63,78 +65,98 @@ export default function Header() {
   // Determinar qué logo mostrar basado en el tema
   const logoSrc = mounted && theme === "dark" ? "/envaxlogo-gold.png" : "/envaxlogo.png"
 
+  // Función para alternar la visibilidad de la búsqueda
+  const toggleSearch = () => {
+    setIsSearchOpen(!isSearchOpen)
+  }
+
   return (
     <header className="sticky top-0 z-40 w-full">
       {/* Main header - Estilo Éxito */}
       <div className="bg-[#20509E] dark:bg-gray-900 text-white">
         <div className="container mx-auto px-4">
           <div className="flex items-center h-14">
-            {/* Logo y Menú */}
-            <div className="flex items-center">
-              {/* Botón de menú móvil */}
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="text-white mr-2 md:mr-4 group">
-                    <Menu className="h-6 w-6 drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] transition-transform group-hover:scale-110" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="dark:bg-gray-900 dark:text-white">
-                  <div className="flex flex-col gap-6 mt-6">
-                    <div className="relative h-10 w-40 mx-auto">
-                      <Image src={logoSrc || "/placeholder.svg"} alt="Envax Logo" fill className="object-contain" />
-                    </div>
+            {/* Logo y Menú - Solo visible cuando la búsqueda está cerrada */}
+            {!isSearchOpen && (
+              <div className="flex items-center">
+                {/* Botón de menú móvil */}
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon" className="text-white mr-2 md:mr-4 group">
+                      <Menu className="h-6 w-6 drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] transition-transform group-hover:scale-110" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="dark:bg-gray-900 dark:text-white">
+                    {/* Contenido del menú lateral */}
+                    <div className="flex flex-col gap-6 mt-6">
+                      <div className="relative h-10 w-40 mx-auto">
+                        <Image src={logoSrc || "/placeholder.svg"} alt="Envax Logo" fill className="object-contain" />
+                      </div>
 
-                    <SearchBar placeholder="¿Qué estás buscando?" />
+                      <SearchBar placeholder="¿Qué estás buscando?" />
 
-                    <nav className="flex flex-col gap-2">
-                      {navigation.map((item) => (
-                        <Link
-                          key={item.name}
-                          href={item.href}
-                          className={`px-2 py-2 rounded-md ${
-                            pathname === item.href
-                              ? "bg-[#f2f2f2] text-[#20509E] dark:bg-gray-800 dark:text-white font-medium"
-                              : "hover:bg-[#184589] dark:hover:bg-gray-800"
-                          }`}
-                        >
-                          {item.name}
-                        </Link>
-                      ))}
-                    </nav>
+                      <nav className="flex flex-col gap-2">
+                        {navigation.map((item) => (
+                          <Link
+                            key={item.name}
+                            href={item.href}
+                            className={`px-2 py-2 rounded-md ${
+                              pathname === item.href
+                                ? "bg-[#f2f2f2] text-[#20509E] dark:bg-gray-800 dark:text-white font-medium"
+                                : "hover:bg-[#184589] dark:hover:bg-gray-800"
+                            }`}
+                          >
+                            {item.name}
+                          </Link>
+                        ))}
+                      </nav>
 
-                    <div className="mt-auto pt-6 border-t border-[#184589] dark:border-gray-700">
-                      <div className="flex flex-col gap-2 text-sm">
-                        <div className="flex items-center gap-2">
-                          <Phone className="h-4 w-4" />
-                          <span>+57 (601) 745-7000</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Mail className="h-4 w-4" />
-                          <span>ventas@envax.com</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4" />
-                          <span>Calle 12 # 68-55, Bogotá</span>
+                      <div className="mt-auto pt-6 border-t border-[#184589] dark:border-gray-700">
+                        <div className="flex flex-col gap-2 text-sm">
+                          <div className="flex items-center gap-2">
+                            <Phone className="h-4 w-4" />
+                            <span>+57 (601) 745-7000</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Mail className="h-4 w-4" />
+                            <span>ventas@envax.com</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-4 w-4" />
+                            <span>Calle 12 # 68-55, Bogotá</span>
+                          </div>
                         </div>
                       </div>
                     </div>
+                  </SheetContent>
+                </Sheet>
+
+                {/* Logo */}
+                <Link href="/" className="flex items-center mr-6">
+                  <div className="relative h-8 w-8 mr-2">
+                    <Image src={logoSrc || "/placeholder.svg"} alt="Envax Logo" fill className="object-contain" />
                   </div>
-                </SheetContent>
-              </Sheet>
+                  <span className="text-xl font-bold">Envax</span>
+                </Link>
+              </div>
+            )}
 
-              {/* Logo */}
-              <Link href="/" className="flex items-center mr-6">
-                <div className="relative h-8 w-8 mr-2">
-                  <Image src={logoSrc || "/placeholder.svg"} alt="Envax Logo" fill className="object-contain" />
-                </div>
-                <span className="text-xl font-bold">Envax</span>
-              </Link>
-            </div>
+            {/* Barra de búsqueda expandida para móvil cuando está abierta */}
+            {isSearchOpen && (
+              <div className="flex-1 md:hidden">
+                <SearchBar placeholder="Buscar en envax.com" darkMode={true} />
+              </div>
+            )}
 
-            {/* Barra de búsqueda mejorada */}
-            <div className="flex-1 max-w-4xl mx-4">
+            {/* Barra de búsqueda para escritorio - siempre visible en escritorio */}
+            <div className="flex-1 max-w-4xl mx-4 hidden md:block">
               <SearchBar placeholder="Buscar en envax.com" darkMode={true} />
             </div>
+
+            {/* Icono de búsqueda para móvil - siempre visible */}
+            <Button variant="ghost" size="icon" className="text-white md:hidden" onClick={toggleSearch}>
+              <Search className="h-6 w-6" />
+            </Button>
 
             {/* Iconos de usuario - estilo Éxito */}
             <div className="flex items-center gap-4 ml-auto">
