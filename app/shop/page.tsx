@@ -37,13 +37,13 @@ export default function ProductsPage() {
       case "grid-2":
         return "grid-cols-1 sm:grid-cols-2"
       case "grid-3":
-        return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+        return "grid-cols-1 xs:grid-cols-2 lg:grid-cols-3"
       case "grid-6":
-        return "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6"
+        return "grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6"
       case "list":
         return "grid-cols-1 gap-y-4" // Asegurar que el modo lista tenga una sola columna
       default:
-        return "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6"
+        return "grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6"
     }
   }
 
@@ -158,7 +158,7 @@ export default function ProductsPage() {
 
         {/* Productos - ahora con 5 columnas */}
         <div className="w-full">
-          <div className={`grid ${getGridCols()} gap-4`}>
+          <div className={`grid ${getGridCols()} gap-4 sm:gap-4 gap-2`}>
             {sortedProducts.map((product) => (
               <ProductCard key={product.id} product={product} viewMode={viewMode === "list" ? "list" : "grid"} />
             ))}

@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -81,23 +80,29 @@ export function ProductUnitSelector({
               </tr>
             </thead>
             <tbody>
-              <RadioGroup value={selectedOption} onValueChange={setSelectedOption}>
-                {unitOptions.map((option) => (
-                  <tr key={option.id} className="border-t border-gray-300">
-                    <td className="p-2">
-                      <div className="flex items-center">
-                        <RadioGroupItem value={option.id} id={`option-${option.id}`} className="mr-2" />
-                        <Label htmlFor={`option-${option.id}`} className="cursor-pointer">
-                          {option.name}
-                        </Label>
-                      </div>
-                    </td>
-                    <td className="p-2 text-right">{formatCurrency(option.unitPrice)}</td>
-                    <td className="p-2 text-right">{formatCurrency(option.unitPrice * option.factor)}</td>
-                    <td className="p-2 text-right">{option.factor}</td>
-                  </tr>
-                ))}
-              </RadioGroup>
+              {unitOptions.map((option) => (
+                <tr key={option.id} className="border-t border-gray-300">
+                  <td className="p-2">
+                    <div className="flex items-center">
+                      <input
+                        type="radio"
+                        id={`option-${option.id}`}
+                        name="unitOption"
+                        value={option.id}
+                        checked={selectedOption === option.id}
+                        onChange={() => setSelectedOption(option.id)}
+                        className="mr-2"
+                      />
+                      <Label htmlFor={`option-${option.id}`} className="cursor-pointer">
+                        {option.name}
+                      </Label>
+                    </div>
+                  </td>
+                  <td className="p-2 text-right">{formatCurrency(option.unitPrice)}</td>
+                  <td className="p-2 text-right">{formatCurrency(option.unitPrice * option.factor)}</td>
+                  <td className="p-2 text-right">{option.factor}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

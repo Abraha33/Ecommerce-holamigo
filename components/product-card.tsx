@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { formatCurrency } from "@/lib/utils"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { ShoppingCart, Plus, Minus, Check, Eye } from "lucide-react"
+import { ShoppingCart, Plus, Minus, Check, Eye, ChevronLeft, ChevronRight } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/components/ui/use-toast"
 import { useCart } from "@/components/cart-provider"
@@ -225,7 +225,9 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
           viewMode === "list" ? "flex-row" : "h-full"
         } border border-gray-200 bg-white rounded-lg m-1`}
       >
-        <div className={`relative ${viewMode === "list" ? "w-40 min-w-40" : "pt-[90%]"} group`}>
+        <div
+          className={`relative ${viewMode === "list" ? "w-40 min-w-40" : "pt-[100%]"} group m-2 overflow-hidden rounded-lg`}
+        >
           <Image src={product.image || "/placeholder.svg"} alt={product.name} fill className="object-contain p-1" />
 
           {/* Badges y botones flotantes */}
@@ -242,17 +244,46 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
             />
           </div>
 
-          {/* Quick view button - aparece al hacer hover */}
-          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-            <Button
-              variant="secondary"
-              size="sm"
-              className="bg-white/80 backdrop-blur-sm shadow-md rounded-full flex items-center gap-1"
-              onClick={openDetailsModal}
-            >
-              <Eye className="h-3.5 w-3.5" />
-              <span>Ver detalles</span>
-            </Button>
+          {/* Quick view button y navegación de galería */}
+          <div className="absolute inset-0 flex flex-col">
+            {/* Botón de vista rápida en el centro */}
+            <div className="flex-1 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="bg-white/80 backdrop-blur-sm shadow-md rounded-full flex items-center gap-1"
+                onClick={openDetailsModal}
+              >
+                <Eye className="h-3.5 w-3.5" />
+                <span>Ver detalles</span>
+              </Button>
+            </div>
+
+            {/* Controles de navegación de galería */}
+            <div className="flex justify-between px-2 pb-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button
+                variant="secondary"
+                size="icon"
+                className="h-8 w-8 rounded-full bg-white/70 hover:bg-white/90 shadow-sm"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  e.preventDefault()
+                }}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="secondary"
+                size="icon"
+                className="h-8 w-8 rounded-full bg-white/70 hover:bg-white/90 shadow-sm"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  e.preventDefault()
+                }}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
 
