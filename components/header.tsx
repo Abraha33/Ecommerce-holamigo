@@ -25,10 +25,12 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { SearchBar } from "@/components/search-bar"
 
+// Actualizar el array de navegación para incluir el enlace a Promos
 const navigation = [
   { name: "Inicio", href: "/" },
   { name: "Nosotros", href: "/about" },
   { name: "Tienda", href: "/shop" },
+  { name: "Promos", href: "/promos" },
   { name: "Categorías", href: "/categories" },
   { name: "Contacto", href: "/contact" },
   { name: "Mi pedido", href: "/orders" },
