@@ -19,11 +19,11 @@ interface LoadingButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 export const LoadingButton = forwardRef<HTMLButtonElement, LoadingButtonProps>(
   ({ children, isLoading, loadingText, className, loaderColor = "white", variant, size, ...props }, ref) => {
     return (
-      <Button 
-        ref={ref} 
-        className={cn("relative", className)} 
-        disabled={isLoading || props.disabled} 
-        variant={variant} 
+      <Button
+        ref={ref}
+        className={cn("relative", className)}
+        disabled={isLoading || props.disabled}
+        variant={variant}
         size={size}
         {...props}
       >

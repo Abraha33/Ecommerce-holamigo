@@ -57,39 +57,22 @@ export default function CheckoutPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 shadow-md p-1 bg-gray-100 rounded-lg">
-              <TabsTrigger
-                value="address"
-                className="data-[state=active]:bg-white data-[state=active]:shadow-sm font-semibold"
-              >
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="address">
                 <span className="flex items-center">
-                  <span className="bg-primary text-white rounded-full w-6 h-6 inline-flex items-center justify-center mr-2 shadow-sm">
-                    1
-                  </span>
+                  <span className="bg-muted rounded-full w-6 h-6 inline-flex items-center justify-center mr-2">1</span>
                   Dirección
                 </span>
               </TabsTrigger>
-              <TabsTrigger
-                value="shipping"
-                disabled={activeTab !== "shipping" && activeTab !== "payment"}
-                className="data-[state=active]:bg-white data-[state=active]:shadow-sm font-semibold"
-              >
+              <TabsTrigger value="shipping" disabled={activeTab !== "shipping" && activeTab !== "payment"}>
                 <span className="flex items-center">
-                  <span className="bg-primary text-white rounded-full w-6 h-6 inline-flex items-center justify-center mr-2 shadow-sm">
-                    2
-                  </span>
+                  <span className="bg-muted rounded-full w-6 h-6 inline-flex items-center justify-center mr-2">2</span>
                   Envío
                 </span>
               </TabsTrigger>
-              <TabsTrigger
-                value="payment"
-                disabled={activeTab !== "payment"}
-                className="data-[state=active]:bg-white data-[state=active]:shadow-sm font-semibold"
-              >
+              <TabsTrigger value="payment" disabled={activeTab !== "payment"}>
                 <span className="flex items-center">
-                  <span className="bg-primary text-white rounded-full w-6 h-6 inline-flex items-center justify-center mr-2 shadow-sm">
-                    3
-                  </span>
+                  <span className="bg-muted rounded-full w-6 h-6 inline-flex items-center justify-center mr-2">3</span>
                   Pago
                 </span>
               </TabsTrigger>
