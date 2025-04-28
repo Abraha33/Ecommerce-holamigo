@@ -66,7 +66,7 @@ export function WishlistButton({ productId, productName, variant = "icon", class
           <Button
             variant="outline"
             size="icon"
-            className={`hover:text-[#004a93] border border-gray-300 bg-white shadow-sm ${className}`}
+            className={`hover:text-[#004a93] border border-gray-300 bg-white shadow-sm rounded-full ${className}`}
             aria-label="Agregar a lista de mercado"
           >
             <ListPlus className="h-[1.2rem] w-[1.2rem]" />

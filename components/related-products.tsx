@@ -25,7 +25,7 @@ export function RelatedProducts({ currentProductId }: RelatedProductsProps) {
         {relatedProducts.map((product) => (
           <Card key={product.id} className="overflow-hidden">
             <div className="relative pt-[100%]">
-              <Link href={`/products/${product.slug}`}>
+              <Link href={`/shop/${product.slug}`}>
                 <Image
                   src={product.image || "/placeholder.svg"}
                   alt={product.name}
@@ -35,7 +35,7 @@ export function RelatedProducts({ currentProductId }: RelatedProductsProps) {
               </Link>
             </div>
             <CardContent className="p-4">
-              <Link href={`/products/${product.slug}`} className="hover:underline">
+              <Link href={`/shop/${product.slug}`} className="hover:underline">
                 <h3 className="font-semibold">{product.name}</h3>
               </Link>
               <div className="mt-2 font-medium text-green-600">{formatCurrency(product.price)}</div>

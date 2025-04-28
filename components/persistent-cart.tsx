@@ -73,7 +73,7 @@ export function PersistentCart() {
             <ShoppingCart className="h-16 w-16 text-gray-300 mb-4" />
             <p className="text-gray-500 mb-4">Tu carrito está vacío</p>
             <Button asChild className="bg-[#004a93] hover:bg-[#0071bc]">
-              <Link href="/products">Ver Productos</Link>
+              <Link href="/shop">Ver Productos</Link>
             </Button>
           </div>
         ) : (

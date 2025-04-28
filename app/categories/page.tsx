@@ -1,80 +1,10 @@
 import { CategoryBanner } from "@/components/category-banner"
-import { CategoryCircles } from "@/components/category-circles"
-
-const categories = [
-  {
-    id: "insuperables",
-    name: "Insuperables",
-    image: "/categories/insuperables.png",
-    href: "/categories/insuperables",
-  },
-  {
-    id: "oferta-estrella",
-    name: "Oferta Estrella",
-    image: "/categories/oferta-estrella.png",
-    href: "/categories/oferta-estrella",
-  },
-  {
-    id: "lacteos",
-    name: "Lácteos",
-    image: "/categories/lacteos.png",
-    href: "/categories/lacteos",
-  },
-  {
-    id: "aseo",
-    name: "Aseo",
-    image: "/categories/aseo.png",
-    href: "/categories/aseo",
-  },
-  {
-    id: "licores",
-    name: "Licores",
-    image: "/categories/licores.png",
-    href: "/categories/licores",
-  },
-  {
-    id: "cosmeticos",
-    name: "Cosméticos",
-    image: "/categories/cosmeticos.png",
-    href: "/categories/cosmeticos",
-  },
-  {
-    id: "bebidas",
-    name: "Bebidas",
-    image: "/categories/bebidas.png",
-    href: "/categories/bebidas",
-  },
-  {
-    id: "frutas-verduras",
-    name: "Frutas y Verduras",
-    image: "/categories/frutas-verduras.png",
-    href: "/categories/frutas-verduras",
-  },
-  {
-    id: "carnes",
-    name: "Carnes",
-    image: "/categories/carnes.png",
-    href: "/categories/carnes",
-  },
-  {
-    id: "delicatessen",
-    name: "Delicatessen",
-    image: "/categories/delicatessen.png",
-    href: "/categories/delicatessen",
-  },
-  {
-    id: "snack",
-    name: "Snack",
-    image: "/categories/snack.png",
-    href: "/categories/snack",
-  },
-  {
-    id: "bebidas-hidratantes",
-    name: "Bebidas Hidratantes",
-    image: "/categories/bebidas-hidratantes.png",
-    href: "/categories/bebidas-hidratantes",
-  },
-]
+import { categoriesData } from "@/lib/categories-data"
+import Link from "next/link"
+import Image from "next/image"
+import { Card, CardContent } from "@/components/ui/card"
+import { ChevronRight } from "lucide-react"
+import { CategoryBreadcrumb } from "@/components/category-breadcrumb"
 
 export default function CategoriesPage() {
   return (
@@ -87,7 +17,48 @@ export default function CategoriesPage() {
       />
 
       <div className="container mx-auto px-4 py-8">
-        <CategoryCircles categories={categories} />
+        <CategoryBreadcrumb items={[{ name: "Categorías", href: "/categories", active: true }]} />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+          {categoriesData.map((category) => (
+            <Link key={category.slug} href={`/categories/${category.slug}`}>
+              <Card className="h-full hover:shadow-md transition-shadow">
+                <div className="relative h-40 w-full overflow-hidden">
+                  <Image
+                    src={category.image || "/placeholder.svg"}
+                    alt={category.title}
+                    fill
+                    className="object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <h2 className="text-xl font-bold text-white">{category.title}</h2>
+                  </div>
+                </div>
+                <CardContent className="p-4">
+                  <p className="text-gray-600 mb-4 line-clamp-2">{category.description}</p>
+
+                  {category.subcategories && category.subcategories.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-medium mb-2">Subcategorías:</h3>
+                      <ul className="text-sm text-gray-600 space-y-1">
+                        {category.subcategories.slice(0, 3).map((subcategory) => (
+                          <li key={subcategory.slug} className="flex items-center">
+                            <ChevronRight className="h-3 w-3 mr-1 text-gray-400" />
+                            {subcategory.title}
+                          </li>
+                        ))}
+                        {category.subcategories.length > 3 && (
+                          <li className="text-[#20509E] font-medium">+ {category.subcategories.length - 3} más...</li>
+                        )}
+                      </ul>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
   )

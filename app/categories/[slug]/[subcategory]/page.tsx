@@ -4,30 +4,36 @@ import { products } from "@/lib/products"
 import { notFound } from "next/navigation"
 import { CategoryBreadcrumb } from "@/components/category-breadcrumb"
 import { ProductFilters } from "@/components/product-filters"
-import { SubcategoryNavigation } from "@/components/subcategory-navigation"
-import { getCategoryBySlug } from "@/lib/categories-data"
+import { NestedSubcategoryNavigation } from "@/components/nested-subcategory-navigation"
+import { getCategoryBySlug, getSubcategoryBySlug } from "@/lib/categories-data"
 
-export default function CategoryPage({ params }: { params: { slug: string } }) {
+export default function SubcategoryPage({
+  params,
+}: {
+  params: { slug: string; subcategory: string }
+}) {
   const category = getCategoryBySlug(params.slug)
+  const subcategory = getSubcategoryBySlug(params.slug, params.subcategory)
 
-  if (!category) {
+  if (!category || !subcategory) {
     notFound()
   }
 
-  // Filtrar productos para esta categoría (simulado)
+  // Filtrar productos para esta subcategoría (simulado)
   // En una aplicación real, esto vendría de una API o base de datos
-  const categoryProducts = products.slice(0, 8)
+  const subcategoryProducts = products.slice(0, 6)
 
   return (
     <div>
       <CategoryBanner
-        title={category.title}
-        description={category.description}
-        image={category.image}
+        title={subcategory.title}
+        description={subcategory.description}
+        image={subcategory.image || category.image}
         breadcrumbs={[
           { name: "Inicio", href: "/" },
           { name: "Categorías", href: "/categories" },
           { name: category.title, href: `/categories/${category.slug}` },
+          { name: subcategory.title, href: `/categories/${category.slug}/${subcategory.slug}` },
         ]}
       />
 
@@ -35,13 +41,18 @@ export default function CategoryPage({ params }: { params: { slug: string } }) {
         <CategoryBreadcrumb
           items={[
             { name: "Categorías", href: "/categories" },
-            { name: category.title, href: `/categories/${category.slug}`, active: true },
+            { name: category.title, href: `/categories/${category.slug}` },
+            { name: subcategory.title, href: `/categories/${category.slug}/${subcategory.slug}`, active: true },
           ]}
         />
 
-        {/* Navegación de subcategorías si existen */}
-        {category.subcategories && category.subcategories.length > 0 && (
-          <SubcategoryNavigation categorySlug={category.slug} subcategories={category.subcategories} />
+        {/* Navegación de subcategorías anidadas si existen */}
+        {subcategory.nestedSubcategories && subcategory.nestedSubcategories.length > 0 && (
+          <NestedSubcategoryNavigation
+            categorySlug={category.slug}
+            subcategorySlug={subcategory.slug}
+            nestedSubcategories={subcategory.nestedSubcategories}
+          />
         )}
 
         <div className="flex flex-col md:flex-row gap-6">
@@ -51,12 +62,12 @@ export default function CategoryPage({ params }: { params: { slug: string } }) {
 
           <div className="w-full md:w-3/4">
             <div className="mb-6">
-              <h1 className="text-2xl font-bold mb-2">{category.title}</h1>
-              <p className="text-gray-600">{category.description}</p>
+              <h1 className="text-2xl font-bold mb-2">{subcategory.title}</h1>
+              <p className="text-gray-600">{subcategory.description}</p>
             </div>
 
             <div className="mb-6 flex justify-between items-center">
-              <div className="text-sm text-gray-500">Mostrando {categoryProducts.length} productos</div>
+              <div className="text-sm text-gray-500">Mostrando {subcategoryProducts.length} productos</div>
               <select className="border rounded p-2 text-sm">
                 <option value="featured">Destacados</option>
                 <option value="price-asc">Precio: menor a mayor</option>
@@ -66,7 +77,7 @@ export default function CategoryPage({ params }: { params: { slug: string } }) {
               </select>
             </div>
 
-            <ProductGrid products={categoryProducts} />
+            <ProductGrid products={subcategoryProducts} />
           </div>
         </div>
       </div>

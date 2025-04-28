@@ -28,7 +28,7 @@ import { SearchBar } from "@/components/search-bar"
 const navigation = [
   { name: "Inicio", href: "/" },
   { name: "Nosotros", href: "/about" },
-  { name: "Tienda", href: "/products" },
+  { name: "Tienda", href: "/shop" },
   { name: "Categorías", href: "/categories" },
   { name: "Contacto", href: "/contact" },
   { name: "Mi pedido", href: "/orders" },

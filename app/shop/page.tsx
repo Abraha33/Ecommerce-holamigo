@@ -40,7 +40,7 @@ export default function ProductsPage() {
       case "grid-5":
         return "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
       case "list":
-        return "grid-cols-1"
+        return "grid-cols-1 gap-y-4" // Asegurar que el modo lista tenga una sola columna
       default:
         return "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
     }
@@ -60,7 +60,7 @@ export default function ProductsPage() {
         <Breadcrumb
           items={[
             { label: "Home", href: "/" },
-            { label: "Products", href: "/products", active: true },
+            { label: "Tienda", href: "/shop", active: true },
           ]}
         />
 
@@ -86,37 +86,37 @@ export default function ProductsPage() {
               Filtros
             </Button>
 
-            {/* Botones de vista */}
-            <div className="flex items-center border rounded-md overflow-hidden">
+            {/* Botones de vista - ahora circulares */}
+            <div className="flex items-center space-x-2">
               <Button
-                variant={viewMode === "list" ? "default" : "ghost"}
+                variant={viewMode === "list" ? "default" : "outline"}
                 size="icon"
                 onClick={() => setViewMode("list")}
-                className="h-9 w-9 rounded-none bg-[#004a93] text-white hover:bg-[#003a73]"
+                className="h-9 w-9 rounded-full bg-[#004a93] text-white hover:bg-[#003a73]"
               >
                 <List className="h-4 w-4" />
               </Button>
               <Button
-                variant={viewMode === "grid-2" ? "default" : "ghost"}
+                variant={viewMode === "grid-2" ? "default" : "outline"}
                 size="icon"
                 onClick={() => setViewMode("grid-2")}
-                className="h-9 w-9 rounded-none bg-[#004a93] text-white hover:bg-[#003a73]"
+                className="h-9 w-9 rounded-full bg-[#004a93] text-white hover:bg-[#003a73]"
               >
                 <Grid className="h-4 w-4" />
               </Button>
               <Button
-                variant={viewMode === "grid-3" ? "default" : "ghost"}
+                variant={viewMode === "grid-3" ? "default" : "outline"}
                 size="icon"
                 onClick={() => setViewMode("grid-3")}
-                className="h-9 w-9 rounded-none bg-[#004a93] text-white hover:bg-[#003a73]"
+                className="h-9 w-9 rounded-full bg-[#004a93] text-white hover:bg-[#003a73]"
               >
                 <LayoutGrid className="h-4 w-4" />
               </Button>
               <Button
-                variant={viewMode === "grid-5" ? "default" : "ghost"}
+                variant={viewMode === "grid-5" ? "default" : "outline"}
                 size="icon"
                 onClick={() => setViewMode("grid-5")}
-                className="h-9 w-9 rounded-none bg-[#004a93] text-white hover:bg-[#003a73]"
+                className="h-9 w-9 rounded-full bg-[#004a93] text-white hover:bg-[#003a73]"
               >
                 <div className="grid grid-cols-2 gap-0.5">
                   <div className="w-1.5 h-1.5 bg-current rounded-sm"></div>
@@ -154,7 +154,7 @@ export default function ProductsPage() {
         <div className="w-full">
           <div className={`grid ${getGridCols()} gap-4`}>
             {sortedProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard key={product.id} product={product} viewMode={viewMode === "list" ? "list" : "grid"} />
             ))}
           </div>
 

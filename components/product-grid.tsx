@@ -20,16 +20,19 @@ interface Product {
 
 interface ProductGridProps {
   products: Product[]
+  viewMode?: "grid" | "list"
 }
 
-export function ProductGrid({ products }: ProductGridProps) {
+export function ProductGrid({ products, viewMode = "grid" }: ProductGridProps) {
   // Calculate savings percentage
   const calculateSavings = (originalPrice: number, discountedPrice: number) => {
     return Math.round(((originalPrice - discountedPrice) / originalPrice) * 100)
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    <div
+      className={`grid ${viewMode === "list" ? "grid-cols-1 gap-y-4" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"} gap-4`}
+    >
       {products.map((product) => (
         <Card
           key={product.id}
@@ -37,7 +40,7 @@ export function ProductGrid({ products }: ProductGridProps) {
         >
           <div className="flex flex-col h-full">
             <div className="relative pt-[80%]">
-              <Link href={`/products/${product.slug}`}>
+              <Link href={`/shop/${product.slug}`}>
                 <Image
                   src={product.image || "/placeholder.svg"}
                   alt={product.name}
@@ -55,7 +58,7 @@ export function ProductGrid({ products }: ProductGridProps) {
             </div>
 
             <CardContent className="p-3 flex-grow">
-              <Link href={`/products/${product.slug}`} className="hover:text-[#004a93]">
+              <Link href={`/shop/${product.slug}`} className="hover:text-[#004a93]">
                 <h3 className="font-medium text-sm">{product.name}</h3>
               </Link>
 

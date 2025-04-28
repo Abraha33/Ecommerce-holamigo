@@ -34,7 +34,7 @@ export default function CartPage() {
           <h2 className="text-2xl font-semibold mb-4">Your cart is empty</h2>
           <p className="mb-8">Looks like you haven't added any products to your cart yet.</p>
           <Button asChild>
-            <Link href="/products">Continue Shopping</Link>
+            <Link href="/shop">Continue Shopping</Link>
           </Button>
         </div>
       ) : (
@@ -141,7 +141,7 @@ export default function CartPage() {
                 </Button>
 
                 <Button variant="outline" className="w-full" asChild>
-                  <Link href="/products">Continue Shopping</Link>
+                  <Link href="/shop">Continue Shopping</Link>
                 </Button>
               </div>
             </div>

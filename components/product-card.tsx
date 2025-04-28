@@ -35,9 +35,10 @@ interface ProductCardProps {
     originalPrice?: number
     stockStatus?: string
   }
+  viewMode?: "grid" | "list"
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
   const [selectedPackage, setSelectedPackage] = useState(packageTypes[0])
   const [quantity, setQuantity] = useState(1)
   const [activePackages, setActivePackages] = useState([packageTypes[0].value])
@@ -210,10 +211,14 @@ export function ProductCard({ product }: ProductCardProps) {
   }
 
   return (
-    <Card className="overflow-hidden transition-all hover:shadow-md flex flex-col h-full border border-gray-200">
-      <div className="relative pt-[100%] group">
-        <Link href={`/products/${product.slug}`}>
-          <Image src={product.image || "/placeholder.svg"} alt={product.name} fill className="object-contain p-2" />
+    <Card
+      className={`overflow-hidden transition-all hover:shadow-md flex flex-col ${
+        viewMode === "list" ? "flex-row" : "h-full"
+      } border border-gray-200`}
+    >
+      <div className={`relative ${viewMode === "list" ? "w-40 min-w-40" : "pt-[90%]"} group`}>
+        <Link href={`/shop/${product.slug}`}>
+          <Image src={product.image || "/placeholder.svg"} alt={product.name} fill className="object-contain p-1" />
         </Link>
 
         {/* Badges y botones flotantes */}
@@ -223,19 +228,23 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
 
         <div className="absolute top-2 right-2">
-          <WishlistButton productId={product.id} productName={product.name} />
+          <WishlistButton
+            productId={product.id}
+            productName={product.name}
+            className="rounded-full h-8 w-8 p-0 flex items-center justify-center"
+          />
         </div>
 
         {/* Quick view button - aparece al hacer hover */}
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button variant="secondary" size="sm" className="bg-white/80 backdrop-blur-sm shadow-md">
+          <Button variant="secondary" size="sm" className="bg-white/80 backdrop-blur-sm shadow-md rounded-full">
             Vista rápida
           </Button>
         </div>
       </div>
 
-      <CardContent className="p-4 flex-grow flex flex-col">
-        <Link href={`/products/${product.slug}`} className="hover:text-[#004a93]">
+      <CardContent className={`p-4 flex-grow flex flex-col ${viewMode === "list" ? "flex-1" : ""}`}>
+        <Link href={`/shop/${product.slug}`} className="hover:text-[#004a93]">
           <h3 className="font-medium text-sm line-clamp-2 h-10">{product.name}</h3>
         </Link>
 

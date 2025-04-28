@@ -144,7 +144,7 @@ export function FeaturedProducts() {
               .map((product) => (
                 <Card key={product.id} className="overflow-hidden">
                   <div className="relative pt-[60%]">
-                    <Link href={`/products/${product.slug}`}>
+                    <Link href={`/shop/${product.slug}`}>
                       <Image
                         src={product.image || "/placeholder.svg"}
                         alt={product.name}
@@ -156,7 +156,7 @@ export function FeaturedProducts() {
                     {product.isSale && <Badge className="absolute top-2 right-2 bg-red-600">Sale</Badge>}
                   </div>
                   <CardContent className="p-3">
-                    <Link href={`/products/${product.slug}`} className="hover:underline">
+                    <Link href={`/shop/${product.slug}`} className="hover:underline">
                       <h3 className="font-semibold text-sm line-clamp-2">{product.name}</h3>
                     </Link>
                     <div className="flex items-center mt-2">
@@ -194,6 +194,9 @@ export function FeaturedProducts() {
             />
           ))}
         </div>
+        <Button variant="outline" className="w-full" asChild>
+          <Link href="/shop">Continue Shopping</Link>
+        </Button>
       </div>
     </section>
   )
