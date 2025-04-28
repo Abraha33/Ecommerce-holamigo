@@ -221,9 +221,9 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
   return (
     <>
       <Card
-        className={`overflow-hidden transition-all hover:shadow-md flex flex-col ${
+        className={`overflow-hidden transition-all shadow-lg hover:shadow-2xl flex flex-col ${
           viewMode === "list" ? "flex-row" : "h-full"
-        } border border-gray-200`}
+        } border border-gray-200 bg-white rounded-lg m-1`}
       >
         <div className={`relative ${viewMode === "list" ? "w-40 min-w-40" : "pt-[90%]"} group`}>
           <Image src={product.image || "/placeholder.svg"} alt={product.name} fill className="object-contain p-1" />
@@ -263,7 +263,7 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
 
           <div className="mt-2 flex-grow">
             <div className="flex items-baseline">
-              <div className="text-[#e30613] font-bold text-lg">{formatCurrency(product.price)}</div>
+              <div className="text-black font-bold text-lg">{formatCurrency(product.price)}</div>
               <span className="text-xs text-gray-500 font-normal ml-1"> / unidad</span>
 
               {product.originalPrice && (
@@ -318,7 +318,7 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
                         <div className="text-[0.65rem] opacity-80">x{pkg.factor}</div>
                       </div>
                       <div
-                        className={`${isSelected ? "text-white" : isActive ? "text-[#004a93]" : "text-[#e30613]"} font-semibold`}
+                        className={`${isSelected ? "text-white" : isActive ? "text-black" : "text-black"} font-semibold`}
                       >
                         {formatCurrency(unitPrice)}
                       </div>
@@ -417,7 +417,7 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
 
               <div className="flex items-center justify-between">
                 <div className="text-sm">
-                  Total: <span className="font-bold text-[#e30613]">{formatCurrency(calculatePrice())}</span>
+                  Total: <span className="font-bold text-black">{formatCurrency(calculatePrice())}</span>
                 </div>
               </div>
             </div>
