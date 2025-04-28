@@ -2,8 +2,8 @@
 
 import { DialogFooter } from "@/components/ui/dialog"
 
-import { useState } from "react"
-import { ListPlus } from "lucide-react"
+import { useState, useEffect } from "react"
+import { ListPlus, Plus, Check, Trash2, Eye, Edit } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
 import {
@@ -21,42 +21,194 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 interface WishlistButtonProps {
   productId: number
   productName: string
+  productImage?: string
+  productPrice?: number
   variant?: "icon" | "full"
   className?: string
 }
 
-export function WishlistButton({ productId, productName, variant = "icon", className = "" }: WishlistButtonProps) {
+interface WishlistItem {
+  id: string
+  name: string
+  productCount: number
+  date: string
+  products: {
+    id: number
+    name: string
+    price: number
+    image: string
+    quantity: number
+  }[]
+}
+
+export function WishlistButton({
+  productId,
+  productName,
+  productImage = "/placeholder.svg",
+  productPrice = 0,
+  variant = "icon",
+  className = "",
+}: WishlistButtonProps) {
   const [open, setOpen] = useState(false)
   const [selectedList, setSelectedList] = useState("")
   const [newListName, setNewListName] = useState("")
   const [isCreatingNew, setIsCreatingNew] = useState(false)
+  const [isEditingList, setIsEditingList] = useState<string | null>(null)
+  const [editListName, setEditListName] = useState("")
+  const [wishlists, setWishlists] = useState<WishlistItem[]>([])
   const { toast } = useToast()
 
-  // Mock wishlist data
-  const wishlists = [
-    { id: "1", name: "Compra negocio", productCount: 12 },
-    { id: "2", name: "Productos favoritos", productCount: 5 },
-  ]
+  // Cargar listas desde localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedLists = localStorage.getItem("wishlists")
+      if (savedLists) {
+        try {
+          setWishlists(JSON.parse(savedLists))
+        } catch (e) {
+          console.error("Error parsing wishlists from localStorage", e)
+        }
+      }
+    }
+  }, [open])
 
   const handleAddToWishlist = () => {
-    if (isCreatingNew && newListName) {
-      // Logic to create new list and add product
+    if (isCreatingNew && newListName.trim()) {
+      // Crear una nueva lista con el producto
+      const newList = {
+        id: `list-${Date.now()}`,
+        name: newListName,
+        date: new Date().toISOString().split("T")[0].replace(/-/g, "/"),
+        productCount: 1,
+        products: [
+          {
+            id: productId,
+            name: productName,
+            price: productPrice,
+            image: productImage,
+            quantity: 1,
+          },
+        ],
+      }
+
+      const updatedLists = [...wishlists, newList]
+      setWishlists(updatedLists)
+
+      // Guardar en localStorage
+      if (typeof window !== "undefined") {
+        localStorage.setItem("wishlists", JSON.stringify(updatedLists))
+      }
+
       toast({
         title: "Lista creada",
         description: `${productName} agregado a "${newListName}"`,
+        className: "max-w-xs",
       })
     } else if (selectedList) {
-      // Logic to add to existing list
+      // Añadir a una lista existente
+      const updatedLists = wishlists.map((list) => {
+        if (list.id === selectedList) {
+          // Verificar si el producto ya existe en la lista
+          const productExists = list.products.some((p) => p.id === productId)
+
+          if (productExists) {
+            toast({
+              title: "Producto ya existe",
+              description: `${productName} ya está en "${list.name}"`,
+              className: "max-w-xs",
+            })
+            return list
+          }
+
+          const updatedProducts = [
+            ...list.products,
+            {
+              id: productId,
+              name: productName,
+              price: productPrice,
+              image: productImage,
+              quantity: 1,
+            },
+          ]
+
+          return {
+            ...list,
+            products: updatedProducts,
+            productCount: updatedProducts.length,
+          }
+        }
+        return list
+      })
+
+      setWishlists(updatedLists)
+
+      // Guardar en localStorage
+      if (typeof window !== "undefined") {
+        localStorage.setItem("wishlists", JSON.stringify(updatedLists))
+      }
+
       const list = wishlists.find((list) => list.id === selectedList)
       toast({
         title: "Producto agregado",
         description: `${productName} agregado a "${list?.name}"`,
+        className: "max-w-xs",
       })
     }
 
     setOpen(false)
     setNewListName("")
     setIsCreatingNew(false)
+    setSelectedList("")
+  }
+
+  const handleEditList = (listId: string) => {
+    const list = wishlists.find((l) => l.id === listId)
+    if (list) {
+      setIsEditingList(listId)
+      setEditListName(list.name)
+    }
+  }
+
+  const handleSaveListName = () => {
+    if (isEditingList && editListName.trim()) {
+      const updatedLists = wishlists.map((list) => (list.id === isEditingList ? { ...list, name: editListName } : list))
+
+      setWishlists(updatedLists)
+
+      // Guardar en localStorage
+      if (typeof window !== "undefined") {
+        localStorage.setItem("wishlists", JSON.stringify(updatedLists))
+      }
+
+      toast({
+        title: "Lista actualizada",
+        description: `Nombre cambiado a "${editListName}"`,
+        className: "max-w-xs",
+      })
+
+      setIsEditingList(null)
+      setEditListName("")
+    }
+  }
+
+  const handleDeleteList = (listId: string) => {
+    const updatedLists = wishlists.filter((list) => list.id !== listId)
+    setWishlists(updatedLists)
+
+    // Guardar en localStorage
+    if (typeof window !== "undefined") {
+      localStorage.setItem("wishlists", JSON.stringify(updatedLists))
+    }
+
+    toast({
+      title: "Lista eliminada",
+      description: "La lista ha sido eliminada",
+      className: "max-w-xs",
+    })
+
+    if (selectedList === listId) {
+      setSelectedList("")
+    }
   }
 
   return (
@@ -106,60 +258,51 @@ export function WishlistButton({ productId, productName, variant = "icon", class
               <div key={list.id} className="flex items-center space-x-2 mb-2 border rounded-md p-3">
                 <RadioGroupItem value={list.id} id={`list-${list.id}`} />
                 <Label htmlFor={`list-${list.id}`} className="flex-1 cursor-pointer">
-                  <div className="font-medium">{list.name}</div>
-                  <div className="text-sm text-muted-foreground">{list.productCount} productos</div>
+                  {isEditingList === list.id ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={editListName}
+                        onChange={(e) => setEditListName(e.target.value)}
+                        className="h-8 text-sm"
+                        autoFocus
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-green-600"
+                        onClick={handleSaveListName}
+                      >
+                        <Check className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="font-medium">{list.name}</div>
+                      <div className="text-sm text-muted-foreground">{list.productCount} productos</div>
+                    </>
+                  )}
                 </Label>
                 <div className="flex gap-2">
                   <Button variant="ghost" size="icon" className="h-8 w-8 text-[#004a93]" title="Ver lista">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
+                    <Eye className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-[#004a93]" title="Editar lista">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                      <path d="m15 5 4 4" />
-                    </svg>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-[#004a93]"
+                    title="Editar lista"
+                    onClick={() => handleEditList(list.id)}
+                  >
+                    <Edit className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-[#e30613]" title="Eliminar lista">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M3 6h18" />
-                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                      <line x1="10" x2="10" y1="11" y2="17" />
-                      <line x1="14" x2="14" y1="11" y2="17" />
-                    </svg>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-[#e30613]"
+                    title="Eliminar lista"
+                    onClick={() => handleDeleteList(list.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
@@ -168,7 +311,10 @@ export function WishlistButton({ productId, productName, variant = "icon", class
             <div className="flex items-center space-x-2 border rounded-md p-3">
               <RadioGroupItem value="new" id="new-list" />
               <Label htmlFor="new-list" className="flex-1 cursor-pointer">
-                <div className="font-medium">Crear nueva lista</div>
+                <div className="font-medium flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  Crear nueva lista
+                </div>
               </Label>
             </div>
           </RadioGroup>
@@ -182,6 +328,7 @@ export function WishlistButton({ productId, productName, variant = "icon", class
                 onChange={(e) => setNewListName(e.target.value)}
                 placeholder="Ej: Mi lista de compras"
                 className="mt-1"
+                autoFocus
               />
             </div>
           )}
@@ -193,7 +340,7 @@ export function WishlistButton({ productId, productName, variant = "icon", class
           </Button>
           <Button
             onClick={handleAddToWishlist}
-            disabled={(isCreatingNew && !newListName) || (!isCreatingNew && !selectedList)}
+            disabled={(isCreatingNew && !newListName.trim()) || (!isCreatingNew && !selectedList)}
             className="bg-[#004a93] hover:bg-[#0071bc]"
           >
             Guardar

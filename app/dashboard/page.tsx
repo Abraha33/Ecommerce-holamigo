@@ -9,7 +9,12 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Printer, RefreshCw, Settings } from "lucide-react"
+import { Printer, RefreshCw, Settings, Building2, FileText, LayoutDashboard } from "lucide-react"
+import { WarehouseFloorPlan } from "@/components/warehouse-floor-plan"
+import { WarehouseSelector } from "@/components/warehouse-selector"
+import { PrinterJobList } from "@/components/printer-job-list"
+import { PrinterDetailsDialog } from "@/components/printer-details-dialog"
+import { warehouses, getPrintersByWarehouse, getJobsByWarehouse, type Printer as PrinterType } from "@/data/mock-data"
 
 // Simulación de API
 const fetchDashboardData = () => {
@@ -39,6 +44,9 @@ export default function DashboardPage() {
   const { isLoading: isRefreshLoading, withLoading: withRefreshLoading } = useLoadingState()
   const [dashboardData, setDashboardData] = useState<any>(null)
   const [activeTab, setActiveTab] = useState("overview")
+  const [selectedWarehouseId, setSelectedWarehouseId] = useState(warehouses[0].id)
+  const [selectedPrinter, setSelectedPrinter] = useState<PrinterType | null>(null)
+  const [printerDialogOpen, setPrinterDialogOpen] = useState(false)
 
   const loadDashboardData = async () => {
     try {
@@ -93,11 +101,23 @@ export default function DashboardPage() {
     await withRefreshLoading(loadDashboardData())
   }
 
+  const handlePrinterSelect = (printer: PrinterType) => {
+    setSelectedPrinter(printer)
+    setPrinterDialogOpen(true)
+  }
+
+  const handleWarehouseSelect = (warehouseId: string) => {
+    setSelectedWarehouseId(warehouseId)
+  }
+
   useEffect(() => {
     loadDashboardData()
   }, [])
 
   const jobsTableColumns = ["ID", "Nombre", "Impresora", "Estado", "Fecha", "Acciones"]
+  const selectedWarehouse = warehouses.find((w) => w.id === selectedWarehouseId)!
+  const warehousePrinters = getPrintersByWarehouse(selectedWarehouseId)
+  const warehouseJobs = getJobsByWarehouse(selectedWarehouseId)
 
   return (
     <div className="container py-8">
@@ -116,10 +136,23 @@ export default function DashboardPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-3 mb-8">
-          <TabsTrigger value="overview">Resumen</TabsTrigger>
-          <TabsTrigger value="printers">Impresoras</TabsTrigger>
-          <TabsTrigger value="jobs">Trabajos</TabsTrigger>
+        <TabsList className="grid grid-cols-4 mb-8">
+          <TabsTrigger value="overview" className="flex items-center gap-1">
+            <LayoutDashboard className="h-4 w-4" />
+            Resumen
+          </TabsTrigger>
+          <TabsTrigger value="printers" className="flex items-center gap-1">
+            <Printer className="h-4 w-4" />
+            Impresoras
+          </TabsTrigger>
+          <TabsTrigger value="jobs" className="flex items-center gap-1">
+            <FileText className="h-4 w-4" />
+            Trabajos
+          </TabsTrigger>
+          <TabsTrigger value="warehouses" className="flex items-center gap-1">
+            <Building2 className="h-4 w-4" />
+            Vista de Almacenes
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -316,7 +349,32 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="warehouses" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div className="lg:col-span-1">
+              <WarehouseSelector
+                warehouses={warehouses}
+                selectedWarehouseId={selectedWarehouseId}
+                onWarehouseSelect={handleWarehouseSelect}
+              />
+            </div>
+            <div className="lg:col-span-3 space-y-6">
+              <WarehouseFloorPlan
+                warehouse={{
+                  ...selectedWarehouse,
+                  printers: warehousePrinters,
+                }}
+                onPrinterSelect={handlePrinterSelect}
+              />
+
+              <PrinterJobList jobs={warehouseJobs} title={`Trabajos en ${selectedWarehouse.name}`} />
+            </div>
+          </div>
+        </TabsContent>
       </Tabs>
+
+      <PrinterDetailsDialog printer={selectedPrinter} open={printerDialogOpen} onOpenChange={setPrinterDialogOpen} />
     </div>
   )
 }

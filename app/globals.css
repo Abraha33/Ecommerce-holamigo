@@ -164,3 +164,21 @@
 .icon-shadow:hover {
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
 }
+
+/* Añadir estilos para el backdrop de los diálogos: */
+.DialogOverlay {
+  background-color: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(4px);
+  position: fixed;
+  inset: 0;
+  animation: overlayShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes overlayShow {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

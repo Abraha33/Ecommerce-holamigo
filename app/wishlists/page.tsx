@@ -2,7 +2,7 @@
 
 import { Label } from "@/components/ui/label"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Breadcrumb } from "@/components/breadcrumb"
@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { formatCurrency } from "@/lib/utils"
 import { useCart } from "@/components/cart-provider"
 import { useToast } from "@/components/ui/use-toast"
-import { ArrowLeft, ShoppingCart, Edit, Trash2, Plus, ListPlus, Check } from "lucide-react"
+import { ArrowLeft, ShoppingCart, Edit, Trash2, Plus, ListPlus, Check, X } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
@@ -105,15 +105,28 @@ export default function WishlistsPage() {
     })
   }
 
+  // Función corregida para guardar el nombre de la lista
   const handleSaveListName = () => {
-    if (editingList) {
+    if (editingList && newListName.trim()) {
       setLists(lists.map((list) => (list.id === editingList ? { ...list, name: newListName } : list)))
       setEditingList(null)
       toast({
         title: "Lista actualizada",
         description: "El nombre de la lista ha sido actualizado.",
       })
+    } else {
+      toast({
+        title: "Error",
+        description: "El nombre de la lista no puede estar vacío.",
+        variant: "destructive",
+      })
     }
+  }
+
+  // Función para cancelar la edición
+  const handleCancelEdit = () => {
+    setEditingList(null)
+    setNewListName("")
   }
 
   const handleCreateNewList = () => {
@@ -155,8 +168,29 @@ export default function WishlistsPage() {
     })
   }
 
+  // Guardar listas en localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("wishlists", JSON.stringify(lists))
+    }
+  }, [lists])
+
+  // Cargar listas desde localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedLists = localStorage.getItem("wishlists")
+      if (savedLists) {
+        try {
+          setLists(JSON.parse(savedLists))
+        } catch (e) {
+          console.error("Error parsing wishlists from localStorage", e)
+        }
+      }
+    }
+  }, [])
+
   return (
-    <div className="container px-4 py-8 mx-auto">
+    <div className="container px-4 py-8 mx-auto max-w-6xl">
       <Breadcrumb
         items={[
           { label: "Home", href: "/" },
@@ -176,34 +210,35 @@ export default function WishlistsPage() {
       </p>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full max-w-md mx-auto mb-8">
-          <TabsTrigger value="frequent" className="flex-1">
+        <TabsList className="w-full max-w-4xl mx-auto mb-8 grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <TabsTrigger value="frequent" className="flex-1 p-3 border border-gray-200 rounded-md shadow-sm">
             <div className="flex items-center justify-center gap-2">
               <ShoppingCart className="h-4 w-4" />
-              Mis productos frecuentes
+              <span className="font-medium">Mis productos frecuentes</span>
             </div>
           </TabsTrigger>
-          <TabsTrigger value="lists" className="flex-1">
+          <TabsTrigger value="lists" className="flex-1 p-3 border border-gray-200 rounded-md shadow-sm">
             <div className="flex items-center justify-center gap-2">
               <ListPlus className="h-4 w-4" />
-              Mis listas de mercado
+              <span className="font-medium">Mis listas de mercado</span>
             </div>
           </TabsTrigger>
-          <TabsTrigger value="wishlist" className="flex-1">
+          <TabsTrigger value="wishlist" className="flex-1 p-3 border border-gray-200 rounded-md shadow-sm">
             <div className="flex items-center justify-center gap-2">
               <ShoppingCart className="h-4 w-4" />
-              Lista de deseos
+              <span className="font-medium">Lista de deseos</span>
             </div>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="frequent">
-          <div className="text-center py-12">
-            <p>Aquí aparecerán tus productos comprados con frecuencia.</p>
+        <TabsContent value="frequent" className="overflow-hidden">
+          <div className="text-center py-12 border rounded-lg shadow-sm bg-white">
+            <ShoppingCart className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-muted-foreground">Aquí aparecerán tus productos comprados con frecuencia.</p>
           </div>
         </TabsContent>
 
-        <TabsContent value="lists">
+        <TabsContent value="lists" className="overflow-hidden">
           <div className="mb-6">
             <h2 className="text-xl font-semibold mb-2">Mis listas de mercado</h2>
             <p className="text-muted-foreground text-sm">
@@ -218,6 +253,7 @@ export default function WishlistsPage() {
                   setNewListName("")
                   setIsCreatingList(true)
                 }}
+                className="bg-green-600 hover:bg-green-700"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Crear nueva lista
@@ -226,14 +262,25 @@ export default function WishlistsPage() {
           </div>
 
           {lists.map((list) => (
-            <div key={list.id} className="border rounded-lg mb-8">
-              <div className="p-4 border-b flex justify-between items-center">
+            <div
+              key={list.id}
+              className="border rounded-lg mb-8 shadow-sm hover:shadow-md transition-shadow duration-200 bg-white"
+            >
+              <div className="p-4 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-50">
                 <div>
                   {editingList === list.id ? (
                     <div className="flex items-center gap-2">
-                      <Input value={newListName} onChange={(e) => setNewListName(e.target.value)} className="w-48" />
-                      <Button size="sm" variant="ghost" onClick={handleSaveListName}>
+                      <Input
+                        value={newListName}
+                        onChange={(e) => setNewListName(e.target.value)}
+                        className="w-48"
+                        autoFocus
+                      />
+                      <Button size="sm" variant="ghost" onClick={handleSaveListName} className="text-green-600">
                         <Check className="h-4 w-4" />
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={handleCancelEdit} className="text-red-600">
+                        <X className="h-4 w-4" />
                       </Button>
                     </div>
                   ) : (
@@ -271,21 +318,24 @@ export default function WishlistsPage() {
                 </div>
               </div>
 
-              <div className="p-4 flex flex-wrap gap-4">
-                <Button variant="outline" size="sm">
-                  Ver productos
+              <div className="flex flex-wrap gap-2 p-2">
+                <Button variant="outline" size="sm" className="bg-white hover:bg-gray-50">
+                  <ShoppingCart className="h-3 w-3 mr-1" /> Ver productos
                 </Button>
-                <Button variant="outline" size="sm">
-                  Agregar productos
+                <Button variant="outline" size="sm" className="bg-white hover:bg-gray-50">
+                  <Plus className="h-3 w-3 mr-1" /> Agregar productos
                 </Button>
               </div>
 
               {list.products.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 p-4 border-t">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 p-4 border-t overflow-x-auto">
                   {list.products.map((product) => (
-                    <div key={product.id} className="border rounded-md p-2 relative group">
+                    <div
+                      key={product.id}
+                      className="border rounded-md p-3 relative group bg-white hover:shadow-md transition-all duration-200"
+                    >
                       <button
-                        className="absolute top-1 right-1 bg-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-1 right-1 bg-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
                         onClick={() => handleRemoveProduct(list.id, product.id)}
                       >
                         <Trash2 className="h-3 w-3 text-red-500" />
@@ -304,7 +354,7 @@ export default function WishlistsPage() {
                   ))}
                 </div>
               ) : (
-                <div className="p-8 text-center border-t">
+                <div className="p-8 text-center border-t bg-gray-50">
                   <p className="text-muted-foreground">Esta lista no tiene productos.</p>
                 </div>
               )}
@@ -312,7 +362,7 @@ export default function WishlistsPage() {
           ))}
 
           {lists.length === 0 && (
-            <div className="text-center py-12 border rounded-lg">
+            <div className="text-center py-12 border rounded-lg shadow-sm bg-white">
               <ListPlus className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <p className="text-muted-foreground mb-4">No tienes listas de mercado creadas.</p>
               <Button
@@ -320,6 +370,7 @@ export default function WishlistsPage() {
                   setNewListName("")
                   setIsCreatingList(true)
                 }}
+                className="bg-green-600 hover:bg-green-700"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Crear nueva lista
@@ -328,9 +379,10 @@ export default function WishlistsPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="wishlist">
-          <div className="text-center py-12">
-            <p>Aquí aparecerán tus productos guardados en la lista de deseos.</p>
+        <TabsContent value="wishlist" className="overflow-hidden">
+          <div className="text-center py-12 border rounded-lg shadow-sm bg-white">
+            <ShoppingCart className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-muted-foreground">Aquí aparecerán tus productos guardados en la lista de deseos.</p>
           </div>
         </TabsContent>
       </Tabs>
@@ -349,6 +401,7 @@ export default function WishlistsPage() {
               onChange={(e) => setNewListName(e.target.value)}
               placeholder="Ej: Mi lista de compras"
               className="mt-2"
+              autoFocus
             />
           </div>
           <DialogFooter>

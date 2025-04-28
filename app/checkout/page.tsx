@@ -16,16 +16,19 @@ import { AddressList } from "@/components/address-list"
 import { WhatsAppSupport } from "@/components/whatsapp-support"
 import { Switch } from "@/components/ui/switch"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { PaymentQRModal } from "@/components/payment-qr-modal"
 
 export default function CheckoutPage() {
   const { cart } = useCart()
-  const [activeTab, setActiveTab] = useState("address")
+  const [activeTab, setActiveTab] = useState("shipping")
   const [showAddressForm, setShowAddressForm] = useState(false)
   const [shippingMethod, setShippingMethod] = useState("")
   const [requiresInvoice, setRequiresInvoice] = useState(false)
   const [isElectronicInvoiceEnabled, setIsElectronicInvoiceEnabled] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState("")
   const [deliveryType, setDeliveryType] = useState("route")
+  const [isNequiModalOpen, setIsNequiModalOpen] = useState(false)
+  const [isBancolombiaModalOpen, setIsBancolombiaModalOpen] = useState(false)
 
   const subtotal = cart.reduce((total, item) => total + item.price * item.quantity, 0)
   const shipping = shippingMethod === "express" ? 15 : shippingMethod === "scheduled" ? 10 : 0
@@ -58,16 +61,16 @@ export default function CheckoutPage() {
         <div className="lg:col-span-2">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="address">
+              <TabsTrigger value="shipping">
                 <span className="flex items-center">
                   <span className="bg-muted rounded-full w-6 h-6 inline-flex items-center justify-center mr-2">1</span>
-                  Dirección
+                  Envío
                 </span>
               </TabsTrigger>
-              <TabsTrigger value="shipping" disabled={activeTab !== "shipping" && activeTab !== "payment"}>
+              <TabsTrigger value="address" disabled={activeTab !== "address" && activeTab !== "payment"}>
                 <span className="flex items-center">
                   <span className="bg-muted rounded-full w-6 h-6 inline-flex items-center justify-center mr-2">2</span>
-                  Envío
+                  Dirección
                 </span>
               </TabsTrigger>
               <TabsTrigger value="payment" disabled={activeTab !== "payment"}>
@@ -210,8 +213,8 @@ export default function CheckoutPage() {
                   </div>
 
                   <div className="mt-6 flex justify-end">
-                    <Button onClick={() => setActiveTab("payment")} disabled={!shippingMethod}>
-                      Continuar al pago <ChevronRight className="ml-2 h-4 w-4" />
+                    <Button onClick={() => setActiveTab("address")} disabled={!shippingMethod}>
+                      Continuar a dirección <ChevronRight className="ml-2 h-4 w-4" />
                     </Button>
                   </div>
                 </div>
@@ -262,43 +265,41 @@ export default function CheckoutPage() {
                     </div>
                   </RadioGroup>
 
-                  {paymentMethod === "bank_transfer" && (
-                    <div className="mt-4 p-4 bg-muted/50 rounded-md">
-                      <h3 className="font-medium mb-2">Cuentas habilitadas para consignación:</h3>
-                      <div className="space-y-3">
-                        <div className="flex items-center border-b pb-2">
-                          <div className="w-16 h-16 relative mr-3 flex-shrink-0">
-                            <Image src="/nequi-logo.png" alt="Nequi" fill className="object-contain" />
-                          </div>
-                          <div>
-                            <p className="font-medium">Nequi</p>
-                            <p className="text-sm">Número: 300 123 4567</p>
-                            <p className="text-sm text-muted-foreground">A nombre de: EcoPlast S.A.S</p>
-                          </div>
+                  <div className="mt-4 p-4 bg-muted/50 rounded-md">
+                    <h3 className="font-medium mb-3">Cuentas habilitadas para consignación:</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Button
+                        variant="outline"
+                        className="h-24 flex flex-col items-center justify-center"
+                        onClick={() => setIsNequiModalOpen(true)}
+                      >
+                        <div className="w-12 h-12 relative mb-2">
+                          <Image src="/nequi-logo.png" alt="Nequi" fill className="object-contain" />
                         </div>
+                        <span className="text-sm">Pagar con Nequi</span>
+                      </Button>
 
-                        <div className="flex items-center pt-2">
-                          <div className="w-16 h-16 relative mr-3 flex-shrink-0">
-                            <Image src="/bancolombia-logo.png" alt="Bancolombia" fill className="object-contain" />
-                          </div>
-                          <div>
-                            <p className="font-medium">Bancolombia</p>
-                            <p className="text-sm">Cuenta de Ahorros: 123-456789-00</p>
-                            <p className="text-sm text-muted-foreground">A nombre de: EcoPlast S.A.S</p>
-                          </div>
+                      <Button
+                        variant="outline"
+                        className="h-24 flex flex-col items-center justify-center"
+                        onClick={() => setIsBancolombiaModalOpen(true)}
+                      >
+                        <div className="w-12 h-12 relative mb-2">
+                          <Image src="/bancolombia-logo.png" alt="Bancolombia" fill className="object-contain" />
                         </div>
-                      </div>
-
-                      <div className="mt-4">
-                        <Label htmlFor="transfer-confirmation">Número de confirmación</Label>
-                        <Input
-                          id="transfer-confirmation"
-                          placeholder="Ingrese el número de confirmación"
-                          className="mt-1"
-                        />
-                      </div>
+                        <span className="text-sm">Pagar con Bancolombia</span>
+                      </Button>
                     </div>
-                  )}
+
+                    <div className="mt-4">
+                      <Label htmlFor="transfer-confirmation">Número de confirmación</Label>
+                      <Input
+                        id="transfer-confirmation"
+                        placeholder="Ingrese el número de confirmación"
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
 
                   {paymentMethod === "immediate" && (
                     <div className="mt-4 p-4 bg-muted/50 rounded-md">
@@ -375,6 +376,13 @@ export default function CheckoutPage() {
           </div>
         </div>
       </div>
+      <PaymentQRModal isOpen={isNequiModalOpen} onClose={() => setIsNequiModalOpen(false)} paymentMethod="nequi" />
+
+      <PaymentQRModal
+        isOpen={isBancolombiaModalOpen}
+        onClose={() => setIsBancolombiaModalOpen(false)}
+        paymentMethod="bancolombia"
+      />
     </div>
   )
 }
