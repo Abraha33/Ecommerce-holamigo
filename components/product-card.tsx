@@ -15,33 +15,56 @@ import { Badge } from "@/components/ui/badge"
 import { useWishlist } from "@/components/wishlist-provider"
 import { ProductDetailsModal } from "@/components/product-details-modal"
 
-// Definir los tipos de empaque disponibles
-const packageTypes = [
+// Types
+interface PackageType {
+  value: string
+  label: string
+  factor: number
+}
+
+interface Product {
+  id: number
+  name: string
+  slug: string
+  price: number
+  image: string
+  isNew?: boolean
+  isSale?: boolean
+  originalPrice?: number
+  stockStatus?: string
+}
+
+interface ProductCardProps {
+  product: Product
+  viewMode?: "grid" | "list"
+}
+
+interface UnitOption {
+  id: string
+  name: string
+  unitPrice: number
+  factor: number
+}
+
+// Constants
+const PACKAGE_TYPES: PackageType[] = [
   { value: "unit", label: "Unidad", factor: 1 },
   { value: "pack", label: "Paquete (10)", factor: 10 },
   { value: "box", label: "Caja (100)", factor: 100 },
   { value: "bulk", label: "Bulto (500)", factor: 500 },
 ]
 
-interface ProductCardProps {
-  product: {
-    id: number
-    name: string
-    slug: string
-    price: number
-    image: string
-    isNew?: boolean
-    isSale?: boolean
-    originalPrice?: number
-    stockStatus?: string
-  }
-  viewMode?: "grid" | "list"
+const DISCOUNT_FACTORS = {
+  UNIT: 1,
+  SMALL: 0.95,
+  MEDIUM: 0.9,
+  LARGE: 0.85,
 }
 
 export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
-  const [selectedPackage, setSelectedPackage] = useState(packageTypes[0])
+  const [selectedPackage, setSelectedPackage] = useState<PackageType>(PACKAGE_TYPES[0])
   const [quantity, setQuantity] = useState(1)
-  const [activePackages, setActivePackages] = useState([packageTypes[0].value])
+  const [activePackages, setActivePackages] = useState<string[]>([PACKAGE_TYPES[0].value])
   const [isAdding, setIsAdding] = useState(false)
   const { toast } = useToast()
   const { addItem } = useCart()
@@ -55,7 +78,7 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
   }, [isInWishlist, product.id])
 
   // Manejar la adición/eliminación de la lista de deseos
-  const handleToggleWishlist = (e) => {
+  const handleToggleWishlist = (e: React.MouseEvent) => {
     e.stopPropagation()
     e.preventDefault()
 
@@ -81,7 +104,7 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
   }
 
   // Dentro del componente ProductCard, añadir estas opciones de unidades
-  const unitOptions = [
+  const unitOptions: UnitOption[] = [
     {
       id: "1",
       name: "Paq de 10 uds.",
@@ -123,29 +146,34 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
   const baseUnitPrice = product.price
 
   // Calcular el precio según el tipo de empaque seleccionado y la cantidad
-  const calculatePrice = () => {
-    const packageType = packageTypes.find((p) => p.value === selectedPackage.value) || packageTypes[0]
-    // Aplicar un pequeño descuento por volumen
-    const discountFactor =
-      packageType.factor === 1 ? 1 : packageType.factor <= 10 ? 0.95 : packageType.factor <= 100 ? 0.9 : 0.85
+  const calculatePrice = (): number => {
+    const packageType = PACKAGE_TYPES.find((p) => p.value === selectedPackage.value) || PACKAGE_TYPES[0]
+    const discountFactor = getDiscountFactor(packageType.factor)
     return product.price * packageType.factor * discountFactor * (quantity / packageType.factor)
   }
 
+  // Obtener el factor de descuento según la cantidad
+  const getDiscountFactor = (factor: number): number => {
+    if (factor === 1) return DISCOUNT_FACTORS.UNIT
+    if (factor <= 10) return DISCOUNT_FACTORS.SMALL
+    if (factor <= 100) return DISCOUNT_FACTORS.MEDIUM
+    return DISCOUNT_FACTORS.LARGE
+  }
+
   // Calcular el precio por unidad para cada tipo de empaque
-  const calculateUnitPrice = (packageType) => {
-    const discountFactor =
-      packageType.factor === 1 ? 1 : packageType.factor <= 10 ? 0.95 : packageType.factor <= 100 ? 0.9 : 0.85
+  const calculateUnitPrice = (packageType: PackageType): number => {
+    const discountFactor = getDiscountFactor(packageType.factor)
     return (product.price * packageType.factor * discountFactor) / packageType.factor
   }
 
   // Calcular el ahorro por unidad para un tipo de empaque
-  const calculateUnitSavings = (packageType) => {
+  const calculateUnitSavings = (packageType: PackageType): number => {
     const unitPrice = calculateUnitPrice(packageType)
     return baseUnitPrice - unitPrice
   }
 
   // Calcular el ahorro total
-  const calculateTotalSavings = () => {
+  const calculateTotalSavings = (): number => {
     const regularPrice = baseUnitPrice * quantity
     const discountedPrice = calculatePrice()
     return regularPrice - discountedPrice
@@ -153,11 +181,11 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
 
   // Determinar las unidades de empaque óptimas basadas en la cantidad
   useEffect(() => {
-    const active = []
+    const active: string[] = []
     let remainingQuantity = quantity
 
     // Ordenar los tipos de empaque de mayor a menor factor
-    const sortedPackages = [...packageTypes].sort((a, b) => b.factor - a.factor)
+    const sortedPackages = [...PACKAGE_TYPES].sort((a, b) => b.factor - a.factor)
 
     // Determinar qué empaques usar para la cantidad actual
     for (const pkg of sortedPackages) {
@@ -176,23 +204,23 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
 
     // Actualizar el paquete seleccionado al más grande que aplique
     if (active.length > 0 && active[0] !== selectedPackage.value) {
-      const newSelectedPackage = packageTypes.find((p) => p.value === active[0])
+      const newSelectedPackage = PACKAGE_TYPES.find((p) => p.value === active[0])
       if (newSelectedPackage) {
         setSelectedPackage(newSelectedPackage)
       }
     }
-  }, [quantity])
+  }, [quantity, selectedPackage.value])
 
   // Manejar cambio de cantidad
-  const handleQuantityChange = (newQuantity) => {
+  const handleQuantityChange = (newQuantity: number): void => {
     if (newQuantity >= 1) {
       setQuantity(newQuantity)
     }
   }
 
   // Manejar selección de paquete desde el dropdown o barras
-  const handlePackageSelect = (value) => {
-    const selected = packageTypes.find((p) => p.value === value)
+  const handlePackageSelect = (value: string): void => {
+    const selected = PACKAGE_TYPES.find((p) => p.value === value)
     if (selected) {
       setSelectedPackage(selected)
 
@@ -210,7 +238,7 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
   }
 
   // Manejar la adición al carrito
-  const handleAddToCart = () => {
+  const handleAddToCart = (): void => {
     setIsAdding(true)
 
     addItem({
@@ -223,12 +251,8 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
     })
 
     toast({
-      title: (
-        <div className="flex items-center">
-          <Check className="h-4 w-4 mr-2 text-green-500" />
-          Producto agregado al carrito
-        </div>
-      ),
+      title: "Producto agregado al carrito",
+      description: `${product.name} ha sido agregado a tu carrito`,
       duration: 2000,
     })
 
@@ -238,15 +262,14 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
   }
 
   // Calcular el porcentaje de ahorro total
-  const savingsPercentage = () => {
+  const savingsPercentage = (): number => {
     const regularPrice = baseUnitPrice * quantity
     const discountedPrice = calculatePrice()
     return Math.round(((regularPrice - discountedPrice) / regularPrice) * 100)
   }
 
   // Función para abrir el modal de detalles
-  const openDetailsModal = (e) => {
-    // Solo prevenir el comportamiento predeterminado, no detener la propagación
+  const openDetailsModal = (e: React.MouseEvent): void => {
     e.preventDefault()
     setIsDetailsModalOpen(true)
   }
@@ -258,22 +281,41 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
           viewMode === "list" ? "flex-row" : "h-full"
         } border border-gray-200 bg-white rounded-lg m-1`}
       >
+        {/* Imagen y badges */}
         <div
           className={`relative ${viewMode === "list" ? "w-40 min-w-40" : "pt-[100%]"} group m-2 overflow-hidden rounded-lg`}
         >
-          <Image src={product.image || "/placeholder.svg"} alt={product.name} fill className="object-contain p-1" />
+          <Image 
+            src={product.image || "/placeholder.svg"} 
+            alt={product.name} 
+            fill 
+            className="object-contain p-1 transition-transform duration-300 group-hover:scale-105" 
+          />
 
-          {/* Badges y botones flotantes */}
+          {/* Badges */}
           <div className="absolute top-2 left-2 flex flex-col gap-1">
-            {product.isNew && <Badge className="bg-[#004a93] hover:bg-[#004a93]">Nuevo</Badge>}
-            {product.isSale && <Badge className="bg-[#e30613] hover:bg-[#e30613]">Oferta</Badge>}
+            {product.isNew && (
+              <Badge className="bg-[#004a93] hover:bg-[#004a93] transition-colors">
+                Nuevo
+              </Badge>
+            )}
+            {product.isSale && (
+              <Badge className="bg-[#e30613] hover:bg-[#e30613] transition-colors">
+                Oferta
+              </Badge>
+            )}
           </div>
 
+          {/* Wishlist Button */}
           <div className="absolute top-2 right-2">
             <Button
               variant="ghost"
               size="icon"
-              className={`rounded-full ${isInList ? "text-red-500 hover:text-red-600" : "text-gray-500 hover:text-gray-700"} bg-white/80 shadow-sm`}
+              className={`rounded-full transition-colors ${
+                isInList 
+                  ? "text-red-500 hover:text-red-600" 
+                  : "text-gray-500 hover:text-gray-700"
+              } bg-white/80 shadow-sm hover:bg-white`}
               onClick={handleToggleWishlist}
               aria-label={isInList ? "Eliminar de lista de deseos" : "Añadir a lista de deseos"}
             >
@@ -281,14 +323,13 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
             </Button>
           </div>
 
-          {/* Quick view button y navegación de galería */}
-          <div className="absolute inset-0 flex flex-col">
-            {/* Botón de vista rápida en el centro */}
-            <div className="flex-1 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+          {/* Quick View Overlay */}
+          <div className="absolute inset-0 flex flex-col opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <div className="flex-1 flex items-center justify-center">
               <Button
                 variant="secondary"
                 size="sm"
-                className="bg-white/80 backdrop-blur-sm shadow-md rounded-full flex items-center gap-1"
+                className="bg-white/80 backdrop-blur-sm shadow-md rounded-full flex items-center gap-1 hover:bg-white"
                 onClick={openDetailsModal}
               >
                 <Eye className="h-3.5 w-3.5" />
@@ -296,12 +337,12 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
               </Button>
             </div>
 
-            {/* Controles de navegación de galería */}
-            <div className="flex justify-between px-2 pb-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            {/* Gallery Navigation */}
+            <div className="flex justify-between px-2 pb-2">
               <Button
                 variant="secondary"
                 size="icon"
-                className="h-8 w-8 rounded-full bg-white/70 hover:bg-white/90 shadow-sm"
+                className="h-8 w-8 rounded-full bg-white/70 hover:bg-white/90 shadow-sm transition-colors"
                 onClick={(e) => {
                   e.stopPropagation()
                   e.preventDefault()
@@ -312,7 +353,7 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
               <Button
                 variant="secondary"
                 size="icon"
-                className="h-8 w-8 rounded-full bg-white/70 hover:bg-white/90 shadow-sm"
+                className="h-8 w-8 rounded-full bg-white/70 hover:bg-white/90 shadow-sm transition-colors"
                 onClick={(e) => {
                   e.stopPropagation()
                   e.preventDefault()
@@ -324,105 +365,43 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
           </div>
         </div>
 
+        {/* Product Content */}
         <CardContent className={`p-4 flex-grow flex flex-col ${viewMode === "list" ? "flex-1" : ""}`}>
-          <div className="hover:text-[#004a93] cursor-pointer" onClick={openDetailsModal}>
+          {/* Product Name */}
+          <div 
+            className="hover:text-[#004a93] cursor-pointer transition-colors" 
+            onClick={openDetailsModal}
+          >
             <h3 className="font-medium text-sm line-clamp-2 h-10">{product.name}</h3>
           </div>
 
+          {/* Price Section */}
           <div className="mt-2 flex-grow">
             <div className="flex items-baseline">
-              <div className="text-black font-bold text-lg">{formatCurrency(product.price)}</div>
-              <span className="text-xs text-gray-500 font-normal ml-1"> / unidad</span>
-
+              <div className="text-black font-bold text-lg">
+                {formatCurrency(product.price)}
+              </div>
+              <span className="text-xs text-gray-500 font-normal ml-1">
+                / unidad
+              </span>
               {product.originalPrice && (
-                <span className="text-xs text-gray-500 line-through ml-2">{formatCurrency(product.originalPrice)}</span>
+                <span className="text-xs text-gray-500 line-through ml-2">
+                  {formatCurrency(product.originalPrice)}
+                </span>
               )}
             </div>
 
-            {/* Barras de ahorro - ahora en disposición horizontal */}
-            <div className="mt-3 flex flex-wrap gap-2 text-xs">
-              {packageTypes.map((pkg) => {
-                const unitPrice = calculateUnitPrice(pkg)
-                const unitSavings = calculateUnitSavings(pkg)
-                const isActive = activePackages.includes(pkg.value)
-                const isSelected = selectedPackage.value === pkg.value
-                return (
-                  <motion.div
-                    key={pkg.value}
-                    onClick={() => handlePackageSelect(pkg.value)}
-                    className={`cursor-pointer rounded p-2 transition-all relative flex-1 min-w-[80px] ${
-                      isActive
-                        ? isSelected
-                          ? "bg-[#004a93] text-white ring-2 ring-[#004a93] ring-offset-1"
-                          : "bg-[#ccdcf0] text-[#004a93] font-medium"
-                        : "bg-gray-100 text-black hover:bg-gray-200"
-                    }`}
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                  >
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <div className="font-medium">{pkg.label.split(" ")[0]}</div>
-                        <div className="text-[0.65rem] opacity-80">x{pkg.factor}</div>
-                      </div>
-                      <div
-                        className={`${isSelected ? "text-white" : isActive ? "text-black" : "text-black"} font-semibold`}
-                      >
-                        {formatCurrency(unitPrice)}
-                      </div>
-                    </div>
-                    {isSelected && (
-                      <motion.div
-                        className="absolute -top-1 -right-1 bg-white rounded-full p-0.5 shadow-sm"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ type: "spring", stiffness: 500, damping: 15 }}
-                      >
-                        <Check className="h-3 w-3 text-[#004a93]" />
-                      </motion.div>
-                    )}
-
-                    {/* Mostrar ahorro por unidad para barras activas */}
-                    <AnimatePresence>
-                      {isActive && unitSavings > 0 && (
-                        <motion.div
-                          className="mt-1 text-[0.65rem] text-[#004a93] bg-blue-50 rounded-sm px-1"
-                          initial={{ opacity: 0, y: -5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          Ahorra {formatCurrency(unitSavings)} por unidad
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-                )
-              })}
-            </div>
-
-            {/* Resumen de ahorro total */}
-            {calculateTotalSavings() > 0 && (
-              <motion.div
-                className="mt-2 text-xs bg-blue-50 text-[#004a93] p-2 rounded flex items-center justify-between shadow-sm"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.1 }}
-              >
-                <span>Ahorro total:</span>
-                <span className="font-bold">
-                  {formatCurrency(calculateTotalSavings())} ({savingsPercentage()}%)
-                </span>
-              </motion.div>
-            )}
-
+            {/* Package Selection */}
             <div className="mt-3 space-y-3">
-              <Select onValueChange={handlePackageSelect} value={selectedPackage.value}>
+              <Select 
+                onValueChange={handlePackageSelect} 
+                value={selectedPackage.value}
+              >
                 <SelectTrigger className="w-full border-[#004a93] shadow-sm">
                   <SelectValue placeholder="Seleccionar empaque" />
                 </SelectTrigger>
                 <SelectContent>
-                  {packageTypes.map((pkg) => (
+                  {PACKAGE_TYPES.map((pkg) => (
                     <SelectItem key={pkg.value} value={pkg.value}>
                       {pkg.label}
                     </SelectItem>
@@ -430,7 +409,7 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
                 </SelectContent>
               </Select>
 
-              {/* Control de cantidad */}
+              {/* Quantity Control */}
               <div className="flex items-center">
                 <span className="text-sm mr-2">Cantidad:</span>
                 <div className="flex border rounded shadow-sm">
@@ -438,7 +417,7 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 rounded-none border-r"
+                    className="h-8 w-8 rounded-none border-r hover:bg-gray-100"
                     onClick={() => handleQuantityChange(quantity - 1)}
                     disabled={quantity <= 1}
                   >
@@ -455,7 +434,7 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 rounded-none border-l"
+                    className="h-8 w-8 rounded-none border-l hover:bg-gray-100"
                     onClick={() => handleQuantityChange(quantity + 1)}
                   >
                     <Plus className="h-3 w-3" />
@@ -463,15 +442,18 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
                 </div>
               </div>
 
+              {/* Total Price */}
               <div className="flex items-center justify-between">
                 <div className="text-sm">
-                  Total: <span className="font-bold text-black">{formatCurrency(calculatePrice())}</span>
+                  Total: <span className="font-bold text-black">
+                    {formatCurrency(calculatePrice())}
+                  </span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Botón fijo en la parte inferior */}
+          {/* Add to Cart Button */}
           <div className="mt-4 pt-3 border-t">
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Button
@@ -503,8 +485,12 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
         </CardContent>
       </Card>
 
-      {/* Modal de detalles del producto */}
-      <ProductDetailsModal isOpen={isDetailsModalOpen} onClose={() => setIsDetailsModalOpen(false)} product={product} />
+      {/* Product Details Modal */}
+      <ProductDetailsModal 
+        isOpen={isDetailsModalOpen} 
+        onClose={() => setIsDetailsModalOpen(false)} 
+        product={product} 
+      />
     </>
   )
 }
