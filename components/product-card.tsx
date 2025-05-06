@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { formatCurrency } from "@/lib/utils"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { ShoppingCart, Plus, Minus, Check, Eye, ChevronLeft, ChevronRight, Heart } from "lucide-react"
+import { ShoppingCart, Plus, Minus, Check, Eye, Heart } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/components/ui/use-toast"
 import { useCart } from "@/components/cart-provider"
@@ -15,79 +15,47 @@ import { Badge } from "@/components/ui/badge"
 import { useWishlist } from "@/components/wishlist-provider"
 import { ProductDetailsModal } from "@/components/product-details-modal"
 
-// Types
-interface PackageType {
-  value: string
-  label: string
-  factor: number
-}
-
-interface Product {
-  id: number
-  name: string
-  slug: string
-  price: number
-  image: string
-  images?: string[]
-  isNew?: boolean
-  isSale?: boolean
-  originalPrice?: number
-  stockStatus?: string
-}
-
-interface ProductCardProps {
-  product: Product
-  viewMode?: "grid" | "list"
-}
-
-interface UnitOption {
-  id: string
-  name: string
-  unitPrice: number
-  factor: number
-}
-
-// Constants
-const PACKAGE_TYPES: PackageType[] = [
+// Definir los tipos de empaque disponibles
+const packageTypes = [
   { value: "unit", label: "Unidad", factor: 1 },
   { value: "pack", label: "Paquete (10)", factor: 10 },
   { value: "box", label: "Caja (100)", factor: 100 },
   { value: "bulk", label: "Bulto (500)", factor: 500 },
 ]
 
-const DISCOUNT_FACTORS = {
-  UNIT: 1,
-  SMALL: 0.95,
-  MEDIUM: 0.9,
-  LARGE: 0.85,
+interface ProductCardProps {
+  product: {
+    id: number
+    name: string
+    slug: string
+    price: number
+    image: string
+    isNew?: boolean
+    isSale?: boolean
+    originalPrice?: number
+    stockStatus?: string
+  }
+  viewMode?: "grid" | "list"
 }
 
 export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
-  const [selectedPackage, setSelectedPackage] = useState<PackageType>(PACKAGE_TYPES[0])
+  const [selectedPackage, setSelectedPackage] = useState(packageTypes[0])
   const [quantity, setQuantity] = useState(1)
-  const [activePackages, setActivePackages] = useState<string[]>([PACKAGE_TYPES[0].value])
+  const [activePackages, setActivePackages] = useState([packageTypes[0].value])
   const [isAdding, setIsAdding] = useState(false)
   const { toast } = useToast()
   const { addItem } = useCart()
   const { addToWishlist, isInWishlist, removeFromWishlist } = useWishlist()
   const [isInList, setIsInList] = useState(false)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
-  
-  // Estado para el slider de imágenes
-  const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const images = product.images || [product.image]
 
   // Verificar si el producto está en la lista de deseos
   useEffect(() => {
-    const checkWishlistStatus = () => {
-      const inList = isInWishlist(product.id)
-      setIsInList(inList)
-    }
-    checkWishlistStatus()
+    setIsInList(isInWishlist(product.id))
   }, [isInWishlist, product.id])
 
   // Manejar la adición/eliminación de la lista de deseos
-  const handleToggleWishlist = (e: React.MouseEvent) => {
+  const handleToggleWishlist = (e) => {
     e.stopPropagation()
     e.preventDefault()
 
@@ -112,21 +80,8 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
     setIsInList(!isInList)
   }
 
-  // Manejar navegación del slider
-  const handlePrevImage = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    e.preventDefault()
-    setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))
-  }
-
-  const handleNextImage = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    e.preventDefault()
-    setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))
-  }
-
   // Dentro del componente ProductCard, añadir estas opciones de unidades
-  const unitOptions: UnitOption[] = [
+  const unitOptions = [
     {
       id: "1",
       name: "Paq de 10 uds.",
@@ -168,34 +123,29 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
   const baseUnitPrice = product.price
 
   // Calcular el precio según el tipo de empaque seleccionado y la cantidad
-  const calculatePrice = (): number => {
-    const packageType = PACKAGE_TYPES.find((p) => p.value === selectedPackage.value) || PACKAGE_TYPES[0]
-    const discountFactor = getDiscountFactor(packageType.factor)
+  const calculatePrice = () => {
+    const packageType = packageTypes.find((p) => p.value === selectedPackage.value) || packageTypes[0]
+    // Aplicar un pequeño descuento por volumen
+    const discountFactor =
+      packageType.factor === 1 ? 1 : packageType.factor <= 10 ? 0.95 : packageType.factor <= 100 ? 0.9 : 0.85
     return product.price * packageType.factor * discountFactor * (quantity / packageType.factor)
   }
 
-  // Obtener el factor de descuento según la cantidad
-  const getDiscountFactor = (factor: number): number => {
-    if (factor === 1) return DISCOUNT_FACTORS.UNIT
-    if (factor <= 10) return DISCOUNT_FACTORS.SMALL
-    if (factor <= 100) return DISCOUNT_FACTORS.MEDIUM
-    return DISCOUNT_FACTORS.LARGE
-  }
-
   // Calcular el precio por unidad para cada tipo de empaque
-  const calculateUnitPrice = (packageType: PackageType): number => {
-    const discountFactor = getDiscountFactor(packageType.factor)
+  const calculateUnitPrice = (packageType) => {
+    const discountFactor =
+      packageType.factor === 1 ? 1 : packageType.factor <= 10 ? 0.95 : packageType.factor <= 100 ? 0.9 : 0.85
     return (product.price * packageType.factor * discountFactor) / packageType.factor
   }
 
   // Calcular el ahorro por unidad para un tipo de empaque
-  const calculateUnitSavings = (packageType: PackageType): number => {
+  const calculateUnitSavings = (packageType) => {
     const unitPrice = calculateUnitPrice(packageType)
     return baseUnitPrice - unitPrice
   }
 
   // Calcular el ahorro total
-  const calculateTotalSavings = (): number => {
+  const calculateTotalSavings = () => {
     const regularPrice = baseUnitPrice * quantity
     const discountedPrice = calculatePrice()
     return regularPrice - discountedPrice
@@ -203,11 +153,11 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
 
   // Determinar las unidades de empaque óptimas basadas en la cantidad
   useEffect(() => {
-    const active: string[] = []
+    const active = []
     let remainingQuantity = quantity
 
     // Ordenar los tipos de empaque de mayor a menor factor
-    const sortedPackages = [...PACKAGE_TYPES].sort((a, b) => b.factor - a.factor)
+    const sortedPackages = [...packageTypes].sort((a, b) => b.factor - a.factor)
 
     // Determinar qué empaques usar para la cantidad actual
     for (const pkg of sortedPackages) {
@@ -226,23 +176,23 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
 
     // Actualizar el paquete seleccionado al más grande que aplique
     if (active.length > 0 && active[0] !== selectedPackage.value) {
-      const newSelectedPackage = PACKAGE_TYPES.find((p) => p.value === active[0])
+      const newSelectedPackage = packageTypes.find((p) => p.value === active[0])
       if (newSelectedPackage) {
         setSelectedPackage(newSelectedPackage)
       }
     }
-  }, [quantity, selectedPackage.value])
+  }, [quantity])
 
   // Manejar cambio de cantidad
-  const handleQuantityChange = (newQuantity: number): void => {
+  const handleQuantityChange = (newQuantity) => {
     if (newQuantity >= 1) {
       setQuantity(newQuantity)
     }
   }
 
   // Manejar selección de paquete desde el dropdown o barras
-  const handlePackageSelect = (value: string): void => {
-    const selected = PACKAGE_TYPES.find((p) => p.value === value)
+  const handlePackageSelect = (value) => {
+    const selected = packageTypes.find((p) => p.value === value)
     if (selected) {
       setSelectedPackage(selected)
 
@@ -260,7 +210,7 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
   }
 
   // Manejar la adición al carrito
-  const handleAddToCart = (): void => {
+  const handleAddToCart = () => {
     setIsAdding(true)
 
     addItem({
@@ -273,8 +223,12 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
     })
 
     toast({
-      title: "Producto agregado al carrito",
-      description: `${product.name} ha sido agregado a tu carrito`,
+      title: (
+        <div className="flex items-center">
+          <Check className="h-4 w-4 mr-2 text-green-500" />
+          Producto agregado al carrito
+        </div>
+      ),
       duration: 2000,
     })
 
@@ -284,14 +238,15 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
   }
 
   // Calcular el porcentaje de ahorro total
-  const savingsPercentage = (): number => {
+  const savingsPercentage = () => {
     const regularPrice = baseUnitPrice * quantity
     const discountedPrice = calculatePrice()
     return Math.round(((regularPrice - discountedPrice) / regularPrice) * 100)
   }
 
   // Función para abrir el modal de detalles
-  const openDetailsModal = (e: React.MouseEvent): void => {
+  const openDetailsModal = (e) => {
+    // Solo prevenir el comportamiento predeterminado, no detener la propagación
     e.preventDefault()
     setIsDetailsModalOpen(true)
   }
@@ -301,42 +256,29 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
       <Card
         className={`overflow-hidden transition-all shadow-lg hover:shadow-2xl flex flex-col ${
           viewMode === "list" ? "flex-row" : "h-full"
-        } border border-gray-200 bg-white rounded-lg m-1`}
+        } border border-gray-200 bg-white rounded-lg m-0`}
       >
         <div
-          className={`relative ${viewMode === "list" ? "w-40 min-w-40" : "pt-[100%]"} group m-2 overflow-hidden rounded-lg`}
+          className={`relative ${viewMode === "list" ? "w-40 min-w-40" : "pt-[100%]"} group overflow-hidden rounded-lg`}
         >
-          <Image 
-            src={images[currentImageIndex] || "/placeholder.svg"} 
-            alt={product.name} 
-            fill 
-            className="object-contain p-1 transition-transform duration-300 group-hover:scale-105" 
+          <Image
+            src={product.image || "/placeholder.svg"}
+            alt={product.name}
+            fill
+            className="object-contain p-0 hover:scale-105 transition-transform duration-300"
           />
 
-          {/* Badges */}
+          {/* Badges y botones flotantes */}
           <div className="absolute top-2 left-2 flex flex-col gap-1">
-            {product.isNew && (
-              <Badge className="bg-[#004a93] hover:bg-[#004a93] transition-colors">
-                Nuevo
-              </Badge>
-            )}
-            {product.isSale && (
-              <Badge className="bg-[#e30613] hover:bg-[#e30613] transition-colors">
-                Oferta
-              </Badge>
-            )}
+            {product.isNew && <Badge className="bg-[#004a93] hover:bg-[#004a93]">Nuevo</Badge>}
+            {product.isSale && <Badge className="bg-[#e30613] hover:bg-[#e30613]">Oferta</Badge>}
           </div>
 
-          {/* Wishlist Button */}
           <div className="absolute top-2 right-2">
             <Button
               variant="ghost"
               size="icon"
-              className={`rounded-full transition-colors ${
-                isInList 
-                  ? "text-red-500 hover:text-red-600" 
-                  : "text-gray-500 hover:text-gray-700"
-              } bg-white/80 shadow-sm hover:bg-white`}
+              className={`rounded-full ${isInList ? "text-red-500 hover:text-red-600" : "text-gray-500 hover:text-gray-700"} bg-white/80 shadow-sm`}
               onClick={handleToggleWishlist}
               aria-label={isInList ? "Eliminar de lista de deseos" : "Añadir a lista de deseos"}
             >
@@ -344,101 +286,119 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
             </Button>
           </div>
 
-          {/* Quick View Overlay */}
-          <div className="absolute inset-0 flex flex-col opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <div className="flex-1 flex items-center justify-center">
+          {/* Quick view button */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
               <Button
                 variant="secondary"
                 size="sm"
-                className="bg-white/80 backdrop-blur-sm shadow-md rounded-full flex items-center gap-1 hover:bg-white"
+                className="bg-white/80 backdrop-blur-sm shadow-md rounded-full flex items-center gap-1"
                 onClick={openDetailsModal}
               >
                 <Eye className="h-3.5 w-3.5" />
                 <span>Ver detalles</span>
               </Button>
             </div>
-
-            {/* Gallery Navigation */}
-            {images.length > 1 && (
-              <div className="flex justify-between px-2 pb-2">
-                <Button
-                  variant="secondary"
-                  size="icon"
-                  className="h-8 w-8 rounded-full bg-white/70 hover:bg-white/90 shadow-sm transition-colors"
-                  onClick={handlePrevImage}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="icon"
-                  className="h-8 w-8 rounded-full bg-white/70 hover:bg-white/90 shadow-sm transition-colors"
-                  onClick={handleNextImage}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
           </div>
-
-          {/* Image Dots */}
-          {images.length > 1 && (
-            <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-1">
-              {images.map((_, index) => (
-                <button
-                  key={index}
-                  className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                    currentImageIndex === index ? "bg-white" : "bg-white/50"
-                  }`}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    e.preventDefault()
-                    setCurrentImageIndex(index)
-                  }}
-                  aria-label={`Ir a imagen ${index + 1}`}
-                />
-              ))}
-            </div>
-          )}
         </div>
 
-        {/* Product Content */}
-        <CardContent className={`p-4 flex-grow flex flex-col ${viewMode === "list" ? "flex-1" : ""}`}>
-          {/* Product Name */}
-          <div 
-            className="hover:text-[#004a93] cursor-pointer transition-colors" 
-            onClick={openDetailsModal}
-          >
-            <h3 className="font-medium text-sm line-clamp-2 h-10">{product.name}</h3>
+        <CardContent className={`p-3 flex-grow flex flex-col ${viewMode === "list" ? "flex-1" : ""}`}>
+          <div className="hover:text-[#004a93] cursor-pointer" onClick={openDetailsModal}>
+            <h3 className="font-medium text-sm line-clamp-2 mb-2">{product.name}</h3>
           </div>
 
-          {/* Price Section */}
-          <div className="mt-2 flex-grow">
+          <div className="flex-grow">
             <div className="flex items-baseline">
-              <div className="text-black font-bold text-lg">
-                {formatCurrency(product.price)}
-              </div>
-              <span className="text-xs text-gray-500 font-normal ml-1">
-                / unidad
-              </span>
+              <div className="text-black font-bold text-lg">{formatCurrency(product.price)}</div>
+              <span className="text-xs text-gray-500 font-normal ml-1"> / unidad</span>
+
               {product.originalPrice && (
-                <span className="text-xs text-gray-500 line-through ml-2">
-                  {formatCurrency(product.originalPrice)}
-                </span>
+                <span className="text-xs text-gray-500 line-through ml-2">{formatCurrency(product.originalPrice)}</span>
               )}
             </div>
 
-            {/* Package Selection */}
-            <div className="mt-3 space-y-3">
-              <Select 
-                onValueChange={handlePackageSelect} 
-                value={selectedPackage.value}
+            {/* Barras de ahorro - en disposición 4 por fila */}
+            <div className="mt-2 grid grid-cols-4 gap-1 text-xs">
+              {packageTypes.map((pkg) => {
+                const unitPrice = calculateUnitPrice(pkg)
+                const unitSavings = calculateUnitSavings(pkg)
+                const isActive = activePackages.includes(pkg.value)
+                const isSelected = selectedPackage.value === pkg.value
+                return (
+                  <motion.div
+                    key={pkg.value}
+                    onClick={() => handlePackageSelect(pkg.value)}
+                    className={`cursor-pointer rounded p-1 transition-all relative ${
+                      isActive
+                        ? isSelected
+                          ? "bg-[#004a93] text-white ring-1 ring-[#004a93]"
+                          : "bg-[#ccdcf0] text-[#004a93] font-medium"
+                        : "bg-gray-100 text-black hover:bg-gray-200"
+                    }`}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <div className="flex flex-col items-center text-center">
+                      <div className="font-medium text-[0.7rem]">{pkg.label.split(" ")[0]}</div>
+                      <div className="text-[0.6rem] opacity-80">x{pkg.factor}</div>
+                      <div
+                        className={`${isSelected ? "text-white" : isActive ? "text-black" : "text-black"} font-semibold text-[0.7rem] mt-1`}
+                      >
+                        {formatCurrency(unitPrice)}
+                      </div>
+                    </div>
+                    {isSelected && (
+                      <motion.div
+                        className="absolute -top-1 -right-1 bg-white rounded-full p-0.5 shadow-sm"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                      >
+                        <Check className="h-3 w-3 text-[#004a93]" />
+                      </motion.div>
+                    )}
+
+                    {/* Mostrar ahorro por unidad para barras activas - mostrar solo en tarjetas seleccionadas */}
+                    <AnimatePresence>
+                      {isSelected && unitSavings > 0 && (
+                        <motion.div
+                          className="absolute bottom-0 left-0 right-0 text-[0.65rem] text-white bg-blue-600/90 rounded-b-sm px-1 text-center"
+                          initial={{ opacity: 0, y: 5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          Ahorra {formatCurrency(unitSavings)}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                )
+              })}
+            </div>
+
+            {/* Resumen de ahorro total */}
+            {calculateTotalSavings() > 0 && (
+              <motion.div
+                className="mt-2 text-xs bg-blue-50 text-[#004a93] p-1 rounded flex items-center justify-between shadow-sm"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.1 }}
               >
-                <SelectTrigger className="w-full border-[#004a93] shadow-sm">
+                <span>Ahorro total:</span>
+                <span className="font-bold">
+                  {formatCurrency(calculateTotalSavings())} ({savingsPercentage()}%)
+                </span>
+              </motion.div>
+            )}
+
+            <div className="mt-2 space-y-2">
+              <Select onValueChange={handlePackageSelect} value={selectedPackage.value}>
+                <SelectTrigger className="w-full h-8 text-xs border-[#004a93] shadow-sm">
                   <SelectValue placeholder="Seleccionar empaque" />
                 </SelectTrigger>
                 <SelectContent>
-                  {PACKAGE_TYPES.map((pkg) => (
+                  {packageTypes.map((pkg) => (
                     <SelectItem key={pkg.value} value={pkg.value}>
                       {pkg.label}
                     </SelectItem>
@@ -446,15 +406,15 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
                 </SelectContent>
               </Select>
 
-              {/* Quantity Control */}
+              {/* Control de cantidad */}
               <div className="flex items-center">
-                <span className="text-sm mr-2">Cantidad:</span>
+                <span className="text-xs mr-2">Cantidad:</span>
                 <div className="flex border rounded shadow-sm">
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 rounded-none border-r hover:bg-gray-100"
+                    className="h-7 w-7 rounded-none border-r"
                     onClick={() => handleQuantityChange(quantity - 1)}
                     disabled={quantity <= 1}
                   >
@@ -465,36 +425,31 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
                     min="1"
                     value={quantity}
                     onChange={(e) => handleQuantityChange(Number.parseInt(e.target.value) || 1)}
-                    className="w-12 h-8 text-center border-none"
+                    className="w-10 h-7 text-center border-none text-xs"
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 rounded-none border-l hover:bg-gray-100"
+                    className="h-7 w-7 rounded-none border-l"
                     onClick={() => handleQuantityChange(quantity + 1)}
                   >
                     <Plus className="h-3 w-3" />
                   </Button>
                 </div>
-              </div>
 
-              {/* Total Price */}
-              <div className="flex items-center justify-between">
-                <div className="text-sm">
-                  Total: <span className="font-bold text-black">
-                    {formatCurrency(calculatePrice())}
-                  </span>
+                <div className="text-xs ml-2">
+                  Total: <span className="font-bold text-black">{formatCurrency(calculatePrice())}</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Add to Cart Button */}
-          <div className="mt-4 pt-3 border-t">
+          {/* Botón fijo en la parte inferior */}
+          <div className="mt-3 pt-2 border-t">
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Button
-                className="w-full bg-[#004a93] hover:bg-[#0071bc] transition-all h-10 shadow-md"
+                className="w-full bg-[#004a93] hover:bg-[#0071bc] transition-all h-9 shadow-md text-sm"
                 onClick={handleAddToCart}
                 disabled={isAdding || product.stockStatus === "out_of_stock"}
               >
@@ -505,14 +460,14 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <Check className="h-4 w-4 mr-2" />
+                    <Check className="h-4 w-4 mr-1" />
                     Agregado
                   </motion.div>
                 ) : product.stockStatus === "out_of_stock" ? (
                   "Agotado"
                 ) : (
                   <div className="flex items-center">
-                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    <ShoppingCart className="h-4 w-4 mr-1" />
                     Agregar al carrito
                   </div>
                 )}
@@ -522,12 +477,8 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
         </CardContent>
       </Card>
 
-      {/* Product Details Modal */}
-      <ProductDetailsModal 
-        isOpen={isDetailsModalOpen} 
-        onClose={() => setIsDetailsModalOpen(false)} 
-        product={product} 
-      />
+      {/* Modal de detalles del producto */}
+      <ProductDetailsModal isOpen={isDetailsModalOpen} onClose={() => setIsDetailsModalOpen(false)} product={product} />
     </>
   )
 }
