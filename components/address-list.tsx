@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { MapPin, Edit, Trash2 } from "lucide-react"
 
 interface AddressListProps {
-  onSelect: () => void
+  onSelect: (addressId: string) => void
   onAddNew: () => void
 }
 
@@ -34,12 +34,17 @@ export function AddressList({ onSelect, onAddNew }: AddressListProps) {
     },
   ]
 
+  const handleAddressSelect = (addressId: string) => {
+    setSelectedAddress(addressId)
+    onSelect(addressId)
+  }
+
   return (
     <div className="p-4">
       <h3 className="font-medium mb-4">Direcciones guardadas a este usuario</h3>
 
       {savedAddresses.length > 0 ? (
-        <RadioGroup value={selectedAddress} onValueChange={setSelectedAddress}>
+        <RadioGroup value={selectedAddress} onValueChange={handleAddressSelect} className="space-y-4">
           <div className="space-y-3">
             {savedAddresses.map((address) => (
               <div
@@ -83,7 +88,7 @@ export function AddressList({ onSelect, onAddNew }: AddressListProps) {
           Agregar nueva dirección
         </Button>
 
-        <Button onClick={onSelect} disabled={!selectedAddress}>
+        <Button onClick={() => onSelect(selectedAddress)} disabled={!selectedAddress}>
           Continuar con esta dirección
         </Button>
       </div>

@@ -29,6 +29,7 @@ export default function CheckoutPage() {
   const [deliveryType, setDeliveryType] = useState("route")
   const [isNequiModalOpen, setIsNequiModalOpen] = useState(false)
   const [isBancolombiaModalOpen, setIsBancolombiaModalOpen] = useState(false)
+  const [selectedAddress, setSelectedAddress] = useState<string | null>(null)
 
   const subtotal = cart.reduce((total, item) => total + item.price * item.quantity, 0)
   const shipping = shippingMethod === "express" ? 15 : shippingMethod === "scheduled" ? 10 : 0
@@ -43,6 +44,34 @@ export default function CheckoutPage() {
     setTimeout(() => {
       setIsElectronicInvoiceEnabled(false)
     }, 500)
+  }
+
+  // Handle shipping method selection
+  const handleShippingMethodSelect = (method: string) => {
+    setShippingMethod(method)
+    if (method) {
+      setActiveTab("address")
+    }
+  }
+
+  // Handle address selection
+  const handleAddressSelect = (addressId: string) => {
+    setSelectedAddress(addressId)
+    setActiveTab("payment")
+  }
+
+  // Handle payment method selection
+  const handlePaymentMethodSelect = (method: string) => {
+    setPaymentMethod(method)
+  }
+
+  // Handle complete purchase
+  const handleCompletePurchase = () => {
+    if (!paymentMethod) {
+      return
+    }
+    // Here you would typically handle the payment processing
+    console.log("Processing payment with method:", paymentMethod)
   }
 
   return (
@@ -67,13 +96,13 @@ export default function CheckoutPage() {
                   Envío
                 </span>
               </TabsTrigger>
-              <TabsTrigger value="address" disabled={activeTab !== "address" && activeTab !== "payment"}>
+              <TabsTrigger value="address" disabled={!shippingMethod}>
                 <span className="flex items-center">
                   <span className="bg-muted rounded-full w-6 h-6 inline-flex items-center justify-center mr-2">2</span>
                   Dirección
                 </span>
               </TabsTrigger>
-              <TabsTrigger value="payment" disabled={activeTab !== "payment"}>
+              <TabsTrigger value="payment" disabled={!selectedAddress}>
                 <span className="flex items-center">
                   <span className="bg-muted rounded-full w-6 h-6 inline-flex items-center justify-center mr-2">3</span>
                   Pago
@@ -102,11 +131,14 @@ export default function CheckoutPage() {
                     onCancel={() => setShowAddressForm(false)}
                     onSave={() => {
                       setShowAddressForm(false)
-                      setActiveTab("shipping")
+                      setActiveTab("payment")
                     }}
                   />
                 ) : (
-                  <AddressList onSelect={() => setActiveTab("shipping")} onAddNew={() => setShowAddressForm(true)} />
+                  <AddressList 
+                    onSelect={handleAddressSelect} 
+                    onAddNew={() => setShowAddressForm(true)} 
+                  />
                 )}
               </div>
             </TabsContent>
@@ -117,7 +149,11 @@ export default function CheckoutPage() {
                   <h2>Método de envío</h2>
                 </div>
                 <div className="p-4">
-                  <RadioGroup value={shippingMethod} onValueChange={setShippingMethod} className="space-y-4">
+                  <RadioGroup 
+                    value={shippingMethod} 
+                    onValueChange={handleShippingMethodSelect} 
+                    className="space-y-4"
+                  >
                     <div className="flex items-center space-x-2 border p-4 rounded-md">
                       <RadioGroupItem value="scheduled" id="scheduled" />
                       <Label htmlFor="scheduled" className="flex-1 cursor-pointer">
@@ -213,7 +249,10 @@ export default function CheckoutPage() {
                   </div>
 
                   <div className="mt-6 flex justify-end">
-                    <Button onClick={() => setActiveTab("address")} disabled={!shippingMethod}>
+                    <Button 
+                      onClick={() => setActiveTab("address")} 
+                      disabled={!shippingMethod}
+                    >
                       Continuar a dirección <ChevronRight className="ml-2 h-4 w-4" />
                     </Button>
                   </div>
@@ -227,7 +266,11 @@ export default function CheckoutPage() {
                   <h2>Información de pago</h2>
                 </div>
                 <div className="p-4">
-                  <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-4">
+                  <RadioGroup 
+                    value={paymentMethod} 
+                    onValueChange={handlePaymentMethodSelect} 
+                    className="space-y-4"
+                  >
                     {(isRouteCustomer || deliveryType === "route") && (
                       <div className="flex items-center space-x-2 border p-4 rounded-md">
                         <RadioGroupItem value="cash_on_delivery" id="cash_on_delivery" />
@@ -322,7 +365,12 @@ export default function CheckoutPage() {
                   )}
 
                   <div className="mt-6 flex justify-end">
-                    <Button disabled={!paymentMethod}>Completar compra</Button>
+                    <Button 
+                      onClick={handleCompletePurchase}
+                      disabled={!paymentMethod}
+                    >
+                      Completar compra
+                    </Button>
                   </div>
                 </div>
               </div>
