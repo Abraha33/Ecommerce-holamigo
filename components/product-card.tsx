@@ -28,6 +28,7 @@ interface Product {
   slug: string
   price: number
   image: string
+  images?: string[]
   isNew?: boolean
   isSale?: boolean
   originalPrice?: number
@@ -71,10 +72,18 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
   const { addToWishlist, isInWishlist, removeFromWishlist } = useWishlist()
   const [isInList, setIsInList] = useState(false)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
+  
+  // Estado para el slider de imágenes
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const images = product.images || [product.image]
 
   // Verificar si el producto está en la lista de deseos
   useEffect(() => {
-    setIsInList(isInWishlist(product.id))
+    const checkWishlistStatus = () => {
+      const inList = isInWishlist(product.id)
+      setIsInList(inList)
+    }
+    checkWishlistStatus()
   }, [isInWishlist, product.id])
 
   // Manejar la adición/eliminación de la lista de deseos
@@ -101,6 +110,19 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
       })
     }
     setIsInList(!isInList)
+  }
+
+  // Manejar navegación del slider
+  const handlePrevImage = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+    setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))
+  }
+
+  const handleNextImage = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+    setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))
   }
 
   // Dentro del componente ProductCard, añadir estas opciones de unidades
@@ -281,12 +303,11 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
           viewMode === "list" ? "flex-row" : "h-full"
         } border border-gray-200 bg-white rounded-lg m-1`}
       >
-        {/* Imagen y badges */}
         <div
           className={`relative ${viewMode === "list" ? "w-40 min-w-40" : "pt-[100%]"} group m-2 overflow-hidden rounded-lg`}
         >
           <Image 
-            src={product.image || "/placeholder.svg"} 
+            src={images[currentImageIndex] || "/placeholder.svg"} 
             alt={product.name} 
             fill 
             className="object-contain p-1 transition-transform duration-300 group-hover:scale-105" 
@@ -338,31 +359,47 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
             </div>
 
             {/* Gallery Navigation */}
-            <div className="flex justify-between px-2 pb-2">
-              <Button
-                variant="secondary"
-                size="icon"
-                className="h-8 w-8 rounded-full bg-white/70 hover:bg-white/90 shadow-sm transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  e.preventDefault()
-                }}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="secondary"
-                size="icon"
-                className="h-8 w-8 rounded-full bg-white/70 hover:bg-white/90 shadow-sm transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  e.preventDefault()
-                }}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+            {images.length > 1 && (
+              <div className="flex justify-between px-2 pb-2">
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="h-8 w-8 rounded-full bg-white/70 hover:bg-white/90 shadow-sm transition-colors"
+                  onClick={handlePrevImage}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="h-8 w-8 rounded-full bg-white/70 hover:bg-white/90 shadow-sm transition-colors"
+                  onClick={handleNextImage}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
+
+          {/* Image Dots */}
+          {images.length > 1 && (
+            <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-1">
+              {images.map((_, index) => (
+                <button
+                  key={index}
+                  className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                    currentImageIndex === index ? "bg-white" : "bg-white/50"
+                  }`}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    e.preventDefault()
+                    setCurrentImageIndex(index)
+                  }}
+                  aria-label={`Ir a imagen ${index + 1}`}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Product Content */}
