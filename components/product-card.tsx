@@ -304,7 +304,7 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
         } border border-gray-200 bg-white rounded-lg m-1`}
       >
         <div
-          className={`relative ${viewMode === "list" ? "w-40 min-w-40" : "pt-[100%]"} group m-2 overflow-hidden rounded-lg`}
+          className={`relative ${viewMode === "list" ? "w-[45%] min-w-[45%]" : "pt-[100%]"} group m-2 overflow-hidden rounded-lg`}
         >
           <Image 
             src={images[currentImageIndex] || "/placeholder.svg"} 
