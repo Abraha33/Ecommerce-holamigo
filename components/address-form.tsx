@@ -15,28 +15,6 @@ interface AddressFormProps {
 
 export function AddressForm({ onCancel, onSave }: AddressFormProps) {
   const [deliveryType, setDeliveryType] = useState("delivery")
-  const [formData, setFormData] = useState({
-    name: "",
-    address: "",
-    city: "",
-    phone: "",
-    isDefault: false
-  })
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Here you would typically save the address to your backend
-    // For now, we'll just call onSave
-    onSave()
-  }
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }))
-  }
 
   const departments = [
     "Amazonas",
@@ -82,7 +60,7 @@ export function AddressForm({ onCancel, onSave }: AddressFormProps) {
   const addressTypes = ["Casa", "Apartamento", "Oficina", "Otro"]
 
   return (
-    <form onSubmit={handleSubmit} className="p-4">
+    <div className="p-4">
       <div className="mb-6">
         <RadioGroup defaultValue={deliveryType} onValueChange={setDeliveryType} className="flex gap-4">
           <div
@@ -106,79 +84,109 @@ export function AddressForm({ onCancel, onSave }: AddressFormProps) {
         </RadioGroup>
       </div>
 
-      {deliveryType === "delivery" && (
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="name">Nombre completo</Label>
-            <Input
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              required
-              className="mt-1"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="address">Dirección</Label>
-            <Input
-              id="address"
-              name="address"
-              value={formData.address}
-              onChange={handleInputChange}
-              required
-              className="mt-1"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="city">Ciudad</Label>
-            <Input
-              id="city"
-              name="city"
-              value={formData.city}
-              onChange={handleInputChange}
-              required
-              className="mt-1"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="phone">Teléfono</Label>
-            <Input
-              id="phone"
-              name="phone"
-              type="tel"
-              value={formData.phone}
-              onChange={handleInputChange}
-              required
-              className="mt-1"
-            />
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="isDefault"
-              name="isDefault"
-              checked={formData.isDefault}
-              onChange={handleInputChange}
-              className="rounded border-gray-300"
-            />
-            <Label htmlFor="isDefault">Establecer como dirección predeterminada</Label>
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div>
+          <Label htmlFor="department">Departamento</Label>
+          <Select>
+            <SelectTrigger id="department">
+              <SelectValue placeholder="Seleccionar" />
+            </SelectTrigger>
+            <SelectContent>
+              {departments.map((dept) => (
+                <SelectItem key={dept} value={dept}>
+                  {dept}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-      )}
 
-      <div className="flex justify-end space-x-4 mt-6">
-        <Button type="button" variant="outline" onClick={onCancel}>
-          Cancelar
-        </Button>
-        <Button type="submit">
-          Guardar dirección
-        </Button>
+        <div>
+          <Label htmlFor="city">Municipio o ciudad capital</Label>
+          <Select>
+            <SelectTrigger id="city">
+              <SelectValue placeholder="Seleccionar" />
+            </SelectTrigger>
+            <SelectContent>
+              {cities["Cundinamarca"]?.map((city) => (
+                <SelectItem key={city} value={city}>
+                  {city}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
-    </form>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div>
+          <Label htmlFor="address-type">Tipo de dirección</Label>
+          <Select>
+            <SelectTrigger id="address-type">
+              <SelectValue placeholder="Seleccionar" />
+            </SelectTrigger>
+            <SelectContent>
+              {addressTypes.map((type) => (
+                <SelectItem key={type} value={type}>
+                  {type}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="md:col-span-2">
+          <Label htmlFor="street">Calle</Label>
+          <Input id="street" placeholder="Ej: Calle 10" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-4 mb-4">
+        <div>
+          <Label htmlFor="number-from">Número</Label>
+          <Input id="number-from" placeholder="Ej: 18" />
+        </div>
+
+        <div className="flex items-end justify-center">
+          <span className="mb-3">-</span>
+        </div>
+
+        <div>
+          <Label htmlFor="number-to" className="invisible">
+            Hasta
+          </Label>
+          <Input id="number-to" placeholder="Ej: 24" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div>
+          <Label htmlFor="neighborhood">Barrio</Label>
+          <Input id="neighborhood" placeholder="Ej: Laureles" />
+        </div>
+
+        <div>
+          <Label htmlFor="apartment">Piso / Apartamento / Torre / Edificio</Label>
+          <Input id="apartment" placeholder="Ej: Torre 4 Apto 345" />
+        </div>
+      </div>
+
+      <div className="mb-4">
+        <Label htmlFor="recipient">Persona que recibe</Label>
+        <Input id="recipient" placeholder="Nombre completo" />
+      </div>
+
+      <div className="mb-4">
+        <Label htmlFor="address-notes">Dirección</Label>
+        <Input id="address-notes" placeholder="-- Instrucciones adicionales --" />
+      </div>
+
+      <div className="flex justify-end gap-3 mt-6">
+        <Button variant="outline" onClick={onCancel}>
+          Volver
+        </Button>
+        <Button onClick={onSave}>Confirmar</Button>
+      </div>
+    </div>
   )
 }

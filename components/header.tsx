@@ -15,7 +15,6 @@ import {
   User,
   MapPin,
   Bell,
-  Printer,
   ChevronDown,
   Home,
   Truck,
@@ -153,13 +152,13 @@ export default function Header() {
               <SearchBar placeholder="Buscar en envax.com" darkMode={true} />
             </div>
 
-            {/* Icono de búsqueda para móvil - siempre visible */}
-            <Button variant="ghost" size="icon" className="text-white md:hidden" onClick={toggleSearch}>
-              <Search className="h-6 w-6" />
-            </Button>
-
             {/* Iconos de usuario - estilo Éxito */}
             <div className="flex items-center gap-4 ml-auto">
+              {/* Icono de búsqueda para móvil - ahora junto a los demás iconos */}
+              <Button variant="ghost" size="icon" className="text-white md:hidden" onClick={toggleSearch}>
+                <Search className="h-6 w-6" />
+              </Button>
+
               {/* Ubicación - estilo Éxito con Popover */}
               <Popover>
                 <PopoverTrigger asChild>
@@ -221,7 +220,7 @@ export default function Header() {
                 </PopoverContent>
               </Popover>
 
-              {/* Iconos reorganizados: cuenta (extremo derecho), notificaciones, carrito, PrintFlow Manager */}
+              {/* Iconos reorganizados: cuenta (extremo derecho), notificaciones, carrito */}
               <Link href="/account" className="flex flex-col items-center">
                 <User className="h-6 w-6" />
                 <span className="text-xs hidden md:block">Mi cuenta</span>
@@ -247,17 +246,6 @@ export default function Header() {
                   )}
                 </div>
                 <span className="text-xs hidden md:block">Carrito</span>
-              </Link>
-
-              {/* Icono de PrintFlow Manager */}
-              <Link href="/dashboard" className="flex flex-col items-center">
-                <div className="relative">
-                  <Printer className="h-6 w-6" />
-                  <span className="absolute -top-1 -right-1 bg-[#ffff1a] text-black text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    5
-                  </span>
-                </div>
-                <span className="text-xs hidden md:block">PrintFlow Manager</span>
               </Link>
             </div>
           </div>

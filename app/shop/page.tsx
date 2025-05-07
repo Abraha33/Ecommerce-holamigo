@@ -6,7 +6,7 @@ import { Breadcrumb } from "@/components/breadcrumb"
 import { products } from "@/lib/products"
 import { ProductCard } from "@/components/product-card"
 import { Button } from "@/components/ui/button"
-import { LayoutGrid, Grid, List, SlidersHorizontal } from "lucide-react"
+import { List, SlidersHorizontal } from "lucide-react"
 import { CategoryBanner } from "@/components/category-banner"
 import { BrandCircles } from "@/components/brand-circles"
 
@@ -34,10 +34,6 @@ export default function ProductsPage() {
   // Determinar el número de columnas según el modo de vista
   const getGridCols = () => {
     switch (viewMode) {
-      case "grid-2":
-        return "grid-cols-1 sm:grid-cols-2"
-      case "grid-3":
-        return "grid-cols-1 xs:grid-cols-2 lg:grid-cols-3"
       case "grid-6":
         return "grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6"
       case "list":
@@ -101,22 +97,6 @@ export default function ProductsPage() {
                 <List className="h-4 w-4" />
               </Button>
               <Button
-                variant={viewMode === "grid-2" ? "default" : "outline"}
-                size="icon"
-                onClick={() => setViewMode("grid-2")}
-                className="h-9 w-9 rounded-full bg-[#004a93] text-white hover:bg-[#003a73]"
-              >
-                <Grid className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === "grid-3" ? "default" : "outline"}
-                size="icon"
-                onClick={() => setViewMode("grid-3")}
-                className="h-9 w-9 rounded-full bg-[#004a93] text-white hover:bg-[#003a73]"
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </Button>
-              <Button
                 variant={viewMode === "grid-6" ? "default" : "outline"}
                 size="icon"
                 onClick={() => setViewMode("grid-6")}
@@ -156,9 +136,9 @@ export default function ProductsPage() {
           </div>
         </div>
 
-        {/* Productos - ahora con 5 columnas */}
+        {/* Productos */}
         <div className="w-full">
-          <div className={`grid ${getGridCols()} gap-4 sm:gap-4 gap-2`}>
+          <div className={`grid ${getGridCols()} gap-4`}>
             {sortedProducts.map((product) => (
               <ProductCard key={product.id} product={product} viewMode={viewMode === "list" ? "list" : "grid"} />
             ))}
