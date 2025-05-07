@@ -96,9 +96,9 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
     },
     {
       id: "3",
-      name: "Bulto x 40 paq de 10 uds.",
+      name: "Bulto x 20 paq de 10 uds.",
       unitPrice: product.price * 0.85,
-      factor: 40,
+      factor: 20,
     },
   ]
 
@@ -254,12 +254,15 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
   return (
     <>
       <Card
-        className={`overflow-hidden transition-all shadow-lg hover:shadow-2xl flex flex-col ${
-          viewMode === "list" ? "flex-row" : "h-full"
+        className={`overflow-hidden transition-all shadow-lg hover:shadow-xl flex ${
+          viewMode === "list" ? "flex-row h-auto" : "flex-col h-full"
         } border border-gray-200 bg-white rounded-lg m-0`}
       >
+        {/* Modificar el contenedor de la imagen para el modo lista */}
         <div
-          className={`relative ${viewMode === "list" ? "w-40 min-w-40" : "pt-[100%]"} group overflow-hidden rounded-lg`}
+          className={`relative ${
+            viewMode === "list" ? "w-[120px] h-[120px] min-w-[120px]" : "pt-[100%]"
+          } group overflow-hidden`}
         >
           <Image
             src={product.image || "/placeholder.svg"}
@@ -278,7 +281,9 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
             <Button
               variant="ghost"
               size="icon"
-              className={`rounded-full ${isInList ? "text-red-500 hover:text-red-600" : "text-gray-500 hover:text-gray-700"} bg-white/80 shadow-sm`}
+              className={`rounded-full ${
+                isInList ? "text-red-500 hover:text-red-600" : "text-gray-500 hover:text-gray-700"
+              } bg-white/80 shadow-sm`}
               onClick={handleToggleWishlist}
               aria-label={isInList ? "Eliminar de lista de deseos" : "Añadir a lista de deseos"}
             >
@@ -302,80 +307,137 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
           </div>
         </div>
 
-        <CardContent className={`p-3 flex-grow flex flex-col ${viewMode === "list" ? "flex-1" : ""}`}>
-          <div className="hover:text-[#004a93] cursor-pointer" onClick={openDetailsModal}>
-            <h3 className="font-medium text-sm line-clamp-2 mb-2">{product.name}</h3>
-          </div>
-
-          <div className="flex-grow">
-            <div className="flex items-baseline">
-              <div className="text-black font-bold text-lg">{formatCurrency(product.price)}</div>
-              <span className="text-xs text-gray-500 font-normal ml-1"> / unidad</span>
-
-              {product.originalPrice && (
-                <span className="text-xs text-gray-500 line-through ml-2">{formatCurrency(product.originalPrice)}</span>
-              )}
+        {/* Modificar el contenido para el modo lista */}
+        <CardContent className={`p-4 flex-grow flex flex-col ${viewMode === "list" ? "justify-between" : ""}`}>
+          <div className={viewMode === "list" ? "flex flex-col h-full" : ""}>
+            <div className="hover:text-[#004a93] cursor-pointer" onClick={openDetailsModal}>
+              <h3 className={`font-medium ${viewMode === "list" ? "text-base" : "text-sm"} line-clamp-2 mb-1`}>
+                {product.name}
+              </h3>
+              {viewMode === "list" && <p className="text-xs text-gray-500">Cod.{product.id}</p>}
             </div>
 
-            {/* Barras de ahorro - en disposición 4 por fila */}
-            <div className="mt-2 grid grid-cols-4 gap-1 text-xs">
-              {packageTypes.map((pkg) => {
-                const unitPrice = calculateUnitPrice(pkg)
-                const unitSavings = calculateUnitSavings(pkg)
-                const isActive = activePackages.includes(pkg.value)
-                const isSelected = selectedPackage.value === pkg.value
-                return (
-                  <motion.div
-                    key={pkg.value}
-                    onClick={() => handlePackageSelect(pkg.value)}
-                    className={`cursor-pointer rounded p-1 transition-all relative ${
-                      isActive
-                        ? isSelected
-                          ? "bg-[#004a93] text-white ring-1 ring-[#004a93]"
-                          : "bg-[#ccdcf0] text-[#004a93] font-medium"
-                        : "bg-gray-100 text-black hover:bg-gray-200"
-                    }`}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <div className="flex flex-col items-center text-center">
-                      <div className="font-medium text-[0.7rem]">{pkg.label.split(" ")[0]}</div>
-                      <div className="text-[0.6rem] opacity-80">x{pkg.factor}</div>
-                      <div
-                        className={`${isSelected ? "text-white" : isActive ? "text-black" : "text-black"} font-semibold text-[0.7rem] mt-1`}
-                      >
-                        {formatCurrency(unitPrice)}
-                      </div>
-                    </div>
-                    {isSelected && (
-                      <motion.div
-                        className="absolute -top-1 -right-1 bg-white rounded-full p-0.5 shadow-sm"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ type: "spring", stiffness: 500, damping: 15 }}
-                      >
-                        <Check className="h-3 w-3 text-[#004a93]" />
-                      </motion.div>
-                    )}
+            <div className="flex-grow">
+              <div className="flex items-baseline">
+                <div className="text-black font-bold text-lg">{formatCurrency(product.price)}</div>
+                <span className="text-xs text-gray-500 font-normal ml-1"> / unidad</span>
 
-                    {/* Mostrar ahorro por unidad para barras activas - mostrar solo en tarjetas seleccionadas */}
-                    <AnimatePresence>
-                      {isSelected && unitSavings > 0 && (
-                        <motion.div
-                          className="absolute bottom-0 left-0 right-0 text-[0.65rem] text-white bg-blue-600/90 rounded-b-sm px-1 text-center"
-                          initial={{ opacity: 0, y: 5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ duration: 0.2 }}
+                {product.originalPrice && (
+                  <span className="text-xs text-gray-500 line-through ml-2">
+                    {formatCurrency(product.originalPrice)}
+                  </span>
+                )}
+              </div>
+
+            {viewMode === "list" ? (
+              <div className="mt-2">
+                <div className="text-sm mb-2">
+                  Cantidad:
+                  <Input
+                    type="number"
+                    min="1"
+                    value={quantity}
+                    onChange={(e) => handleQuantityChange(Number.parseInt(e.target.value) || 1)}
+                    className="w-16 h-7 text-center border ml-2 text-xs inline-block"
+                  />
+                </div>
+                <table className="w-full text-sm border">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="p-1 text-left text-xs">Nombre UM</th>
+                      <th className="p-1 text-right text-xs">Val. UN</th>
+                      <th className="p-1 text-right text-xs">Val. UM</th>
+                      <th className="p-1 text-right text-xs">Factor</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {unitOptions.map((option) => (
+                      <tr key={option.id} className="border-t border-gray-200">
+                        <td className="p-1">
+                          <div className="flex items-center">
+                            <input
+                              type="radio"
+                              id={`option-${product.id}-${option.id}`}
+                              name={`unitOption-${product.id}`}
+                              value={option.id}
+                              checked={selectedPackage.value === packageTypes[Number.parseInt(option.id) - 1]?.value}
+                              onChange={() => handlePackageSelect(packageTypes[Number.parseInt(option.id) - 1]?.value)}
+                              className="mr-1"
+                            />
+                            <label htmlFor={`option-${product.id}-${option.id}`} className="cursor-pointer text-xs">
+                              {option.name}
+                            </label>
+                          </div>
+                        </td>
+                        <td className="p-1 text-right text-xs">{formatCurrency(option.unitPrice)}</td>
+                        <td className="p-1 text-right text-xs">{formatCurrency(option.unitPrice * option.factor)}</td>
+                        <td className="p-1 text-right text-xs">{option.factor}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              // Keep the existing barras de ahorro for grid mode
+              <div className="mt-2 grid grid-cols-4 gap-1 text-xs">
+                {packageTypes.map((pkg) => {
+                  const unitPrice = calculateUnitPrice(pkg)
+                  const unitSavings = calculateUnitSavings(pkg)
+                  const isActive = activePackages.includes(pkg.value)
+                  const isSelected = selectedPackage.value === pkg.value
+                  return (
+                    <motion.div
+                      key={pkg.value}
+                      onClick={() => handlePackageSelect(pkg.value)}
+                      className={`cursor-pointer rounded p-1 transition-all relative ${
+                        isActive
+                          ? isSelected
+                            ? "bg-[#004a93] text-white ring-1 ring-[#004a93]"
+                            : "bg-[#ccdcf0] text-[#004a93] font-medium"
+                          : "bg-gray-100 text-black hover:bg-gray-200"
+                      }`}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <div className="flex flex-col items-center text-center">
+                        <div className="font-medium text-[0.7rem]">{pkg.label.split(" ")[0]}</div>
+                        <div className="text-[0.6rem] opacity-80">x{pkg.factor}</div>
+                        <div
+                          className={`${isSelected ? "text-white" : isActive ? "text-black" : "text-black"} font-semibold text-[0.7rem] mt-1`}
                         >
-                          Ahorra {formatCurrency(unitSavings)}
+                          {formatCurrency(unitPrice)}
+                        </div>
+                      </div>
+                      {isSelected && (
+                        <motion.div
+                          className="absolute -top-1 -right-1 bg-white rounded-full p-0.5 shadow-sm"
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                        >
+                          <Check className="h-3 w-3 text-[#004a93]" />
                         </motion.div>
                       )}
-                    </AnimatePresence>
-                  </motion.div>
-                )
-              })}
-            </div>
+
+                      {/* Mostrar ahorro por unidad para barras activas - mostrar solo en tarjetas seleccionadas */}
+                      <AnimatePresence>
+                        {isSelected && unitSavings > 0 && (
+                          <motion.div
+                            className="absolute bottom-0 left-0 right-0 text-[0.65rem] text-white bg-blue-600/90 rounded-b-sm px-1 text-center"
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            Ahorra {formatCurrency(unitSavings)}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+                  )
+                })}
+              </div>
+            )}
 
             {/* Resumen de ahorro total */}
             {calculateTotalSavings() > 0 && (
@@ -392,64 +454,68 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
               </motion.div>
             )}
 
-            <div className="mt-2 space-y-2">
-              <Select onValueChange={handlePackageSelect} value={selectedPackage.value}>
-                <SelectTrigger className="w-full h-8 text-xs border-[#004a93] shadow-sm">
-                  <SelectValue placeholder="Seleccionar empaque" />
-                </SelectTrigger>
-                <SelectContent>
-                  {packageTypes.map((pkg) => (
-                    <SelectItem key={pkg.value} value={pkg.value}>
-                      {pkg.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            {!viewMode || viewMode === "grid" ? (
+              <div className="mt-2 space-y-2">
+                <Select onValueChange={handlePackageSelect} value={selectedPackage.value}>
+                  <SelectTrigger className="w-full h-8 text-xs border-[#004a93] shadow-sm">
+                    <SelectValue placeholder="Seleccionar empaque" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {packageTypes.map((pkg) => (
+                      <SelectItem key={pkg.value} value={pkg.value}>
+                        {pkg.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-              {/* Control de cantidad */}
-              <div className="flex items-center">
-                <span className="text-xs mr-2">Cantidad:</span>
-                <div className="flex border rounded shadow-sm">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 rounded-none border-r"
-                    onClick={() => handleQuantityChange(quantity - 1)}
-                    disabled={quantity <= 1}
-                  >
-                    <Minus className="h-3 w-3" />
-                  </Button>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={quantity}
-                    onChange={(e) => handleQuantityChange(Number.parseInt(e.target.value) || 1)}
-                    className="w-10 h-7 text-center border-none text-xs"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 rounded-none border-l"
-                    onClick={() => handleQuantityChange(quantity + 1)}
-                  >
-                    <Plus className="h-3 w-3" />
-                  </Button>
-                </div>
+                {/* Control de cantidad */}
+                <div className="flex items-center">
+                  <span className="text-xs mr-2">Cantidad:</span>
+                  <div className="flex border rounded shadow-sm">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 rounded-none border-r"
+                      onClick={() => handleQuantityChange(quantity - 1)}
+                      disabled={quantity <= 1}
+                    >
+                      <Minus className="h-3 w-3" />
+                    </Button>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={quantity}
+                      onChange={(e) => handleQuantityChange(Number.parseInt(e.target.value) || 1)}
+                      className="w-10 h-7 text-center border-none text-xs"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 rounded-none border-l"
+                      onClick={() => handleQuantityChange(quantity + 1)}
+                    >
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                  </div>
 
-                <div className="text-xs ml-2">
-                  Total: <span className="font-bold text-black">{formatCurrency(calculatePrice())}</span>
+                  <div className="text-xs ml-2">
+                    Total: <span className="font-bold text-black">{formatCurrency(calculatePrice())}</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : null}
           </div>
 
           {/* Botón fijo en la parte inferior */}
-          <div className="mt-3 pt-2 border-t">
+          <div className={`${viewMode === "list" ? "mt-2" : "mt-3 pt-2 border-t"}`}>
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Button
-                className="w-full bg-[#004a93] hover:bg-[#0071bc] transition-all h-9 shadow-md text-sm"
+                className={`w-full bg-[#004a93] hover:bg-[#0071bc] transition-all h-9 shadow-md text-sm ${
+                  viewMode === "list" ? "text-xs" : ""
+                }`}
                 onClick={handleAddToCart}
                 disabled={isAdding || product.stockStatus === "out_of_stock"}
               >
@@ -466,9 +532,18 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
                 ) : product.stockStatus === "out_of_stock" ? (
                   "Agotado"
                 ) : (
-                  <div className="flex items-center">
-                    <ShoppingCart className="h-4 w-4 mr-1" />
-                    Agregar al carrito
+                  <div className="flex items-center justify-center">
+                    {viewMode === "list" ? (
+                      <>
+                        <ShoppingCart className="h-4 w-4 mr-1" />
+                        AGREGAR
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart className="h-4 w-4 mr-1" />
+                        Agregar al carrito
+                      </>
+                    )}
                   </div>
                 )}
               </Button>
