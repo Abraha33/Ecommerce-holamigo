@@ -136,9 +136,9 @@ export default function ProductsPage() {
           </div>
         </div>
 
-        {/* Productos */}
+        {/* Productos - ahora con 5 columnas */}
         <div className="w-full">
-          <div className={`grid ${getGridCols()} gap-4`}>
+          <div className={`grid ${getGridCols()} gap-4 sm:gap-4 gap-2`}>
             {sortedProducts.map((product) => (
               <ProductCard key={product.id} product={product} viewMode={viewMode === "list" ? "list" : "grid"} />
             ))}
