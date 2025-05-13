@@ -1,104 +1,138 @@
 "use client"
 
 import type React from "react"
-
 import { createContext, useContext, useState, useEffect } from "react"
-
-interface CartItem {
-  id: number
-  name: string
-  price: number
-  image: string
-  quantity: number
-  variant: string
-  addedAt?: number
-}
+import {
+  getCartItems,
+  addToCart,
+  updateCartItemQuantity,
+  removeFromCart,
+  clearCart,
+  calculateSubtotal,
+  type CartItem,
+} from "@/lib/cart-service"
 
 interface CartContextType {
-  cart: CartItem[]
-  addItem: (item: CartItem) => void
-  updateQuantity: (id: number, quantity: number) => void
-  removeItem: (id: number) => void
-  clearCart: () => void
-  lastAddedItem: number | null
+  items: CartItem[]
+  addItem: (item: CartItem) => Promise<void>
+  removeItem: (itemId: string) => Promise<void>
+  updateQuantity: (itemId: string, quantity: number) => Promise<void>
+  clearItems: () => Promise<void>
+  subtotal: number
+  isLoading: boolean
 }
 
-const CartContext = createContext<CartContextType>({
-  cart: [],
-  addItem: () => {},
-  updateQuantity: () => {},
-  removeItem: () => {},
-  clearCart: () => {},
-  lastAddedItem: null,
-})
+const CartContext = createContext<CartContextType | undefined>(undefined)
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [cart, setCart] = useState<CartItem[]>([])
-  const [lastAddedItem, setLastAddedItem] = useState<number | null>(null)
+  const [items, setItems] = useState<CartItem[]>([])
+  const [subtotal, setSubtotal] = useState(0)
+  const [isLoading, setIsLoading] = useState(true)
 
-  // Load cart from localStorage on initial render
+  // Cargar los items del carrito al iniciar
   useEffect(() => {
-    const savedCart = localStorage.getItem("cart")
-    if (savedCart) {
+    const loadCartItems = async () => {
       try {
-        setCart(JSON.parse(savedCart))
+        setIsLoading(true)
+        const cartItems = await getCartItems()
+        setItems(cartItems)
+        setSubtotal(calculateSubtotal(cartItems))
       } catch (error) {
-        console.error("Failed to parse cart from localStorage:", error)
+        console.error("Error al cargar el carrito:", error)
+      } finally {
+        setIsLoading(false)
       }
     }
+
+    loadCartItems()
   }, [])
 
-  // Save cart to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(cart))
-  }, [cart])
+  // Añadir un item al carrito
+  const addItem = async (item: CartItem) => {
+    try {
+      setIsLoading(true)
+      await addToCart(item)
 
-  const addItem = (item: CartItem) => {
-    setCart((prevCart) => {
-      const existingItemIndex = prevCart.findIndex(
-        (cartItem) => cartItem.id === item.id && cartItem.variant === item.variant,
-      )
-
-      // Add timestamp to track when item was added
-      const itemWithTimestamp = {
-        ...item,
-        addedAt: Date.now(),
-      }
-
-      if (existingItemIndex !== -1) {
-        // Item already exists, update quantity
-        const updatedCart = [...prevCart]
-        updatedCart[existingItemIndex].quantity += item.quantity
-        updatedCart[existingItemIndex].addedAt = Date.now() // Update timestamp
-        return updatedCart
-      } else {
-        // Item doesn't exist, add it
-        return [...prevCart, itemWithTimestamp]
-      }
-    })
-
-    // Set the last added item for highlighting
-    setLastAddedItem(item.id)
-    setTimeout(() => setLastAddedItem(null), 2000)
+      // Recargar los items para reflejar los cambios
+      const updatedItems = await getCartItems()
+      setItems(updatedItems)
+      setSubtotal(calculateSubtotal(updatedItems))
+    } catch (error) {
+      console.error("Error al añadir item al carrito:", error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const updateQuantity = (id: number, quantity: number) => {
-    setCart((prevCart) => prevCart.map((item) => (item.id === id ? { ...item, quantity } : item)))
+  // Eliminar un item del carrito
+  const removeItem = async (itemId: string) => {
+    try {
+      setIsLoading(true)
+      await removeFromCart(itemId)
+
+      // Actualizar el estado local
+      const updatedItems = items.filter((item) => item.id !== itemId)
+      setItems(updatedItems)
+      setSubtotal(calculateSubtotal(updatedItems))
+    } catch (error) {
+      console.error("Error al eliminar item del carrito:", error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const removeItem = (id: number) => {
-    setCart((prevCart) => prevCart.filter((item) => item.id !== id))
+  // Actualizar la cantidad de un item
+  const updateQuantity = async (itemId: string, quantity: number) => {
+    try {
+      setIsLoading(true)
+      await updateCartItemQuantity(itemId, quantity)
+
+      // Actualizar el estado local
+      const updatedItems = items.map((item) => (item.id === itemId ? { ...item, quantity } : item))
+      setItems(updatedItems)
+      setSubtotal(calculateSubtotal(updatedItems))
+    } catch (error) {
+      console.error("Error al actualizar cantidad:", error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const clearCart = () => {
-    setCart([])
+  // Vaciar el carrito
+  const clearItems = async () => {
+    try {
+      setIsLoading(true)
+      await clearCart()
+      setItems([])
+      setSubtotal(0)
+    } catch (error) {
+      console.error("Error al vaciar el carrito:", error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
-    <CartContext.Provider value={{ cart, addItem, updateQuantity, removeItem, clearCart, lastAddedItem }}>
+    <CartContext.Provider
+      value={{
+        items,
+        addItem,
+        removeItem,
+        updateQuantity,
+        clearItems,
+        subtotal,
+        isLoading,
+      }}
+    >
       {children}
     </CartContext.Provider>
   )
 }
 
-export const useCart = () => useContext(CartContext)
+export function useCart() {
+  const context = useContext(CartContext)
+  if (context === undefined) {
+    throw new Error("useCart must be used within a CartProvider")
+  }
+  return context
+}

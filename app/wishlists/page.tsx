@@ -1,419 +1,268 @@
 "use client"
 
-import { Label } from "@/components/ui/label"
-
-import { useState, useEffect } from "react"
-import Link from "next/link"
-import Image from "next/image"
-import { Breadcrumb } from "@/components/breadcrumb"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useState } from "react"
+import { useWishlist } from "@/components/wishlist-provider"
 import { formatCurrency } from "@/lib/utils"
-import { useCart } from "@/components/cart-provider"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/components/ui/use-toast"
-import { ArrowLeft, ShoppingCart, Edit, Trash2, Plus, ListPlus, Check, X } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { useCart } from "@/components/cart-provider"
+import { WishlistEditDialog } from "@/components/wishlist-edit-dialog"
+import { useRouter } from "next/navigation"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { ArrowLeft, ShoppingBag, Pencil, Plus } from "lucide-react"
 
 export default function WishlistsPage() {
-  const [activeTab, setActiveTab] = useState("lists")
-  const { addItem } = useCart()
+  const router = useRouter()
+  const { wishlists, activeWishlistId, setActiveWishlistId, clearWishlist, deleteWishlist } = useWishlist()
+  const { addItem, addItems } = useCart()
   const { toast } = useToast()
-  const [editingList, setEditingList] = useState<string | null>(null)
-  const [newListName, setNewListName] = useState("")
-  const [isCreatingList, setIsCreatingList] = useState(false)
-  const [lists, setLists] = useState([
-    {
-      id: "1",
-      name: "Compra negocio",
-      date: "2023/02/28",
-      productCount: 12,
-      products: [
-        {
-          id: 1,
-          name: "Toallas de cocina ECONO",
-          price: 5.99,
-          image: "/stack-of-paper-towels.png",
-          quantity: 1,
-        },
-        {
-          id: 2,
-          name: "PAPEL ALUMINIO CAJA 11/0",
-          price: 3.49,
-          image: "/crumpled-foil-texture.png",
-          quantity: 1,
-        },
-        {
-          id: 3,
-          name: "Vasos 7-Oz ECONO (38728)",
-          price: 2.99,
-          image: "/colorful-plastic-cups.png",
-          quantity: 1,
-        },
-      ],
-    },
-    {
-      id: "2",
-      name: "Productos favoritos",
-      date: "2023/03/15",
-      productCount: 5,
-      products: [
-        {
-          id: 4,
-          name: "Eco Storage Container",
-          price: 24.99,
-          image: "/sustainable-kitchen-storage.png",
-          quantity: 1,
-        },
-        {
-          id: 5,
-          name: "Biodegradable Plant Pots",
-          price: 12.99,
-          image: "/seedling-nursery.png",
-          quantity: 1,
-        },
-      ],
-    },
-  ])
 
-  const handleAddAllToCart = (listId) => {
-    const list = lists.find((l) => l.id === listId)
-    if (!list) return
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [editingWishlistId, setEditingWishlistId] = useState<string | undefined>()
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [deletingWishlistId, setDeletingWishlistId] = useState<string | undefined>()
+  const [showProducts, setShowProducts] = useState<Record<string, boolean>>({})
 
-    list.products.forEach((product) => {
-      addItem({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: product.image,
-        quantity: product.quantity,
-        variant: "Default",
-      })
-    })
-
-    toast({
-      title: "Productos agregados",
-      description: `${list.products.length} productos de "${list.name}" agregados al carrito.`,
-    })
+  const handleCreateWishlist = () => {
+    setEditingWishlistId(undefined)
+    setEditDialogOpen(true)
   }
 
-  const handleDeleteList = (listId) => {
-    setLists(lists.filter((list) => list.id !== listId))
-    toast({
-      title: "Lista eliminada",
-      description: "La lista ha sido eliminada correctamente.",
-    })
+  const handleEditWishlist = (id: string) => {
+    setEditingWishlistId(id)
+    setEditDialogOpen(true)
   }
 
-  // Función corregida para guardar el nombre de la lista
-  const handleSaveListName = () => {
-    if (editingList && newListName.trim()) {
-      setLists(lists.map((list) => (list.id === editingList ? { ...list, name: newListName } : list)))
-      setEditingList(null)
+  const confirmDeleteWishlist = (id: string) => {
+    setDeletingWishlistId(id)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleDeleteWishlist = () => {
+    if (deletingWishlistId) {
+      deleteWishlist(deletingWishlistId)
       toast({
-        title: "Lista actualizada",
-        description: "El nombre de la lista ha sido actualizado.",
+        title: "Lista eliminada",
+        description: "La lista ha sido eliminada correctamente",
       })
-    } else {
+      setDeleteDialogOpen(false)
+    }
+  }
+
+  const toggleShowProducts = (wishlistId: string) => {
+    setShowProducts((prev) => ({
+      ...prev,
+      [wishlistId]: !prev[wishlistId],
+    }))
+  }
+
+  const addWishlistToCart = (wishlistId: string) => {
+    const wishlist = wishlists.find((w) => w.id === wishlistId)
+    if (wishlist && wishlist.items.length > 0) {
+      addItems(
+        wishlist.items.map((item) => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          image: item.image,
+          quantity: 1,
+        })),
+      )
       toast({
-        title: "Error",
-        description: "El nombre de la lista no puede estar vacío.",
-        variant: "destructive",
+        title: "Productos agregados al carrito",
+        description: `${wishlist.items.length} productos de "${wishlist.name}" han sido agregados al carrito`,
       })
     }
   }
 
-  // Función para cancelar la edición
-  const handleCancelEdit = () => {
-    setEditingList(null)
-    setNewListName("")
+  const navigateToShop = () => {
+    router.push("/shop")
   }
 
-  const handleCreateNewList = () => {
-    if (newListName.trim()) {
-      const newList = {
-        id: `list-${Date.now()}`,
-        name: newListName,
-        date: new Date().toISOString().split("T")[0].replace(/-/g, "/"),
-        productCount: 0,
-        products: [],
-      }
-      setLists([...lists, newList])
-      setIsCreatingList(false)
-      setNewListName("")
-      toast({
-        title: "Lista creada",
-        description: `La lista "${newListName}" ha sido creada correctamente.`,
-      })
-    }
-  }
-
-  const handleRemoveProduct = (listId, productId) => {
-    setLists(
-      lists.map((list) => {
-        if (list.id === listId) {
-          const updatedProducts = list.products.filter((product) => product.id !== productId)
-          return {
-            ...list,
-            products: updatedProducts,
-            productCount: updatedProducts.length,
-          }
-        }
-        return list
-      }),
-    )
-    toast({
-      title: "Producto eliminado",
-      description: "El producto ha sido eliminado de la lista.",
+  const formatDate = (date: Date) => {
+    return new Date(date).toLocaleDateString("es-ES", {
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
     })
   }
-
-  // Guardar listas en localStorage
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("wishlists", JSON.stringify(lists))
-    }
-  }, [lists])
-
-  // Cargar listas desde localStorage
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedLists = localStorage.getItem("wishlists")
-      if (savedLists) {
-        try {
-          setLists(JSON.parse(savedLists))
-        } catch (e) {
-          console.error("Error parsing wishlists from localStorage", e)
-        }
-      }
-    }
-  }, [])
 
   return (
-    <div className="container px-4 py-8 mx-auto max-w-6xl">
-      <Breadcrumb
-        items={[
-          { label: "Home", href: "/" },
-          { label: "Listas de mercado", href: "/wishlists", active: true },
-        ]}
-      />
-
-      <div className="flex items-center gap-2 mt-6 mb-8">
-        <Link href="/" className="text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" />
+    <div className="container mx-auto px-4 py-6">
+      <div className="mb-6">
+        <Link href="/shop" className="flex items-center text-gray-600 hover:text-gray-900">
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          <span>Regreso</span>
         </Link>
-        <h1 className="text-2xl font-bold">Lista de mercado</h1>
       </div>
 
-      <p className="text-muted-foreground mb-6">
-        Lista de mercado, reusable para volver a comprar, click agregar al carrito
-      </p>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full max-w-4xl mx-auto mb-8 grid grid-cols-1 sm:grid-cols-3 gap-2">
-          <TabsTrigger value="frequent" className="flex-1 p-3 border border-gray-200 rounded-md shadow-sm">
-            <div className="flex items-center justify-center gap-2">
-              <ShoppingCart className="h-4 w-4" />
-              <span className="font-medium">Mis productos frecuentes</span>
-            </div>
+      <Tabs defaultValue="lists" className="w-full">
+        <TabsList className="w-full grid grid-cols-2 gap-4 mb-8 bg-transparent">
+          <TabsTrigger
+            value="frequent"
+            className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-full border border-gray-200 py-3"
+          >
+            <ShoppingBag className="h-4 w-4 mr-2" />
+            Mis productos frecuentes
           </TabsTrigger>
-          <TabsTrigger value="lists" className="flex-1 p-3 border border-gray-200 rounded-md shadow-sm">
-            <div className="flex items-center justify-center gap-2">
-              <ListPlus className="h-4 w-4" />
-              <span className="font-medium">Mis listas de mercado</span>
-            </div>
-          </TabsTrigger>
-          <TabsTrigger value="wishlist" className="flex-1 p-3 border border-gray-200 rounded-md shadow-sm">
-            <div className="flex items-center justify-center gap-2">
-              <ShoppingCart className="h-4 w-4" />
-              <span className="font-medium">Lista de deseos</span>
-            </div>
+          <TabsTrigger
+            value="lists"
+            className="data-[state=active]:bg-amber-50 data-[state=active]:shadow-sm rounded-full border border-amber-200 py-3"
+          >
+            <ShoppingBag className="h-4 w-4 mr-2" />
+            Mis lista de mercado
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="frequent" className="overflow-hidden">
-          <div className="text-center py-12 border rounded-lg shadow-sm bg-white">
-            <ShoppingCart className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">Aquí aparecerán tus productos comprados con frecuencia.</p>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="lists" className="overflow-hidden">
+        <TabsContent value="lists" className="mt-0">
           <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-2">Mis listas de mercado</h2>
-            <p className="text-muted-foreground text-sm">
-              Recuerda que puedes crear nuevas listas, adicionarlas o eliminarlas y de hacer tu próxima compra más
-              rápido. Ten presente que debes seleccionar tu método de envío, antes de agregar más productos a tus
-              listas.
-            </p>
-
-            <div className="flex justify-end mt-4">
+            <h1 className="text-2xl font-bold mb-4">Mis listas de mercado</h1>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+              <p className="text-gray-700">
+                Recuerda que puedes crear nuevas listas, actualizarlas o eliminarlas y así hacer tu próxima compra más
+                rápido.
+                <span className="font-medium">
+                  {" "}
+                  Ten presente que debes seleccionar tu método de envío, antes de agregar más productos a tus listas.
+                </span>
+              </p>
               <Button
-                onClick={() => {
-                  setNewListName("")
-                  setIsCreatingList(true)
-                }}
-                className="bg-green-600 hover:bg-green-700"
+                onClick={handleCreateWishlist}
+                className="whitespace-nowrap bg-orange-400 hover:bg-orange-500 text-white"
               >
-                <Plus className="h-4 w-4 mr-2" />
                 Crear nueva lista
               </Button>
             </div>
           </div>
 
-          {lists.map((list) => (
-            <div
-              key={list.id}
-              className="border rounded-lg mb-8 shadow-sm hover:shadow-md transition-shadow duration-200 bg-white"
-            >
-              <div className="p-4 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-50">
-                <div>
-                  {editingList === list.id ? (
-                    <div className="flex items-center gap-2">
-                      <Input
-                        value={newListName}
-                        onChange={(e) => setNewListName(e.target.value)}
-                        className="w-48"
-                        autoFocus
-                      />
-                      <Button size="sm" variant="ghost" onClick={handleSaveListName} className="text-green-600">
-                        <Check className="h-4 w-4" />
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={handleCancelEdit} className="text-red-600">
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold">{list.name}</h3>
+          {wishlists.length === 0 ? (
+            <Card className="p-8 text-center">
+              <p className="text-gray-500 mb-4">No tienes listas de mercado creadas</p>
+              <Button onClick={handleCreateWishlist} className="bg-orange-400 hover:bg-orange-500 text-white">
+                Crear mi primera lista
+              </Button>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {wishlists.map((wishlist) => (
+                <div key={wishlist.id} className="border border-gray-200 rounded-lg p-6">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+                    <div>
+                      <div className="flex items-center">
+                        <h3 className="text-xl font-semibold">{wishlist.name}</h3>
+                        <button
+                          onClick={() => handleEditWishlist(wishlist.id)}
+                          className="ml-2 text-gray-500 hover:text-gray-700"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <div className="text-gray-500 text-sm mt-1">
+                        ({wishlist.items.length} de 200 productos) {formatDate(wishlist.updatedAt)}
+                      </div>
                       <button
-                        className="text-muted-foreground hover:text-foreground"
-                        onClick={() => {
-                          setEditingList(list.id)
-                          setNewListName(list.name)
-                        }}
+                        onClick={() => confirmDeleteWishlist(wishlist.id)}
+                        className="text-gray-500 hover:text-red-500 text-sm mt-1 underline"
                       >
-                        <Edit className="h-4 w-4" />
+                        Eliminar lista
                       </button>
+                    </div>
+
+                    <div className="flex flex-col md:flex-row gap-2 mt-4 md:mt-0 w-full md:w-auto">
+                      <button
+                        onClick={() => toggleShowProducts(wishlist.id)}
+                        className="text-blue-600 hover:text-blue-800 flex items-center justify-center md:justify-start"
+                      >
+                        Ver productos <Plus className="h-4 w-4 ml-1" />
+                      </button>
+                      <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto mt-2 md:mt-0">
+                        <Button
+                          onClick={() => addWishlistToCart(wishlist.id)}
+                          className="bg-orange-400 hover:bg-orange-500 text-white w-full md:w-auto"
+                          disabled={wishlist.items.length === 0}
+                        >
+                          Añadir al Carrito
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="border-gray-300 text-gray-700 w-full md:w-auto"
+                          onClick={navigateToShop}
+                        >
+                          Agregar productos
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {showProducts[wishlist.id] && wishlist.items.length > 0 && (
+                    <div className="mt-4 border-t pt-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {wishlist.items.map((item) => (
+                          <div key={item.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded">
+                            <div className="w-12 h-12 bg-gray-100 rounded flex-shrink-0 relative overflow-hidden">
+                              {item.image && (
+                                <img
+                                  src={item.image || "/placeholder.svg"}
+                                  alt={item.name}
+                                  className="object-cover w-full h-full"
+                                />
+                              )}
+                            </div>
+                            <div className="flex-grow">
+                              <div className="text-sm font-medium line-clamp-1">{item.name}</div>
+                              <div className="text-sm text-gray-500">{formatCurrency(item.price)}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
-                  <div className="text-sm text-muted-foreground">
-                    ({list.productCount} productos) {list.date}
-                  </div>
                 </div>
-
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => handleDeleteList(list.id)}>
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Eliminar lista
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => handleAddAllToCart(list.id)}
-                    className="bg-orange-500 hover:bg-orange-600"
-                    disabled={list.products.length === 0}
-                  >
-                    Añadir al carrito
-                  </Button>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-2 p-2">
-                <Button variant="outline" size="sm" className="bg-white hover:bg-gray-50">
-                  <ShoppingCart className="h-3 w-3 mr-1" /> Ver productos
-                </Button>
-                <Button variant="outline" size="sm" className="bg-white hover:bg-gray-50">
-                  <Plus className="h-3 w-3 mr-1" /> Agregar productos
-                </Button>
-              </div>
-
-              {list.products.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 p-4 border-t overflow-x-auto">
-                  {list.products.map((product) => (
-                    <div
-                      key={product.id}
-                      className="border rounded-md p-3 relative group bg-white hover:shadow-md transition-all duration-200"
-                    >
-                      <button
-                        className="absolute top-1 right-1 bg-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
-                        onClick={() => handleRemoveProduct(list.id, product.id)}
-                      >
-                        <Trash2 className="h-3 w-3 text-red-500" />
-                      </button>
-                      <div className="relative h-24 mb-2">
-                        <Image
-                          src={product.image || "/placeholder.svg"}
-                          alt={product.name}
-                          fill
-                          className="object-contain"
-                        />
-                      </div>
-                      <h4 className="text-xs font-medium line-clamp-2 mb-1">{product.name}</h4>
-                      <div className="text-xs font-semibold">{formatCurrency(product.price)}</div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="p-8 text-center border-t bg-gray-50">
-                  <p className="text-muted-foreground">Esta lista no tiene productos.</p>
-                </div>
-              )}
-            </div>
-          ))}
-
-          {lists.length === 0 && (
-            <div className="text-center py-12 border rounded-lg shadow-sm bg-white">
-              <ListPlus className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground mb-4">No tienes listas de mercado creadas.</p>
-              <Button
-                onClick={() => {
-                  setNewListName("")
-                  setIsCreatingList(true)
-                }}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Crear nueva lista
-              </Button>
+              ))}
             </div>
           )}
         </TabsContent>
 
-        <TabsContent value="wishlist" className="overflow-hidden">
-          <div className="text-center py-12 border rounded-lg shadow-sm bg-white">
-            <ShoppingCart className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">Aquí aparecerán tus productos guardados en la lista de deseos.</p>
+        <TabsContent value="frequent">
+          <div className="p-8 text-center border rounded-lg">
+            <p className="text-gray-500">Aquí aparecerán tus productos comprados con frecuencia</p>
           </div>
         </TabsContent>
       </Tabs>
 
-      {/* Dialog for creating new list */}
-      <Dialog open={isCreatingList} onOpenChange={setIsCreatingList}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Crear nueva lista</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <Label htmlFor="new-list-name">Nombre de la lista</Label>
-            <Input
-              id="new-list-name"
-              value={newListName}
-              onChange={(e) => setNewListName(e.target.value)}
-              placeholder="Ej: Mi lista de compras"
-              className="mt-2"
-              autoFocus
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreatingList(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleCreateNewList} disabled={!newListName.trim()}>
-              Crear lista
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Edit Wishlist Dialog */}
+      <WishlistEditDialog open={editDialogOpen} onOpenChange={setEditDialogOpen} wishlistId={editingWishlistId} />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se eliminará permanentemente esta lista y todos los productos guardados
+              en ella.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteWishlist} className="bg-red-500 hover:bg-red-600">
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

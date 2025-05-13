@@ -1,333 +1,272 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
-import { Breadcrumb } from "@/components/breadcrumb"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useCart } from "@/components/cart-provider"
 import { formatCurrency } from "@/lib/utils"
-import { ChevronRight, Plus, AlertTriangle, Truck, Store, Clock, CreditCard, Wallet, BanknoteIcon } from "lucide-react"
-import { AddressForm } from "@/components/address-form"
-import { AddressList } from "@/components/address-list"
+import { Plus, Store, BikeIcon, Calendar, Minus, X, Truck } from "lucide-react"
 import { WhatsAppSupport } from "@/components/whatsapp-support"
-import { Switch } from "@/components/ui/switch"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { PaymentQRModal } from "@/components/payment-qr-modal"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { DeliveryOptionsModal } from "@/components/delivery-options-modal"
+import { AddressSelectionModal } from "@/components/address-selection-modal"
+import { ScheduleDeliveryModal } from "@/components/schedule-delivery-modal"
+import { getDeliveryTime, getDeliveryTitle } from "@/lib/delivery-service"
+import { useDelivery } from "@/contexts/delivery-context"
+import { useCart } from "@/components/cart-provider"
+import type { Address } from "@/lib/delivery-service"
 
 export default function CheckoutPage() {
-  const { cart } = useCart()
-  const [activeTab, setActiveTab] = useState("shipping")
-  const [showAddressForm, setShowAddressForm] = useState(false)
-  const [shippingMethod, setShippingMethod] = useState("")
-  const [requiresInvoice, setRequiresInvoice] = useState(false)
-  const [isElectronicInvoiceEnabled, setIsElectronicInvoiceEnabled] = useState(false)
-  const [paymentMethod, setPaymentMethod] = useState("")
-  const [deliveryType, setDeliveryType] = useState("route")
-  const [isNequiModalOpen, setIsNequiModalOpen] = useState(false)
-  const [isBancolombiaModalOpen, setIsBancolombiaModalOpen] = useState(false)
+  const router = useRouter()
+  const { items, updateQuantity, removeItem, subtotal, isLoading } = useCart()
+  const {
+    deliveryInfo,
+    isDeliveryModalOpen,
+    openDeliveryModal,
+    closeDeliveryModal,
+    isScheduleModalOpen,
+    openScheduleModal,
+    closeScheduleModal,
+    updateSelectedAddress,
+  } = useDelivery()
 
-  const subtotal = cart.reduce((total, item) => total + item.price * item.quantity, 0)
-  const shipping = shippingMethod === "express" ? 15 : shippingMethod === "scheduled" ? 10 : 0
-  const total = subtotal + shipping
+  const [selectedAddress, setSelectedAddress] = useState("")
+  const [couponCode, setCouponCode] = useState("")
+  const [receiveMethod, setReceiveMethod] = useState("personal")
+  const [isAddressFormOpen, setIsAddressFormOpen] = useState(false)
 
-  // Verificar si el cliente es de ruta (simulado)
-  const isRouteCustomer = true
+  // Añade esto después de las declaraciones de estado
+  const [addresses, setAddresses] = useState<Address[]>([
+    { id: "1", name: "Casa", address: "KR 35 A # 45 - 25 CABECERA DEL LLANO", city: "Bucaramanga", isDefault: true },
+    { id: "2", name: "Oficina", address: "CL 56 # 23 - 15 APTO 502", city: "Bucaramanga", isDefault: false },
+  ])
 
-  // Verificar si el cliente está habilitado para facturador electrónico (simulado)
-  const checkElectronicInvoiceStatus = () => {
-    // Simulación de verificación - en producción, esto sería una llamada a API
-    setTimeout(() => {
-      setIsElectronicInvoiceEnabled(false)
-    }, 500)
+  // Modificar el componente CheckoutPage para sincronizar correctamente con el contexto de entrega
+
+  // 1. Modificar el useEffect para sincronizar con el contexto de entrega
+  // Reemplazar el useEffect existente con este
+  useEffect(() => {
+    // Cargar el método de recepción guardado
+    const savedReceiveMethod = localStorage.getItem("receiveMethod")
+    if (savedReceiveMethod) {
+      setReceiveMethod(savedReceiveMethod)
+    }
+
+    // Sincronizar con el contexto de entrega
+    if (deliveryInfo) {
+      // Si hay una dirección seleccionada en el contexto, usarla
+      if (deliveryInfo.selectedAddress) {
+        setSelectedAddress(deliveryInfo.selectedAddress.address)
+      } else if (addresses.length > 0) {
+        // Si no hay dirección seleccionada pero hay direcciones disponibles, usar la primera
+        setSelectedAddress(addresses[0].address)
+        updateSelectedAddress(addresses[0])
+      }
+
+      // Actualizar la UI basada en la información de entrega
+      if (deliveryInfo.type === "programada" && deliveryInfo.schedule) {
+        // Si hay programación, actualizar la UI
+        console.log("Entrega programada:", deliveryInfo.schedule)
+      } else if (deliveryInfo.type === "tienda" && deliveryInfo.storeAddress) {
+        // Si hay dirección de tienda, actualizar la UI
+        console.log("Recogida en tienda:", deliveryInfo.storeAddress)
+      }
+    }
+  }, [deliveryInfo, addresses, updateSelectedAddress])
+
+  // 2. Modificar la función getDeliveryIcon para ser más robusta
+  const getDeliveryIcon = () => {
+    if (!deliveryInfo) return <BikeIcon className="text-blue-600 mr-2" />
+
+    switch (deliveryInfo.type) {
+      case "sprint":
+        return <BikeIcon className="text-blue-600 mr-2" />
+      case "programada":
+        return <Calendar className="text-blue-600 mr-2" />
+      case "tienda":
+        return <Store className="text-blue-600 mr-2" />
+      default:
+        return <BikeIcon className="text-blue-600 mr-2" />
+    }
   }
+
+  const handleQuantityChange = (itemId: string | undefined, newQuantity: number) => {
+    if (!itemId || newQuantity < 1) return
+    updateQuantity(itemId, newQuantity)
+  }
+
+  const handleRemoveItem = (itemId: string | undefined) => {
+    if (!itemId) return
+    removeItem(itemId)
+  }
+
+  const handleApplyCoupon = () => {
+    // Esta función se implementaría en un contexto real para aplicar un cupón
+    console.log(`Aplicar cupón: ${couponCode}`)
+  }
+
+  const handleGoToPayment = () => {
+    // Guardar el método de recepción en localStorage o en un estado global
+    localStorage.setItem("receiveMethod", receiveMethod)
+    router.push("/checkout/payment")
+  }
+
+  if (isLoading) {
+    return (
+      <div className="container px-4 py-8 mx-auto">
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      </div>
+    )
+  }
+
+  const discount = 2000
+  const shipping = 3500
+  const total = subtotal + shipping - discount
 
   return (
     <div className="container px-4 py-8 mx-auto">
-      <Breadcrumb
-        items={[
-          { label: "Home", href: "/" },
-          { label: "Cart", href: "/cart" },
-          { label: "Checkout", href: "/checkout", active: true },
-        ]}
-      />
-
-      <h1 className="text-3xl font-bold mt-6 mb-8">Checkout</h1>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="shipping">
-                <span className="flex items-center">
-                  <span className="bg-muted rounded-full w-6 h-6 inline-flex items-center justify-center mr-2">1</span>
-                  Envío
-                </span>
-              </TabsTrigger>
-              <TabsTrigger value="address" disabled={activeTab !== "address" && activeTab !== "payment"}>
-                <span className="flex items-center">
-                  <span className="bg-muted rounded-full w-6 h-6 inline-flex items-center justify-center mr-2">2</span>
-                  Dirección
-                </span>
-              </TabsTrigger>
-              <TabsTrigger value="payment" disabled={activeTab !== "payment"}>
-                <span className="flex items-center">
-                  <span className="bg-muted rounded-full w-6 h-6 inline-flex items-center justify-center mr-2">3</span>
-                  Pago
-                </span>
-              </TabsTrigger>
-            </TabsList>
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold">
+              Carrito <span className="text-gray-500 text-lg">({items.length} productos)</span>
+            </h1>
+            <Button variant="ghost" className="text-red-500 hover:text-red-700 hover:bg-red-50">
+              Vaciar carrito
+            </Button>
+          </div>
 
-            <TabsContent value="address" className="mt-6">
-              <div className="border rounded-lg overflow-hidden">
-                <div className="bg-muted px-4 py-3 font-medium flex justify-between items-center">
-                  <h2>Agregar dirección:</h2>
-                  {!showAddressForm && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowAddressForm(true)}
-                      className="flex items-center"
-                    >
-                      <Plus className="h-4 w-4 mr-1" /> Crear tu dirección
-                    </Button>
-                  )}
-                </div>
+          <div className="mb-6">
+            <Select
+              value={selectedAddress}
+              onValueChange={(value) => {
+                setSelectedAddress(value)
+                // Buscar la dirección completa y actualizar el contexto
+                const addressObj = addresses.find((addr) => addr.address === value)
+                if (addressObj) {
+                  // Actualizar la dirección seleccionada en el contexto
+                  updateSelectedAddress(addressObj)
+                }
+              }}
+            >
+              <SelectTrigger className="w-full bg-blue-500 text-white py-2 px-4 rounded">
+                <SelectValue placeholder="Selecciona una dirección" />
+              </SelectTrigger>
+              <SelectContent>
+                {addresses.map((addr) => (
+                  <SelectItem key={addr.id} value={addr.address}>
+                    {addr.address}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button variant="link" className="text-blue-500 mt-2 p-0 h-auto" onClick={() => setIsAddressFormOpen(true)}>
+              Editar dirección
+            </Button>
+          </div>
 
-                {showAddressForm ? (
-                  <AddressForm
-                    onCancel={() => setShowAddressForm(false)}
-                    onSave={() => {
-                      setShowAddressForm(false)
-                      setActiveTab("shipping")
-                    }}
-                  />
-                ) : (
-                  <AddressList onSelect={() => setActiveTab("shipping")} onAddNew={() => setShowAddressForm(true)} />
-                )}
-              </div>
-            </TabsContent>
+          <div className="bg-blue-50 p-4 rounded-lg mb-6">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center">
+                <div className="flex items-center mr-4">
+                  {getDeliveryIcon()}
+                  <div>
+                    <div className="font-medium">{getDeliveryTitle(deliveryInfo.type)}</div>
+                    <div className="text-sm text-gray-500">Entregado por: Holamigo</div>
+                    <div className="text-sm text-gray-500">{items.length} productos</div>
 
-            <TabsContent value="shipping" className="mt-6">
-              <div className="border rounded-lg overflow-hidden">
-                <div className="bg-muted px-4 py-3 font-medium">
-                  <h2>Método de envío</h2>
-                </div>
-                <div className="p-4">
-                  <RadioGroup value={shippingMethod} onValueChange={setShippingMethod} className="space-y-4">
-                    <div className="flex items-center space-x-2 border p-4 rounded-md">
-                      <RadioGroupItem value="scheduled" id="scheduled" />
-                      <Label htmlFor="scheduled" className="flex-1 cursor-pointer">
-                        <div className="font-medium flex items-center">
-                          <Truck className="mr-2 h-5 w-5 text-primary" />
-                          Programar envío
-                        </div>
-
-                        {shippingMethod === "scheduled" && (
-                          <div className="mt-3 pl-7">
-                            <RadioGroup value={deliveryType} onValueChange={setDeliveryType} className="space-y-3">
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="route" id="route" />
-                                <Label htmlFor="route">
-                                  <div className="font-medium">Entrega por ruta</div>
-                                  <div className="text-sm text-muted-foreground">
-                                    Entrega programada por camión de la empresa
-                                  </div>
-                                </Label>
-                              </div>
-
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="home" id="home" />
-                                <Label htmlFor="home">
-                                  <div className="font-medium">Entrega a domicilio</div>
-                                  <div className="text-sm text-muted-foreground">Entrega programada a su dirección</div>
-                                </Label>
-                              </div>
-                            </RadioGroup>
-                          </div>
-                        )}
-
-                        <div className="text-sm text-muted-foreground mt-1">Entrega programada en 1-3 días hábiles</div>
-                      </Label>
-                      <div className="font-medium">{formatCurrency(10)}</div>
-                    </div>
-
-                    <div className="flex items-center space-x-2 border p-4 rounded-md">
-                      <RadioGroupItem value="express" id="express" />
-                      <Label htmlFor="express" className="flex-1 cursor-pointer">
-                        <div className="font-medium flex items-center">
-                          <Clock className="mr-2 h-5 w-5 text-primary" />
-                          Domicilio express
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          Envío inmediato (costo cubierto por el cliente)
-                        </div>
-                      </Label>
-                      <div className="font-medium">{formatCurrency(15)}</div>
-                    </div>
-
-                    <div className="flex items-center space-x-2 border p-4 rounded-md">
-                      <RadioGroupItem value="pickup" id="pickup" />
-                      <Label htmlFor="pickup" className="flex-1 cursor-pointer">
-                        <div className="font-medium flex items-center">
-                          <Store className="mr-2 h-5 w-5 text-primary" />
-                          Retiro en tienda
-                        </div>
-                        <div className="text-sm text-muted-foreground">Disponible para recoger en 24 horas</div>
-                      </Label>
-                      <div className="font-medium">Gratis</div>
-                    </div>
-                  </RadioGroup>
-
-                  <div className="mt-6 border-t pt-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center space-x-2">
-                        <Label htmlFor="invoice" className="font-medium">
-                          ¿Requiere factura electrónica?
-                        </Label>
-                        <Switch
-                          id="invoice"
-                          checked={requiresInvoice}
-                          onCheckedChange={(checked) => {
-                            setRequiresInvoice(checked)
-                            if (checked) {
-                              checkElectronicInvoiceStatus()
-                            }
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    {requiresInvoice && !isElectronicInvoiceEnabled && (
-                      <Alert variant="destructive" className="mt-2">
-                        <AlertTriangle className="h-4 w-4" />
-                        <AlertTitle>Advertencia</AlertTitle>
-                        <AlertDescription>
-                          Su cuenta no está habilitada para facturación electrónica. Por favor, contacte con soporte.
-                        </AlertDescription>
-                      </Alert>
-                    )}
-                  </div>
-
-                  <div className="mt-6 flex justify-end">
-                    <Button onClick={() => setActiveTab("address")} disabled={!shippingMethod}>
-                      Continuar a dirección <ChevronRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="payment" className="mt-6">
-              <div className="border rounded-lg overflow-hidden">
-                <div className="bg-muted px-4 py-3 font-medium">
-                  <h2>Información de pago</h2>
-                </div>
-                <div className="p-4">
-                  <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-4">
-                    {(isRouteCustomer || deliveryType === "route") && (
-                      <div className="flex items-center space-x-2 border p-4 rounded-md">
-                        <RadioGroupItem value="cash_on_delivery" id="cash_on_delivery" />
-                        <Label htmlFor="cash_on_delivery" className="flex-1 cursor-pointer">
-                          <div className="font-medium flex items-center">
-                            <Wallet className="mr-2 h-5 w-5 text-primary" />
-                            Contraentrega
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            Pago al recibir su pedido (solo para clientes de ruta)
-                          </div>
-                        </Label>
-                      </div>
+                    {/* Mostrar dirección seleccionada para todos los tipos de entrega */}
+                    {deliveryInfo.selectedAddress && (
+                      <div className="text-sm text-gray-600">{deliveryInfo.selectedAddress.address}</div>
                     )}
 
-                    <div className="flex items-center space-x-2 border p-4 rounded-md">
-                      <RadioGroupItem value="immediate" id="immediate" />
-                      <Label htmlFor="immediate" className="flex-1 cursor-pointer">
-                        <div className="font-medium flex items-center">
-                          <CreditCard className="mr-2 h-5 w-5 text-primary" />
-                          Pago inmediato
+                    {/* Mostrar fecha y hora para entrega programada */}
+                    {deliveryInfo.type === "programada" &&
+                      deliveryInfo.schedule?.day &&
+                      deliveryInfo.schedule?.timeSlot && (
+                        <div className="text-sm font-medium text-blue-600">
+                          {deliveryInfo.schedule.day}, {deliveryInfo.schedule.timeSlot}
                         </div>
-                        <div className="text-sm text-muted-foreground">Pasarela de pago con link de pago</div>
-                      </Label>
-                    </div>
+                      )}
 
-                    <div className="flex items-center space-x-2 border p-4 rounded-md">
-                      <RadioGroupItem value="bank_transfer" id="bank_transfer" />
-                      <Label htmlFor="bank_transfer" className="flex-1 cursor-pointer">
-                        <div className="font-medium flex items-center">
-                          <BanknoteIcon className="mr-2 h-5 w-5 text-primary" />
-                          Consignación
-                        </div>
-                      </Label>
-                    </div>
-                  </RadioGroup>
-
-                  <div className="mt-4 p-4 bg-muted/50 rounded-md">
-                    <h3 className="font-medium mb-3">Cuentas habilitadas para consignación:</h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Button
-                        variant="outline"
-                        className="h-24 flex flex-col items-center justify-center"
-                        onClick={() => setIsNequiModalOpen(true)}
-                      >
-                        <div className="w-12 h-12 relative mb-2">
-                          <Image src="/nequi-logo.png" alt="Nequi" fill className="object-contain" />
-                        </div>
-                        <span className="text-sm">Pagar con Nequi</span>
-                      </Button>
-
-                      <Button
-                        variant="outline"
-                        className="h-24 flex flex-col items-center justify-center"
-                        onClick={() => setIsBancolombiaModalOpen(true)}
-                      >
-                        <div className="w-12 h-12 relative mb-2">
-                          <Image src="/bancolombia-logo.png" alt="Bancolombia" fill className="object-contain" />
-                        </div>
-                        <span className="text-sm">Pagar con Bancolombia</span>
-                      </Button>
-                    </div>
-
-                    <div className="mt-4">
-                      <Label htmlFor="transfer-confirmation">Número de confirmación</Label>
-                      <Input
-                        id="transfer-confirmation"
-                        placeholder="Ingrese el número de confirmación"
-                        className="mt-1"
-                      />
-                    </div>
-                  </div>
-
-                  {paymentMethod === "immediate" && (
-                    <div className="mt-4 p-4 bg-muted/50 rounded-md">
-                      <h3 className="font-medium mb-3">Opciones de pago inmediato</h3>
-                      <div className="grid grid-cols-3 gap-3">
-                        <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                          <Image src="/visa.png" alt="Visa" width={40} height={25} className="mb-1" />
-                          <span className="text-xs">Visa</span>
-                        </Button>
-                        <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                          <Image src="/mastercard.png" alt="Mastercard" width={40} height={25} className="mb-1" />
-                          <span className="text-xs">Mastercard</span>
-                        </Button>
-                        <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
-                          <Image src="/paypal.png" alt="PayPal" width={50} height={25} className="mb-1" />
-                          <span className="text-xs">PayPal</span>
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="mt-6 flex justify-end">
-                    <Button disabled={!paymentMethod}>Completar compra</Button>
+                    {/* Mostrar dirección de tienda para recogida en tienda */}
+                    {deliveryInfo.type === "tienda" && deliveryInfo.storeAddress && (
+                      <div className="text-sm text-gray-600">{deliveryInfo.storeAddress} (2.5 km de tu ubicación)</div>
+                    )}
                   </div>
                 </div>
               </div>
-            </TabsContent>
-          </Tabs>
+
+              <div className="flex space-x-2">
+                <div className="bg-white border border-blue-200 rounded-lg px-4 py-2 flex items-center">
+                  {getDeliveryIcon()}
+                  <div>
+                    <div className="font-medium">{getDeliveryTime(deliveryInfo.type)}</div>
+                    <div className="text-xs text-gray-500">
+                      {deliveryInfo.type === "sprint"
+                        ? "Sprint"
+                        : deliveryInfo.type === "programada"
+                          ? "Programado"
+                          : "Recogida"}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Modificar el botón de programación para reflejar correctamente el estado */}
+                {/* Reemplazar el botón existente con este */}
+                <Button
+                  variant="outline"
+                  className="bg-white border-blue-200 text-blue-600 text-xs px-2 py-1 h-auto"
+                  onClick={openDeliveryModal}
+                >
+                  Cambiar método
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {items.map((item, index) => (
+              <div key={`${item.id}-${index}`} className="border rounded-lg p-3 flex items-center">
+                <div className="relative h-20 w-20 rounded overflow-hidden bg-muted flex-shrink-0">
+                  <Image src={item.image || "/placeholder.svg"} alt={item.name} fill className="object-cover" />
+                </div>
+
+                <div className="ml-4 flex-1 flex items-center">
+                  <div className="flex-1">
+                    <h3 className="font-medium text-sm">{item.name}</h3>
+                    {item.variant && <p className="text-xs text-gray-500">{item.variant}</p>}
+                    <p className="text-xs text-gray-400">SKU: {item.sku}</p>
+                  </div>
+
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center border rounded-md">
+                      <button
+                        className="px-2 py-1 text-blue-600"
+                        onClick={() => handleQuantityChange(item.id, Math.max(1, item.quantity - 1))}
+                      >
+                        <Minus className="h-4 w-4" />
+                      </button>
+                      <span className="px-2 py-1 border-x">{item.quantity}</span>
+                      <button
+                        className="px-2 py-1 text-blue-600"
+                        onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <div className="font-bold text-blue-600">{formatCurrency(item.price)}</div>
+                    <button className="text-gray-400 hover:text-gray-600" onClick={() => handleRemoveItem(item.id)}>
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="lg:col-span-1">
@@ -336,53 +275,109 @@ export default function CheckoutPage() {
               <h2>Resumen del pedido</h2>
             </div>
             <div className="p-4">
-              <div className="max-h-80 overflow-y-auto mb-4">
-                {cart.map((item) => (
-                  <div key={`${item.id}-${item.variant}`} className="flex py-3 border-b">
-                    <div className="relative h-16 w-16 rounded overflow-hidden bg-muted flex-shrink-0">
-                      <Image src={item.image || "/placeholder.svg"} alt={item.name} fill className="object-cover" />
-                    </div>
-                    <div className="ml-4 flex-1">
-                      <h4 className="font-medium text-sm">{item.name}</h4>
-                      <p className="text-xs text-muted-foreground">{item.variant}</p>
-                      <div className="flex justify-between mt-1">
-                        <span className="text-sm">
-                          {item.quantity} x {formatCurrency(item.price)}
-                        </span>
-                        <span className="font-medium">{formatCurrency(item.price * item.quantity)}</span>
-                      </div>
-                    </div>
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center">
+                  <Truck className="h-5 w-5 text-blue-500 mr-2" />
+                  <div>
+                    <div className="font-medium">9 - 13 min</div>
+                    <div className="text-xs text-gray-500">Sprint</div>
                   </div>
-                ))}
+                </div>
+
+                {/* 3. Modificar el botón de programación para reflejar correctamente el estado */}
+                {/* Reemplazar el botón existente con este */}
+                <Button
+                  variant="outline"
+                  className="text-blue-500 border-blue-200"
+                  onClick={openScheduleModal}
+                  disabled={
+                    deliveryInfo.type === "programada" &&
+                    !!deliveryInfo.schedule?.day &&
+                    !!deliveryInfo.schedule?.timeSlot
+                  }
+                  title={
+                    deliveryInfo.type === "programada" && deliveryInfo.schedule?.day && deliveryInfo.schedule?.timeSlot
+                      ? `Programado para: ${deliveryInfo.schedule.day}, ${deliveryInfo.schedule.timeSlot}`
+                      : "Programa tu pedido"
+                  }
+                >
+                  <Calendar className="h-4 w-4 mr-1" />
+                  <span className="text-xs">
+                    {deliveryInfo.type === "programada" && deliveryInfo.schedule?.day && deliveryInfo.schedule?.timeSlot
+                      ? "Programado"
+                      : "Programa tu pedido"}
+                  </span>
+                </Button>
+              </div>
+
+              <div className="bg-blue-100 rounded-lg p-3 mb-4 flex items-center">
+                <div className="w-10 h-10 relative mr-2">
+                  <Image src="/prime-number-concept.png" alt="Prime" fill className="object-contain" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm">Siendo prime ahorrarías:</div>
+                  <div className="font-bold">{formatCurrency(7500)}</div>
+                </div>
+                <Button className="bg-yellow-400 hover:bg-yellow-500 text-black text-xs">Quiero ahorrar</Button>
               </div>
 
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span>Subtotal</span>
+                  <span>Costo de productos</span>
                   <span>{formatCurrency(subtotal)}</span>
                 </div>
+                <div className="flex justify-between text-green-500">
+                  <span>Ahorro en productos</span>
+                  <span>{formatCurrency(discount)}</span>
+                </div>
                 <div className="flex justify-between">
-                  <span>Envío</span>
-                  <span>{shipping === 0 ? "Gratis" : formatCurrency(shipping)}</span>
+                  <span>Costo Domicilio</span>
+                  <span>{formatCurrency(shipping)}</span>
                 </div>
                 <div className="border-t pt-2 mt-2 font-semibold flex justify-between">
                   <span>Total</span>
                   <span>{formatCurrency(total)}</span>
                 </div>
               </div>
+
+              <div className="mb-4 mt-4">
+                <div className="flex items-center mb-2">
+                  <Input
+                    placeholder="Ingresa el cupón"
+                    className="rounded-r-none"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value)}
+                  />
+                  <Button className="rounded-l-none bg-blue-500 hover:bg-blue-600" onClick={handleApplyCoupon}>
+                    Redimir
+                  </Button>
+                </div>
+              </div>
+
+              <Button className="w-full mt-4 bg-blue-500 hover:bg-blue-600" onClick={handleGoToPayment}>
+                Ir a pagar
+              </Button>
             </div>
 
             <WhatsAppSupport />
           </div>
         </div>
       </div>
-      <PaymentQRModal isOpen={isNequiModalOpen} onClose={() => setIsNequiModalOpen(false)} paymentMethod="nequi" />
 
-      <PaymentQRModal
-        isOpen={isBancolombiaModalOpen}
-        onClose={() => setIsBancolombiaModalOpen(false)}
-        paymentMethod="bancolombia"
+      {/* Modal de programación de entrega */}
+      <ScheduleDeliveryModal isOpen={isScheduleModalOpen} onClose={closeScheduleModal} />
+
+      {/* Modal de selección de dirección */}
+      <AddressSelectionModal
+        isOpen={isAddressFormOpen}
+        onClose={() => setIsAddressFormOpen(false)}
+        onAddressSelect={(addressId) => {
+          setIsAddressFormOpen(false)
+        }}
       />
+
+      {/* Modal de opciones de entrega */}
+      <DeliveryOptionsModal isOpen={isDeliveryModalOpen} onClose={closeDeliveryModal} />
     </div>
   )
 }

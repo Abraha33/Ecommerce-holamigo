@@ -1,24 +1,26 @@
-import { Phone } from "lucide-react"
+"use client"
+
+import { Button } from "@/components/ui/button"
+import { MessageSquare } from "lucide-react"
 
 export function WhatsAppSupport() {
+  const phoneNumber = "573192102438" // Número actualizado
+  const message = "Hola, necesito ayuda con mi pedido"
+
+  const handleWhatsAppClick = () => {
+    window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, "_blank")
+  }
+
   return (
     <div className="p-4 bg-green-50 border-t border-green-100">
-      <div className="flex items-center gap-3">
-        <div className="bg-green-500 text-white p-2 rounded-full">
-          <Phone className="h-5 w-5" />
-        </div>
-        <div>
-          <h3 className="font-medium text-sm">¿Necesitas ayuda para completar tu pedido?</h3>
-          <a
-            href="https://wa.me/573183741959"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[#004a93] hover:underline text-sm"
-          >
-            Contáctanos por WhatsApp: +57 318 374 1959
-          </a>
-        </div>
-      </div>
+      <Button
+        onClick={handleWhatsAppClick}
+        className="w-full bg-green-500 hover:bg-green-600 flex items-center justify-center"
+      >
+        <MessageSquare className="mr-2 h-4 w-4" />
+        Soporte por WhatsApp
+        <span className="ml-2 text-xs">+57 319 210 2438</span>
+      </Button>
     </div>
   )
 }

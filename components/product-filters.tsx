@@ -81,9 +81,10 @@ const attributes = [
 // Añadir prop para modo compacto
 interface ProductFiltersProps {
   compact?: boolean
+  onFilterChange?: (filters: any) => void
 }
 
-export function ProductFilters({ compact = false }: ProductFiltersProps) {
+export function ProductFilters({ compact = false, onFilterChange }: ProductFiltersProps) {
   const [priceRange, setPriceRange] = useState([0, 100])
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedColors, setSelectedColors] = useState<string[]>([])
@@ -309,101 +310,157 @@ export function ProductFilters({ compact = false }: ProductFiltersProps) {
         </Popover>
       </div>
 
-      {/* Chips de filtros activos */}
-      {totalFiltersApplied > 0 && (
-        <div className="flex flex-wrap gap-2 mt-4">
-          {selectedCategories.map((catId) => {
-            const category = categories.find((c) => c.id === catId)
-            return category ? (
-              <Badge key={catId} variant="secondary" className="pl-2 pr-1 py-1 flex items-center gap-1">
-                {category.label}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-4 w-4 p-0 ml-1"
-                  onClick={() => handleCategoryChange(catId)}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              </Badge>
-            ) : null
-          })}
-
-          {selectedColors.map((colorId) => {
-            const color = colors.find((c) => c.id === colorId)
-            return color ? (
-              <Badge key={colorId} variant="secondary" className="pl-2 pr-1 py-1 flex items-center gap-1">
-                {color.label}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-4 w-4 p-0 ml-1"
-                  onClick={() => handleColorChange(colorId)}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              </Badge>
-            ) : null
-          })}
-
-          {selectedMaterials.map((materialId) => {
-            const material = materials.find((m) => m.id === materialId)
-            return material ? (
-              <Badge key={materialId} variant="secondary" className="pl-2 pr-1 py-1 flex items-center gap-1">
-                {material.label}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-4 w-4 p-0 ml-1"
-                  onClick={() => handleMaterialChange(materialId)}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              </Badge>
-            ) : null
-          })}
-
-          {(priceRange[0] > 0 || priceRange[1] < 100) && (
-            <Badge variant="secondary" className="pl-2 pr-1 py-1 flex items-center gap-1">
-              {formatCurrency(priceRange[0])} - {formatCurrency(priceRange[1])}
-              <Button variant="ghost" size="icon" className="h-4 w-4 p-0 ml-1" onClick={() => setPriceRange([0, 100])}>
-                <X className="h-3 w-3" />
-              </Button>
-            </Badge>
-          )}
-
-          {Object.entries(selectedAttributes).map(([attributeName, selectedOptions]) =>
-            selectedOptions.map((optionId) => {
-              const attribute = attributes.find((attr) => attr.name === attributeName)
-              const option = attribute?.options.find((opt) => opt.id === optionId)
-
-              return option ? (
-                <Badge
-                  key={`${attributeName}-${optionId}`}
-                  variant="secondary"
-                  className="pl-2 pr-1 py-1 flex items-center gap-1"
-                >
-                  {option.label}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-4 w-4 p-0 ml-1"
-                    onClick={() => handleAttributeChange(attributeName, optionId)}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </Badge>
-              ) : null
-            }),
-          )}
-        </div>
-      )}
-
       {!compact && (
         <div className="mt-6">
           <Button className="w-full bg-[#004a93] hover:bg-[#0071bc]">Aplicar filtros</Button>
         </div>
       )}
+    </div>
+  )
+}
+
+// Componente separado para los filtros activos
+export function ActiveFilters({
+  selectedCategories = [],
+  selectedColors = [],
+  selectedMaterials = [],
+  selectedAttributes = {},
+  priceRange = [0, 100],
+  handleCategoryChange = () => {},
+  handleColorChange = () => {},
+  handleMaterialChange = () => {},
+  handleAttributeChange = () => {},
+  setPriceRange = () => {},
+}) {
+  const totalFiltersApplied =
+    selectedCategories.length +
+    selectedColors.length +
+    selectedMaterials.length +
+    Object.values(selectedAttributes).reduce((acc, curr) => acc + curr.length, 0) +
+    (priceRange[0] > 0 || priceRange[1] < 100 ? 1 : 0)
+
+  if (totalFiltersApplied === 0) return null
+
+  return (
+    <div className="w-full bg-gray-50 p-3 rounded-lg mb-4 border border-gray-200">
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-sm font-medium">Filtros aplicados:</h3>
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-xs h-7"
+          onClick={() => {
+            setPriceRange([0, 100])
+            selectedCategories.forEach((id) => handleCategoryChange(id))
+            selectedColors.forEach((id) => handleColorChange(id))
+            selectedMaterials.forEach((id) => handleMaterialChange(id))
+            Object.entries(selectedAttributes).forEach(([attrName, options]) => {
+              options.forEach((optId) => handleAttributeChange(attrName, optId))
+            })
+          }}
+        >
+          <CircleSlash className="h-3 w-3 mr-1" />
+          Limpiar todos
+        </Button>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {selectedCategories.map((catId) => {
+          const category = categories.find((c) => c.id === catId)
+          return category ? (
+            <Badge
+              key={catId}
+              variant="secondary"
+              className="pl-2 pr-1 py-1 flex items-center gap-1 bg-blue-50 text-[#004a93]"
+            >
+              {category.label}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-4 w-4 p-0 ml-1"
+                onClick={() => handleCategoryChange(catId)}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </Badge>
+          ) : null
+        })}
+
+        {selectedColors.map((colorId) => {
+          const color = colors.find((c) => c.id === colorId)
+          return color ? (
+            <Badge
+              key={colorId}
+              variant="secondary"
+              className="pl-2 pr-1 py-1 flex items-center gap-1 bg-blue-50 text-[#004a93]"
+            >
+              {color.label}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-4 w-4 p-0 ml-1"
+                onClick={() => handleColorChange(colorId)}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </Badge>
+          ) : null
+        })}
+
+        {selectedMaterials.map((materialId) => {
+          const material = materials.find((m) => m.id === materialId)
+          return material ? (
+            <Badge
+              key={materialId}
+              variant="secondary"
+              className="pl-2 pr-1 py-1 flex items-center gap-1 bg-blue-50 text-[#004a93]"
+            >
+              {material.label}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-4 w-4 p-0 ml-1"
+                onClick={() => handleMaterialChange(materialId)}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </Badge>
+          ) : null
+        })}
+
+        {(priceRange[0] > 0 || priceRange[1] < 100) && (
+          <Badge variant="secondary" className="pl-2 pr-1 py-1 flex items-center gap-1 bg-blue-50 text-[#004a93]">
+            {formatCurrency(priceRange[0])} - {formatCurrency(priceRange[1])}
+            <Button variant="ghost" size="icon" className="h-4 w-4 p-0 ml-1" onClick={() => setPriceRange([0, 100])}>
+              <X className="h-3 w-3" />
+            </Button>
+          </Badge>
+        )}
+
+        {Object.entries(selectedAttributes).map(([attributeName, selectedOptions]) =>
+          selectedOptions.map((optionId) => {
+            const attribute = attributes.find((attr) => attr.name === attributeName)
+            const option = attribute?.options.find((opt) => opt.id === optionId)
+
+            return option ? (
+              <Badge
+                key={`${attributeName}-${optionId}`}
+                variant="secondary"
+                className="pl-2 pr-1 py-1 flex items-center gap-1 bg-blue-50 text-[#004a93]"
+              >
+                {option.label}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-4 w-4 p-0 ml-1"
+                  onClick={() => handleAttributeChange(attributeName, optionId)}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </Badge>
+            ) : null
+          }),
+        )}
+      </div>
     </div>
   )
 }

@@ -5,15 +5,14 @@ import Image from "next/image"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { formatCurrency } from "@/lib/utils"
-import { ShoppingCart, Star, Check, Minus, Plus, ChevronLeft, ChevronRight, Heart } from "lucide-react"
+import { ShoppingCart, Star, Check, Minus, Plus, ChevronLeft, ChevronRight } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { useCart } from "@/components/cart-provider"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { motion, AnimatePresence } from "framer-motion"
-import { useWishlist } from "@/components/wishlist-provider"
-import { useEffect } from "react"
+import { WishlistButton } from "@/components/wishlist-button"
 
 interface ProductDetailsModalProps {
   isOpen: boolean
@@ -53,45 +52,11 @@ export function ProductDetailsModal({ isOpen, onClose, product }: ProductDetails
   const [selectedPackage, setSelectedPackage] = useState(packageTypes[0])
   const { toast } = useToast()
   const { addItem } = useCart()
-  const { addToWishlist, isInWishlist, removeFromWishlist } = useWishlist()
-  const [isInList, setIsInList] = useState(false)
   const [selectedUnit, setSelectedUnit] = useState(product?.units ? product.units[0] : null)
   const [showBrands, setShowBrands] = useState(false)
 
-  // Verificar si el producto está en la lista de deseos
-  useEffect(() => {
-    if (product) {
-      setIsInList(isInWishlist(product.id))
-    }
-  }, [isInWishlist, product])
-
-  // Manejar la adición/eliminación de la lista de deseos
-  const handleToggleWishlist = () => {
-    if (!product) return
-
-    if (isInList) {
-      removeFromWishlist(product.id)
-      toast({
-        title: "Producto eliminado",
-        description: `${product.name} ha sido eliminado de tu lista de deseos`,
-      })
-    } else {
-      addToWishlist({
-        id: product.id,
-        name: product.name,
-        image: product.image,
-        price: product.price,
-      })
-      toast({
-        title: "Producto añadido",
-        description: `${product.name} ha sido añadido a tu lista de deseos`,
-      })
-    }
-    setIsInList(!isInList)
-  }
-
   // Estado para la galería de imágenes
-  const productImages = getAdditionalImages(product?.image || "/placeholder.svg")
+  const productImages = product ? getAdditionalImages(product.image || "/placeholder.svg") : []
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
   // Colores disponibles (simulados)
@@ -115,6 +80,7 @@ export function ProductDetailsModal({ isOpen, onClose, product }: ProductDetails
 
   // Calcular el precio según el tipo de empaque seleccionado y la cantidad
   const calculatePrice = () => {
+    if (!product) return 0
     const packageType = packageTypes.find((p) => p.value === selectedPackage.value) || packageTypes[0]
     // Aplicar un pequeño descuento por volumen
     const discountFactor =
@@ -124,6 +90,7 @@ export function ProductDetailsModal({ isOpen, onClose, product }: ProductDetails
 
   // Calcular el precio por unidad para cada tipo de empaque
   const calculateUnitPrice = (packageType) => {
+    if (!product) return 0
     const discountFactor =
       packageType.factor === 1 ? 1 : packageType.factor <= 10 ? 0.95 : packageType.factor <= 100 ? 0.9 : 0.85
     return (product.price * packageType.factor * discountFactor) / packageType.factor
@@ -162,31 +129,42 @@ export function ProductDetailsModal({ isOpen, onClose, product }: ProductDetails
     }
   }
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
+    if (!product) return
+
     setIsAdding(true)
 
-    addItem({
-      id: product.id,
-      name: product.name,
-      price: calculateUnitPrice(selectedPackage),
-      image: product.image,
-      quantity: quantity * selectedPackage.factor,
-      variant: `${availableBrands.find((b) => b.id === selectedBrand)?.name} - ${
-        selectedColor !== "default"
-          ? `${availableColors.find((c) => c.id === selectedColor)?.name} - ${selectedPackage.label}`
-          : selectedPackage.label
-      }`,
-    })
+    try {
+      await addItem({
+        product_id: product.id.toString(),
+        name: product.name,
+        price: calculateUnitPrice(selectedPackage),
+        image: product.image,
+        quantity: quantity * selectedPackage.factor,
+        variant: `${availableBrands.find((b) => b.id === selectedBrand)?.name} - ${
+          selectedColor !== "default"
+            ? `${availableColors.find((c) => c.id === selectedColor)?.name} - ${selectedPackage.label}`
+            : selectedPackage.label
+        }`,
+      })
 
-    toast({
-      title: "Producto agregado",
-      description: `${quantity} ${selectedPackage.label}(s) de ${product.name} agregado al carrito.`,
-      className: "max-w-xs",
-    })
-
-    setTimeout(() => {
-      setIsAdding(false)
-    }, 1500)
+      toast({
+        title: "Producto agregado",
+        description: `${quantity} ${selectedPackage.label}(s) de ${product.name} agregado al carrito.`,
+        className: "max-w-xs",
+      })
+    } catch (error) {
+      console.error("Error al agregar al carrito:", error)
+      toast({
+        title: "Error",
+        description: "No se pudo agregar el producto al carrito",
+        variant: "destructive",
+      })
+    } finally {
+      setTimeout(() => {
+        setIsAdding(false)
+      }, 1500)
+    }
   }
 
   const handleQuantityChange = (newQuantity) => {
@@ -569,14 +547,13 @@ export function ProductDetailsModal({ isOpen, onClose, product }: ProductDetails
 
             {/* Botones de acción */}
             <div className="mt-6 grid grid-cols-2 gap-3 pt-4 border-t">
-              <Button
-                variant="outline"
-                className={`flex items-center gap-2 ${isInList ? "border-red-500 text-red-500 hover:bg-red-50" : ""}`}
-                onClick={handleToggleWishlist}
-              >
-                <Heart className={`h-5 w-5 ${isInList ? "fill-current text-red-500" : ""}`} />
-                {isInList ? "Eliminar de lista" : "Agregar a lista"}
-              </Button>
+              <WishlistButton
+                productId={product.id}
+                productName={product.name}
+                productImage={product.image}
+                productPrice={product.price}
+                variant="full"
+              />
               <Button
                 className="bg-[#004a93] hover:bg-[#0071bc] flex items-center justify-center gap-2"
                 onClick={handleAddToCart}

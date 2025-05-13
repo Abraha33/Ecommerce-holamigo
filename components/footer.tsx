@@ -1,10 +1,25 @@
+"use client"
+
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Facebook, Instagram, Twitter, Youtube, MapPin, Phone, Mail } from "lucide-react"
+import { usePathname } from "next/navigation"
 
 export default function Footer() {
+  const pathname = usePathname()
+
+  // Versión simplificada para la página de orders/latest
+  if (pathname === "/orders/latest") {
+    return (
+      <footer className="bg-gray-100 py-4 text-center">
+        <p className="text-gray-600 text-sm">@Derechos reservados</p>
+      </footer>
+    )
+  }
+
+  // Footer original para el resto de páginas
   return (
     <footer className="bg-gray-100 pt-12 pb-6">
       <div className="container mx-auto px-4">
