@@ -22,15 +22,35 @@ interface CartContextType {
   isLoading: boolean
 }
 
-const CartContext = createContext<CartContextType | undefined>(undefined)
+// Valores predeterminados para el contexto
+const defaultCartContext: CartContextType = {
+  items: [],
+  addItem: async () => {},
+  removeItem: async () => {},
+  updateQuantity: async () => {},
+  clearItems: async () => {},
+  subtotal: 0,
+  isLoading: true,
+}
+
+const CartContext = createContext<CartContextType>(defaultCartContext)
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
   const [subtotal, setSubtotal] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
+  const [isMounted, setIsMounted] = useState(false)
+
+  // Verificar si estamos en el cliente
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   // Cargar los items del carrito al iniciar
   useEffect(() => {
+    // Solo cargar el carrito si estamos en el cliente
+    if (!isMounted) return
+
     const loadCartItems = async () => {
       try {
         setIsLoading(true)
@@ -45,7 +65,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
 
     loadCartItems()
-  }, [])
+  }, [isMounted])
 
   // Añadir un item al carrito
   const addItem = async (item: CartItem) => {
@@ -131,8 +151,5 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
 export function useCart() {
   const context = useContext(CartContext)
-  if (context === undefined) {
-    throw new Error("useCart must be used within a CartProvider")
-  }
   return context
 }

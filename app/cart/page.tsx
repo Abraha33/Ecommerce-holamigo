@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Breadcrumb } from "@/components/breadcrumb"
@@ -11,12 +11,28 @@ import { formatCurrency } from "@/lib/utils"
 import { Trash2, Plus, Minus } from "lucide-react"
 
 export default function CartPage() {
-  const { cart, updateQuantity, removeItem } = useCart()
+  const { cart = [], updateQuantity, removeItem } = useCart()
   const [couponCode, setCouponCode] = useState("")
+  const [isClient, setIsClient] = useState(false)
 
-  const subtotal = cart.reduce((total, item) => total + item.price * item.quantity, 0)
+  // Asegurarse de que el componente solo se renderice completamente en el cliente
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  // Calcular subtotal solo si estamos en el cliente y cart existe
+  const subtotal = isClient && cart ? cart.reduce((total, item) => total + item.price * item.quantity, 0) : 0
   const shipping = subtotal > 0 ? 10 : 0
   const total = subtotal + shipping
+
+  // Mostrar un estado de carga hasta que estemos en el cliente
+  if (!isClient) {
+    return (
+      <div className="container px-4 py-8 mx-auto">
+        <h1 className="text-3xl font-bold mt-6 mb-8">Cargando carrito...</h1>
+      </div>
+    )
+  }
 
   return (
     <div className="container px-4 py-8 mx-auto">
@@ -29,7 +45,7 @@ export default function CartPage() {
 
       <h1 className="text-3xl font-bold mt-6 mb-8">Shopping Cart</h1>
 
-      {cart.length === 0 ? (
+      {!cart || cart.length === 0 ? (
         <div className="text-center py-12">
           <h2 className="text-2xl font-semibold mb-4">Your cart is empty</h2>
           <p className="mb-8">Looks like you haven't added any products to your cart yet.</p>

@@ -12,6 +12,39 @@ type Address = {
   isDefault: boolean
 }
 
+// Añade esta función al inicio del archivo para verificar si estamos en el cliente
+const isClient = typeof window !== "undefined"
+
+// Modifica la función getLocalDeliveryInfo para manejar el caso del servidor
+const getLocalDeliveryInfo = (): DeliveryInfo => {
+  if (!isClient) {
+    return {
+      type: "tienda",
+      storeAddress: "Calle 31#15-09, Centro",
+      scheduledDate: null,
+      scheduledTime: null,
+      address: null,
+    }
+  }
+
+  try {
+    const savedInfo = localStorage.getItem("deliveryInfo")
+    if (savedInfo) {
+      return JSON.parse(savedInfo)
+    }
+  } catch (error) {
+    console.error("Error al obtener método de envío:", error)
+  }
+
+  return {
+    type: "tienda",
+    storeAddress: "Calle 31#15-09, Centro",
+    scheduledDate: null,
+    scheduledTime: null,
+    address: null,
+  }
+}
+
 // Update the DeliveryContextType interface to include selectedAddress
 interface DeliveryContextType {
   deliveryInfo: DeliveryInfo & { selectedAddress?: Address }

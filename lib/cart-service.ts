@@ -17,6 +17,11 @@ export interface CartItem {
 // Obtener o crear un ID de carrito
 export const getOrCreateCartId = async (): Promise<string> => {
   try {
+    // Verificar si estamos en el cliente
+    if (typeof window === "undefined") {
+      return "server-side-cart-id"
+    }
+
     // Intentar obtener el ID del carrito del localStorage
     let cartId = localStorage.getItem("cartId")
 
@@ -56,15 +61,23 @@ export const getOrCreateCartId = async (): Promise<string> => {
   } catch (error) {
     console.error("Error en getOrCreateCartId:", error)
     // Fallback: crear un ID local si hay un error
-    const fallbackId = uuidv4()
-    localStorage.setItem("cartId", fallbackId)
-    return fallbackId
+    if (typeof window !== "undefined") {
+      const fallbackId = uuidv4()
+      localStorage.setItem("cartId", fallbackId)
+      return fallbackId
+    }
+    return "error-cart-id"
   }
 }
 
 // Obtener los items del carrito
 export const getCartItems = async (): Promise<CartItem[]> => {
   try {
+    // Verificar si estamos en el cliente
+    if (typeof window === "undefined") {
+      return []
+    }
+
     const cartId = await getOrCreateCartId()
     const supabase = createClientComponentClient()
 

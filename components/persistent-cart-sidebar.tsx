@@ -12,17 +12,26 @@ import { toast } from "sonner"
 
 export function PersistentCartSidebar() {
   const router = useRouter()
-  const { items, removeItem, updateQuantity, subtotal, isLoading } = useCart()
+  const { items = [], removeItem, updateQuantity, subtotal = 0, isLoading } = useCart()
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
+  const [isMounted, setIsMounted] = useState(false)
+
+  // Verificar si estamos en el cliente
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   // Verificar si estamos en la página de checkout
   const isCheckoutPage = pathname?.includes("/checkout")
 
-  const itemCount = items.reduce((count, item) => count + item.quantity, 0)
+  // Calcular el número de items solo si items está definido
+  const itemCount = isMounted && items ? items.reduce((count, item) => count + item.quantity, 0) : 0
 
   // Cerrar el carrito al hacer clic fuera
   useEffect(() => {
+    if (!isMounted) return
+
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement
       if (isOpen && !target.closest(".cart-sidebar") && !target.closest(".cart-toggle")) {
@@ -34,10 +43,12 @@ export function PersistentCartSidebar() {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside)
     }
-  }, [isOpen])
+  }, [isOpen, isMounted])
 
   // Prevenir scroll cuando el carrito está abierto
   useEffect(() => {
+    if (!isMounted) return
+
     if (isOpen) {
       // Guardar la posición actual del scroll
       const scrollY = window.scrollY
@@ -68,7 +79,7 @@ export function PersistentCartSidebar() {
       document.body.style.top = ""
       document.body.style.width = ""
     }
-  }, [isOpen])
+  }, [isOpen, isMounted])
 
   const handleRemoveItem = async (itemId: string) => {
     if (!itemId) return
@@ -116,6 +127,11 @@ export function PersistentCartSidebar() {
     router.push("/tienda")
   }
 
+  // Si no estamos montados en el cliente, no renderizamos nada o renderizamos un placeholder
+  if (!isMounted) {
+    return null // O un placeholder si prefieres
+  }
+
   return (
     <>
       {/* Botón del carrito */}
@@ -159,7 +175,7 @@ export function PersistentCartSidebar() {
         </div>
 
         {/* Mensaje informativo */}
-        {items.length > 0 && (
+        {items && items.length > 0 && (
           <div className="bg-[#FFFF1A] p-3 mx-4 my-3 rounded-md flex items-start">
             <Info className="h-5 w-5 text-gray-800 mr-2 flex-shrink-0 mt-0.5" />
             <p className="text-sm text-gray-800">Los descuentos serán visualizados al seleccionar el método de pago</p>
@@ -173,13 +189,14 @@ export function PersistentCartSidebar() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
             </div>
           )}
-          {!isLoading && items.length === 0 && (
+          {!isLoading && (!items || items.length === 0) && (
             <div className="flex flex-col items-center justify-center h-40 text-gray-500">
               <ShoppingCart className="h-12 w-12 mb-2 opacity-20" />
               <p>Tu carrito está vacío</p>
             </div>
           )}
           {!isLoading &&
+            items &&
             items.map((item) => (
               <div key={item.id} className="flex py-4 border-b">
                 {/* Imagen del producto */}
@@ -230,7 +247,7 @@ export function PersistentCartSidebar() {
         </div>
 
         {/* Footer con subtotal y botones */}
-        {items.length > 0 && (
+        {items && items.length > 0 && (
           <div className="border-t p-4 bg-white">
             <div className="flex justify-between items-center mb-4">
               <span className="font-medium text-lg">Subtotal:</span>
