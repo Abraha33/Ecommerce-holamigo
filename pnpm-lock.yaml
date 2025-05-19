@@ -178,7 +178,7 @@ importers:
         version: 5.31.1
       swiper:
         specifier: latest
-        version: 11.2.6
+        version: 11.2.7
       tailwind-merge:
         specifier: ^2.5.5
         version: 2.5.5
@@ -199,7 +199,7 @@ importers:
         version: 4.5.1(vue@3.5.14(typescript@5.0.2))
       zod:
         specifier: latest
-        version: 3.25.6
+        version: 3.25.7
     devDependencies:
       '@types/node':
         specifier: ^22
@@ -2692,8 +2692,8 @@ packages:
     resolution: {integrity: sha512-09fup3U7NQobUCUJnLhed6pxG6MzUS8rPsALB5Jr8m8u3pVKITs0ejYiKS/wsVjfkXHvKc2g260KA8o7dWypHA==}
     engines: {node: '>=18'}
 
-  swiper@11.2.6:
-    resolution: {integrity: sha512-8aXpYKtjy3DjcbzZfz+/OX/GhcU5h+looA6PbAzHMZT6ESSycSp9nAjPCenczgJyslV+rUGse64LMGpWE3PX9Q==}
+  swiper@11.2.7:
+    resolution: {integrity: sha512-oPJCwdcjFMw3SoBM7AdB1RJzjT7JaE4Mg7TWceTmJ/i2OtF8L01Ct+5eOf48nG3trgR0wXFekWdfnTdl0eg6Pg==}
     engines: {node: '>= 4.7.0'}
 
   tabbable@6.2.0:
@@ -2904,8 +2904,8 @@ packages:
   zimmerframe@1.1.2:
     resolution: {integrity: sha512-rAbqEGa8ovJy4pyBxZM70hg4pE6gDgaQ0Sl9M3enG3I0d6H4XSAM3GeNGLKnsBpuijUow064sf7ww1nutC5/3w==}
 
-  zod@3.25.6:
-    resolution: {integrity: sha512-kA1wikWvfsP+z3L6mzUJJRQz1Y28BR0Bu/MTWeYbfaFJ8c+OLOt1Bb8d4V3Mk1480H+poPYG6BjS/I4kJ1U8WA==}
+  zod@3.25.7:
+    resolution: {integrity: sha512-YGdT1cVRmKkOg6Sq7vY7IkxdphySKnXhaUmFI4r4FcuFVNgpCb9tZfNwXbT6BPjD5oz0nubFsoo9pIqKrDcCvg==}
 
 snapshots:
 
@@ -5241,7 +5241,7 @@ snapshots:
       magic-string: 0.30.17
       zimmerframe: 1.1.2
 
-  swiper@11.2.6: {}
+  swiper@11.2.7: {}
 
   tabbable@6.2.0: {}
 
@@ -5430,4 +5430,4 @@ snapshots:
 
   zimmerframe@1.1.2: {}
 
-  zod@3.25.6: {}
+  zod@3.25.7: {}
