@@ -6,15 +6,26 @@ import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/components/cart-provider"
+import { useAuth } from "@/components/auth-provider"
 import { createOrder, type ShippingAddress } from "@/lib/order-service"
 import { PaymentQRModal } from "@/components/payment-qr-modal"
 import { OrderConfirmationModal } from "@/components/order-confirmation-modal"
 import { AddCardModal } from "@/components/add-card-modal"
 import { Pencil } from "lucide-react"
+import { toast } from "sonner"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 export default function PaymentPage() {
   const router = useRouter()
   const { items, subtotal, clearItems } = useCart()
+  const { user } = useAuth()
   const [paymentMethod, setPaymentMethod] = useState("contraentrega")
   const [paymentOption, setPaymentOption] = useState<"efectivo" | "datafono" | null>("efectivo")
   const [isQRModalOpen, setIsQRModalOpen] = useState(false)
@@ -23,8 +34,9 @@ export default function PaymentPage() {
   const [isAddCardModalOpen, setIsAddCardModalOpen] = useState(false)
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null)
   const [isShippingDetailsExpanded, setIsShippingDetailsExpanded] = useState(false)
+  const [isAuthRequired, setIsAuthRequired] = useState(false)
 
-  // Estado para las tarjetas guardadas (simulado)
+  // State for saved cards (simulated)
   const [savedCards, setSavedCards] = useState<
     Array<{
       id: string
@@ -54,83 +66,93 @@ export default function PaymentPage() {
   const [electronicInvoice, setElectronicInvoice] = useState(false)
   const [comments, setComments] = useState("")
 
-  // Recuperar información de entrega del localStorage
+  // Retrieve delivery info from localStorage
   const [deliveryType, setDeliveryType] = useState("sprint")
   const [selectedAddress, setSelectedAddress] = useState<ShippingAddress | null>(null)
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null)
 
-  // Cargar la dirección seleccionada del contexto de entrega
+  // Check if user is logged in
   useEffect(() => {
-    // Intentar obtener la dirección de múltiples fuentes posibles
+    if (!user) {
+      setIsAuthRequired(true)
+    }
+  }, [user])
+
+  // Load selected address from context
+  useEffect(() => {
+    // Try to get address from multiple possible sources
     const headerAddress = localStorage.getItem("deliveryAddress")
     const deliveryInfoAddress = localStorage.getItem("holamigo_delivery_address")
     const deliveryInfo = localStorage.getItem("deliveryInfo")
 
     let addressFound = false
 
-    // Primero intentar con la dirección del header
+    // First try with header address
     if (headerAddress) {
       const defaultAddress: ShippingAddress = {
-        name: "Dirección de entrega",
+        fullName: "Delivery Address",
         address: headerAddress,
         city: "Bucaramanga",
         state: "",
         postalCode: "",
+        country: "Colombia",
         phone: "",
       }
 
       setSelectedAddress(defaultAddress)
       localStorage.setItem("selectedAddress", JSON.stringify(defaultAddress))
       addressFound = true
-      console.log("Dirección cargada desde header:", defaultAddress)
+      console.log("Address loaded from header:", defaultAddress)
     }
 
-    // Luego intentar con la dirección del contexto de entrega
+    // Then try with delivery context address
     if (!addressFound && deliveryInfo) {
       try {
         const parsedInfo = JSON.parse(deliveryInfo)
         if (parsedInfo.selectedAddress && parsedInfo.selectedAddress.address) {
           const addressFromDelivery: ShippingAddress = {
-            name: parsedInfo.selectedAddress.name || "Dirección de entrega",
+            fullName: parsedInfo.selectedAddress.name || "Delivery Address",
             address: parsedInfo.selectedAddress.address,
             city: parsedInfo.selectedAddress.city || "Bucaramanga",
             state: "",
             postalCode: "",
+            country: "Colombia",
             phone: "",
           }
           setSelectedAddress(addressFromDelivery)
           localStorage.setItem("selectedAddress", JSON.stringify(addressFromDelivery))
           addressFound = true
-          console.log("Dirección cargada desde deliveryInfo:", addressFromDelivery)
+          console.log("Address loaded from deliveryInfo:", addressFromDelivery)
         }
       } catch (error) {
         console.error("Error parsing delivery info:", error)
       }
     }
 
-    // Si no se encontró dirección, crear una dirección por defecto
+    // If no address found, create a default address
     if (!addressFound) {
       const defaultAddress: ShippingAddress = {
-        name: "Dirección de entrega",
+        fullName: "Delivery Address",
         address: "Calle 31#15-09, Centro",
         city: "Bucaramanga",
         state: "",
         postalCode: "",
+        country: "Colombia",
         phone: "",
       }
       setSelectedAddress(defaultAddress)
       localStorage.setItem("selectedAddress", JSON.stringify(defaultAddress))
-      console.log("Dirección por defecto establecida:", defaultAddress)
+      console.log("Default address set:", defaultAddress)
     }
   }, [])
 
   useEffect(() => {
-    // Cargar el método de entrega guardado
+    // Load saved delivery method
     const savedDeliveryType = localStorage.getItem("deliveryType") || "sprint"
     setDeliveryType(savedDeliveryType)
 
-    // Cargar la dirección guardada - intentar múltiples fuentes
+    // Load saved address - try multiple sources
     const addressSources = ["selectedAddress", "shippingAddress", "lastUsedAddress"]
 
     let foundAddress = null
@@ -139,50 +161,51 @@ export default function PaymentPage() {
       if (savedAddress) {
         try {
           foundAddress = JSON.parse(savedAddress)
-          console.log(`Dirección cargada desde ${source}:`, foundAddress)
+          console.log(`Address loaded from ${source}:`, foundAddress)
           setSelectedAddress(foundAddress)
           break
         } catch (error) {
-          console.error(`Error al analizar dirección desde ${source}:`, error)
+          console.error(`Error parsing address from ${source}:`, error)
         }
       }
     }
 
-    // Cargar la programación guardada si existe
+    // Load saved schedule if it exists
     const savedDay = localStorage.getItem("selectedDay")
     const savedTimeSlot = localStorage.getItem("selectedTimeSlot")
     if (savedDay) setSelectedDay(savedDay)
     if (savedTimeSlot) setSelectedTimeSlot(savedTimeSlot)
   }, [])
 
-  // Efecto para establecer la dirección desde el header si no hay dirección seleccionada
+  // Effect to set address from header if no address selected
   useEffect(() => {
     if (!selectedAddress) {
-      // Intentar obtener la dirección de múltiples fuentes
+      // Try to get address from multiple sources
       const headerAddress = localStorage.getItem("deliveryAddress")
       const deliveryInfoAddress = localStorage.getItem("holamigo_delivery_address")
 
-      // Usar la primera dirección disponible
+      // Use first available address
       const address = headerAddress || deliveryInfoAddress || "Calle 31#15-09, Centro"
 
-      // Crear un objeto de dirección con la dirección encontrada
+      // Create address object with found address
       const defaultAddress = {
-        name: "Dirección de entrega",
+        fullName: "Delivery Address",
         address: address,
         city: "Bucaramanga",
         state: "",
         postalCode: "",
+        country: "Colombia",
         phone: "",
       }
 
-      // Establecer la dirección en el estado de forma segura
+      // Set address in state safely
       setSelectedAddress(defaultAddress)
-      console.log("Dirección establecida desde el header:", defaultAddress)
+      console.log("Address set from header:", defaultAddress)
     }
-  }, [selectedAddress]) // Solo se ejecuta cuando selectedAddress cambia o es null
+  }, [selectedAddress]) // Only runs when selectedAddress changes or is null
 
   const shipping = deliveryType === "sprint" ? 7500 : deliveryType === "programada" ? 5000 : 0
-  const discount = -25170 // Ejemplo de descuento
+  const discount = -2500 // Example discount
   const total = subtotal + shipping + discount
 
   const handlePaymentMethodChange = (method: string) => {
@@ -199,30 +222,37 @@ export default function PaymentPage() {
   }
 
   const handleCompletePurchase = async () => {
-    // Obtener la dirección del header directamente
+    // Check if user is logged in
+    if (!user) {
+      setIsAuthRequired(true)
+      return
+    }
+
+    // Get address from header directly
     const headerAddress = localStorage.getItem("deliveryAddress") || localStorage.getItem("holamigo_delivery_address")
 
-    // Si no hay dirección seleccionada, crear una con la dirección del header
+    // If no selected address, create one with header address
     if (!selectedAddress && headerAddress) {
       const defaultAddress: ShippingAddress = {
-        name: "Dirección de entrega",
+        fullName: "Delivery Address",
         address: headerAddress,
         city: "Bucaramanga",
         state: "",
         postalCode: "",
+        country: "Colombia",
         phone: "",
       }
 
-      // Procesar el pedido con esta dirección sin esperar a que se actualice el estado
+      // Process order with this address without waiting for state update
       processOrder(defaultAddress)
       return
     } else if (!selectedAddress) {
-      // Si no hay dirección disponible en ninguna parte, mostrar alerta
-      alert("Por favor selecciona una dirección de envío")
+      // If no address available anywhere, show alert
+      toast.error("Please select a delivery address")
       return
     }
 
-    // Si hay dirección seleccionada, continuar con la compra
+    // If address selected, continue with purchase
     processOrder(selectedAddress)
   }
 
@@ -230,46 +260,59 @@ export default function PaymentPage() {
     setIsProcessing(true)
 
     try {
-      // Guardar la dirección seleccionada de forma permanente
+      // Save selected address permanently
       const addressToSave = JSON.stringify(address)
       localStorage.setItem("selectedAddress", addressToSave)
       localStorage.setItem("shippingAddress", addressToSave)
       localStorage.setItem("lastUsedAddress", addressToSave)
-      console.log("Dirección guardada:", address)
+      console.log("Address saved:", address)
 
-      // Crear el pedido en Supabase
+      // Validate cart items before creating order
+      const validItems = items.map((item) => {
+        // If no product_id, generate a temporary one
+        if (!item.product_id) {
+          console.log("Item without product_id:", item.name)
+          return {
+            ...item,
+            product_id: `temp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+          }
+        }
+        return item
+      })
+
+      // Create order in Supabase
       const result = await createOrder(
-        items,
+        validItems,
         address,
         paymentMethod + (paymentOption ? ` (${paymentOption})` : ""),
         deliveryType,
-        comments || (electronicInvoice ? "Requiere factura electrónica" : ""),
+        comments || (electronicInvoice ? "Electronic invoice required" : ""),
       )
 
-      // Verificar si el resultado es nulo antes de intentar acceder a sus propiedades
+      // Check if result is null before trying to access its properties
       if (result) {
-        // Guardar el ID y número del pedido
-        const orderNumber = result.order_number || "37096825" // Valor por defecto para demo
-        setOrderId(result.id || "order-123") // Valor por defecto para demo
+        // Save order ID and number
+        const orderNumber = result.order_number || "37096825" // Default value for demo
+        setOrderId(result.id || "order-123") // Default value for demo
         setOrderNumber(orderNumber)
 
-        // Guardar información del pedido para la página de estado
+        // Save order information for status page
         localStorage.setItem("currentOrderId", result.id || "order-123")
         localStorage.setItem("currentOrderNumber", orderNumber)
         localStorage.setItem("currentOrderStatus", "processing")
         localStorage.setItem("currentOrderDate", new Date().toISOString())
 
-        // Limpiar el carrito
+        // Clear cart
         await clearItems()
 
-        // Mostrar el modal de confirmación
+        // Show confirmation modal
         setIsConfirmationModalOpen(true)
       } else {
-        alert("Hubo un error al procesar tu pedido. Por favor intenta de nuevo.")
+        toast.error("There was an error processing your order. Please try again.")
       }
     } catch (error) {
-      console.error("Error al crear el pedido:", error)
-      alert("Hubo un error al procesar tu pedido. Por favor intenta de nuevo.")
+      console.error("Error creating order:", error)
+      toast.error("There was an error processing your order. Please try again.")
     } finally {
       setIsProcessing(false)
     }
@@ -277,7 +320,7 @@ export default function PaymentPage() {
 
   const handleOrderConfirmed = () => {
     setIsConfirmationModalOpen(false)
-    // Redirigir a la página de estado del pedido
+    // Redirect to order status page
     router.push(`/orders/latest`)
   }
 
@@ -288,6 +331,12 @@ export default function PaymentPage() {
   const handleOpenQRModal = (type: "nequi" | "bancolombia") => {
     setSelectedQRType(type)
     setIsQRModalOpen(true)
+  }
+
+  const handleLoginRedirect = () => {
+    // Save current path for redirect after login
+    localStorage.setItem("loginRedirect", "/checkout/payment")
+    router.push("/login")
   }
 
   return (
@@ -310,16 +359,16 @@ export default function PaymentPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
-          {/* 1. Dirección de envío */}
+          {/* 1. Shipping address */}
           <div className="bg-blue-50 rounded-lg p-4 mb-6">
             <div className="flex justify-between items-center mb-2">
-              <h2 className="text-lg font-bold">1. Dirección de envío</h2>
+              <h2 className="text-lg font-bold">1. Shipping Address</h2>
             </div>
             {selectedAddress ? (
               <div className="bg-white p-4 rounded-md border">
                 <div className="flex justify-between">
                   <div>
-                    <p className="font-medium">{selectedAddress.name || "Dirección de entrega"}</p>
+                    <p className="font-medium">{selectedAddress.fullName || "Delivery Address"}</p>
                     <p className="text-gray-600">
                       {selectedAddress.address || ""},{selectedAddress.city || "Bucaramanga"}
                       {selectedAddress.state ? `, ${selectedAddress.state}` : ""}
@@ -331,7 +380,7 @@ export default function PaymentPage() {
                   </div>
                   <button onClick={handleEditAddress} className="text-blue-600 flex items-center hover:underline">
                     <Pencil className="h-4 w-4 mr-1" />
-                    Editar dirección
+                    Edit address
                   </button>
                 </div>
               </div>
@@ -339,7 +388,7 @@ export default function PaymentPage() {
               <div className="bg-white p-4 rounded-md border">
                 <div className="flex justify-between">
                   <div>
-                    <p className="font-medium">Dirección de entrega</p>
+                    <p className="font-medium">Delivery Address</p>
                     <p className="text-gray-600">
                       {localStorage.getItem("deliveryAddress") ||
                         localStorage.getItem("holamigo_delivery_address") ||
@@ -348,18 +397,18 @@ export default function PaymentPage() {
                   </div>
                   <button onClick={handleEditAddress} className="text-blue-600 flex items-center hover:underline">
                     <Pencil className="h-4 w-4 mr-1" />
-                    Editar dirección
+                    Edit address
                   </button>
                 </div>
               </div>
             )}
           </div>
 
-          {/* 2. Documentación */}
+          {/* 2. Documentation */}
           <div className="bg-blue-50 rounded-lg p-4 mb-6">
-            <h2 className="text-lg font-bold mb-4">2. Documentación</h2>
+            <h2 className="text-lg font-bold mb-4">2. Documentation</h2>
             <div className="bg-white p-4 rounded-md border">
-              <p className="mb-2">¿Requiere factura electrónica?</p>
+              <p className="mb-2">Do you require an electronic invoice?</p>
               <div className="flex gap-4">
                 <label className="flex items-center">
                   <input
@@ -369,7 +418,7 @@ export default function PaymentPage() {
                     checked={electronicInvoice}
                     onChange={() => setElectronicInvoice(true)}
                   />
-                  <span>Sí</span>
+                  <span>Yes</span>
                 </label>
                 <label className="flex items-center">
                   <input
@@ -400,9 +449,9 @@ export default function PaymentPage() {
                     />
                   </svg>
                   <div className="text-sm text-yellow-700">
-                    <span>Su cuenta no está habilitada para facturación electrónica. </span>
+                    <span>Your account is not enabled for electronic invoicing. </span>
                     <a href="/account/billing" className="text-blue-600 underline hover:text-blue-800">
-                      Habilitar facturación electrónica
+                      Enable electronic invoicing
                     </a>
                   </div>
                 </div>
@@ -410,13 +459,13 @@ export default function PaymentPage() {
             </div>
           </div>
 
-          {/* 3. Método de pago */}
+          {/* 3. Payment method */}
           <div className="bg-blue-50 rounded-lg p-4 mb-6">
-            <h2 className="text-lg font-bold mb-4">3. Método de pago</h2>
+            <h2 className="text-lg font-bold mb-4">3. Payment Method</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-white rounded-md border overflow-hidden">
                 <div className="p-4">
-                  <h3 className="font-medium mb-3">Selecciona el método de pago</h3>
+                  <h3 className="font-medium mb-3">Select payment method</h3>
                   <div className="space-y-3">
                     <label className="flex items-center p-3 border rounded-md cursor-pointer hover:bg-gray-50">
                       <input
@@ -434,7 +483,7 @@ export default function PaymentPage() {
                           />
                         </svg>
                       </div>
-                      <span>Contraentrega</span>
+                      <span>Cash on delivery</span>
                     </label>
 
                     <label className="flex items-center p-3 border rounded-md cursor-pointer hover:bg-gray-50">
@@ -453,7 +502,7 @@ export default function PaymentPage() {
                           />
                         </svg>
                       </div>
-                      <span>Tarjeta débito/crédito (CVV)</span>
+                      <span>Debit/credit card (CVV)</span>
                     </label>
 
                     <label className="flex items-center p-3 border rounded-md cursor-pointer hover:bg-gray-50">
@@ -472,7 +521,7 @@ export default function PaymentPage() {
                           />
                         </svg>
                       </div>
-                      <span>Consignación</span>
+                      <span>Bank transfer</span>
                     </label>
                   </div>
                 </div>
@@ -480,7 +529,7 @@ export default function PaymentPage() {
 
               <div className="bg-white rounded-md border overflow-hidden">
                 <div className="p-4">
-                  <h3 className="font-medium mb-3">Selecciona el método de pago:</h3>
+                  <h3 className="font-medium mb-3">Select payment method:</h3>
 
                   {paymentMethod === "contraentrega" && (
                     <div className="grid grid-cols-2 gap-4">
@@ -504,7 +553,7 @@ export default function PaymentPage() {
                             />
                           </svg>
                         </div>
-                        <span className="text-center">Efectivo</span>
+                        <span className="text-center">Cash</span>
                       </div>
 
                       <div
@@ -527,7 +576,7 @@ export default function PaymentPage() {
                             />
                           </svg>
                         </div>
-                        <span className="text-center">Datafono</span>
+                        <span className="text-center">Card terminal</span>
                       </div>
                     </div>
                   )}
@@ -536,7 +585,7 @@ export default function PaymentPage() {
                     <div className="space-y-3">
                       {savedCards.length > 0 ? (
                         <>
-                          <p className="text-sm text-gray-600 mb-2">Selecciona una tarjeta guardada:</p>
+                          <p className="text-sm text-gray-600 mb-2">Select a saved card:</p>
                           {savedCards.map((card) => (
                             <div
                               key={card.id}
@@ -550,18 +599,16 @@ export default function PaymentPage() {
                               </div>
                               <div className="flex-1">
                                 <p className="font-medium">•••• •••• •••• {card.lastFour}</p>
-                                <p className="text-xs text-gray-500">Vence: {card.expiryDate}</p>
+                                <p className="text-xs text-gray-500">Expires: {card.expiryDate}</p>
                               </div>
                               {card.isDefault && (
-                                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                  Predeterminada
-                                </span>
+                                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Default</span>
                               )}
                             </div>
                           ))}
                         </>
                       ) : (
-                        <p className="text-sm text-gray-600 mb-2">No tienes tarjetas guardadas</p>
+                        <p className="text-sm text-gray-600 mb-2">You don't have any saved cards</p>
                       )}
 
                       <button
@@ -582,14 +629,14 @@ export default function PaymentPage() {
                             d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                           />
                         </svg>
-                        Agregar nueva tarjeta
+                        Add new card
                       </button>
                     </div>
                   )}
 
                   {paymentMethod === "consignacion" && (
                     <div className="space-y-4">
-                      <p className="text-sm text-gray-600 mb-2">Selecciona una cuenta para consignación:</p>
+                      <p className="text-sm text-gray-600 mb-2">Select an account for bank transfer:</p>
 
                       <div className="grid grid-cols-2 gap-4">
                         <div
@@ -604,7 +651,7 @@ export default function PaymentPage() {
                             <Image src="/bancolombia-logo.png" alt="Bancolombia" fill className="object-contain" />
                           </div>
                           <p className="text-sm font-medium">Bancolombia</p>
-                          <p className="text-xs text-gray-500">Ver datos de cuenta</p>
+                          <p className="text-xs text-gray-500">View account details</p>
                           {selectedQRType === "bancolombia" && (
                             <div className="absolute top-2 right-2 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
                               <svg
@@ -632,7 +679,7 @@ export default function PaymentPage() {
                             <Image src="/nequi-logo.png" alt="Nequi" fill className="object-contain" />
                           </div>
                           <p className="text-sm font-medium">Nequi</p>
-                          <p className="text-xs text-gray-500">Ver datos de cuenta</p>
+                          <p className="text-xs text-gray-500">View account details</p>
                           {selectedQRType === "nequi" && (
                             <div className="absolute top-2 right-2 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
                               <svg
@@ -651,8 +698,8 @@ export default function PaymentPage() {
 
                       <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-md">
                         <p className="text-sm text-yellow-800">
-                          <span className="font-medium">Importante:</span> Después de realizar la consignación, ingresa
-                          el número de confirmación en los comentarios del pedido.
+                          <span className="font-medium">Important:</span> After making the bank transfer, enter the
+                          confirmation number in the order comments.
                         </p>
                       </div>
                     </div>
@@ -662,13 +709,13 @@ export default function PaymentPage() {
             </div>
           </div>
 
-          {/* 4. Información de envío */}
+          {/* 4. Shipping information */}
           <div className="bg-blue-50 rounded-lg p-4 mb-6">
-            <h2 className="text-lg font-bold mb-4">4. Información de envío</h2>
+            <h2 className="text-lg font-bold mb-4">4. Shipping Information</h2>
             <div className="bg-white p-4 rounded-md border">
               <div className="flex justify-between items-center">
                 <div>
-                  <p className="font-medium">Envío 1 de 1</p>
+                  <p className="font-medium">Shipment 1 of 1</p>
                   <div className="flex items-center mt-2">
                     <div className="w-6 h-6 mr-2">
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -678,14 +725,14 @@ export default function PaymentPage() {
                         />
                       </svg>
                     </div>
-                    <span>Envío Sprint por moto (35 min. promedio) (3 artículos)</span>
+                    <span>Sprint delivery by motorcycle (35 min. average) ({items.length} items)</span>
                   </div>
                 </div>
                 <button
                   className="text-blue-600 flex items-center"
                   onClick={() => setIsShippingDetailsExpanded(!isShippingDetailsExpanded)}
                 >
-                  {isShippingDetailsExpanded ? "Ocultar detalles" : "Ver detalles"}
+                  {isShippingDetailsExpanded ? "Hide details" : "View details"}
                   <svg
                     width="20"
                     height="20"
@@ -701,7 +748,7 @@ export default function PaymentPage() {
 
               {isShippingDetailsExpanded && (
                 <div className="mt-4 pt-4 border-t">
-                  <h4 className="font-medium mb-2">Productos en este envío:</h4>
+                  <h4 className="font-medium mb-2">Products in this shipment:</h4>
                   <div className="space-y-3">
                     {items.map((item, index) => (
                       <div key={index} className="flex items-center">
@@ -717,7 +764,7 @@ export default function PaymentPage() {
                         </div>
                         <div>
                           <p className="font-medium">{item.name}</p>
-                          <p className="text-sm text-gray-500">Cantidad: {item.quantity}</p>
+                          <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
                         </div>
                       </div>
                     ))}
@@ -731,7 +778,7 @@ export default function PaymentPage() {
         <div className="lg:col-span-1">
           <div className="bg-gray-50 rounded-lg overflow-hidden sticky top-24">
             <div className="bg-gray-100 px-4 py-3 font-medium">
-              <h2>Resumen del pedido</h2>
+              <h2>Order Summary</h2>
             </div>
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
@@ -763,7 +810,7 @@ export default function PaymentPage() {
                       fill="currentColor"
                     />
                   </svg>
-                  Programa tu pedido
+                  Schedule your order
                 </button>
               </div>
 
@@ -773,26 +820,26 @@ export default function PaymentPage() {
                     <Image src="/placeholder.svg" alt="Prime" width={32} height={32} />
                   </div>
                   <div>
-                    <p className="text-sm font-medium">Siendo prime ahorrarías:</p>
+                    <p className="text-sm font-medium">As a prime member you would save:</p>
                     <p className="font-bold">$7,500.00</p>
                   </div>
                 </div>
                 <button className="bg-yellow-400 hover:bg-yellow-500 text-black font-medium rounded-md px-3 py-1 text-sm">
-                  Quiero ahorrar
+                  I want to save
                 </button>
               </div>
 
               <div className="space-y-2 mb-4">
                 <div className="flex justify-between">
-                  <span>Costo de productos</span>
+                  <span>Product cost</span>
                   <span>${subtotal.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-green-500">
-                  <span>Ahorro en productos</span>
+                  <span>Product savings</span>
                   <span>${Math.abs(discount).toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Costo Domicilio</span>
+                  <span>Delivery Cost</span>
                   <span>${shipping.toLocaleString()}</span>
                 </div>
                 <div className="border-t pt-2 mt-2 font-semibold flex justify-between">
@@ -803,13 +850,13 @@ export default function PaymentPage() {
 
               <div className="mb-4">
                 <label htmlFor="comments" className="block text-sm mb-1">
-                  Escríbenos tus comentarios
+                  Write your comments
                 </label>
                 <textarea
                   id="comments"
                   className="w-full border rounded-md p-2 text-sm"
                   rows={3}
-                  placeholder="Ej: Dejar con el celador del edificio, por favor."
+                  placeholder="E.g.: Leave with the building doorman, please."
                   value={comments}
                   onChange={(e) => setComments(e.target.value)}
                 ></textarea>
@@ -820,59 +867,87 @@ export default function PaymentPage() {
                 onClick={handleCompletePurchase}
                 disabled={isProcessing}
               >
-                {isProcessing ? "Procesando..." : "Completar compra"}
+                {isProcessing ? "Processing..." : "Complete purchase"}
               </Button>
 
               <div className="text-sm text-gray-600">
-                <h3 className="font-medium mb-2">Información pedido de productos Sprint</h3>
+                <h3 className="font-medium mb-2">Sprint product order information</h3>
                 <ul className="list-disc pl-5 space-y-2">
-                  <li>El tiempo promedio de los pedidos sprint del último mes es menor a 45 minutos.</li>
+                  <li>The average time for sprint orders in the last month is less than 45 minutes.</li>
                   <li>
-                    El envío se realizará por defecto en moto, por lo que es importante considerar los tamaños de los
-                    productos.
+                    Delivery will be by motorcycle by default, so it's important to consider the size of the products.
                   </li>
-                  <li>El costo del envío de su domicilio está detallado en el carrito de compras.</li>
-                  <li>Para pagos en efectivo, por favor tenga el monto exacto disponible.</li>
-                  <li>Para pagos con datafono, asegúrese de tener su tarjeta a mano.</li>
-                  <li>Si tienes dudas, contáctanos al chat.</li>
-                  <li>Recuerda que debes presentar fórmula médica para los productos con prescripción.</li>
+                  <li>The cost of your delivery is detailed in the shopping cart.</li>
+                  <li>For cash payments, please have the exact amount available.</li>
+                  <li>For card terminal payments, make sure you have your card on hand.</li>
+                  <li>If you have questions, contact us via chat.</li>
+                  <li>Remember that you must present a medical prescription for prescription products.</li>
                 </ul>
-                <p className="text-xs text-gray-500 text-center mt-4">© 2023 Todos los derechos reservados</p>
+                <p className="text-xs text-gray-500 text-center mt-4">© 2023 All rights reserved</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Modal de QR para pagos */}
+      {/* QR payment modal */}
       {selectedQRType && (
         <PaymentQRModal isOpen={isQRModalOpen} onClose={() => setIsQRModalOpen(false)} paymentMethod={selectedQRType} />
       )}
 
-      {/* Modal de confirmación de pedido */}
+      {/* Order confirmation modal */}
       <OrderConfirmationModal
         isOpen={isConfirmationModalOpen}
         onClose={handleOrderConfirmed}
         estimatedTime="17 - 25 min"
       />
 
-      {/* Modal para agregar tarjeta */}
+      {/* Add card modal */}
       <AddCardModal
         isOpen={isAddCardModalOpen}
         onClose={() => setIsAddCardModalOpen(false)}
         onAddCard={(cardData) => {
-          // Simulación de agregar una nueva tarjeta
+          // Verificar que cardData tenga todas las propiedades necesarias
+          if (!cardData) {
+            toast.error("Error al procesar los datos de la tarjeta")
+            return
+          }
+
+          // Crear un objeto de tarjeta con valores predeterminados seguros
           const newCard = {
             id: `card${savedCards.length + 1}`,
-            type: cardData.cardType || "visa",
-            lastFour: cardData.cardNumber.slice(-4),
-            expiryDate: `${cardData.expiryMonth}/${cardData.expiryYear.slice(-2)}`,
+            type: (cardData.cardType || cardData.brand || "visa") as "visa" | "mastercard" | "amex",
+            lastFour: cardData.last4 || "0000",
+            expiryDate:
+              cardData.expMonth && cardData.expYear
+                ? `${cardData.expMonth}/${cardData.expYear.toString().slice(-2)}`
+                : "00/00",
           }
+
           setSavedCards([...savedCards, newCard])
           setSelectedCardId(newCard.id)
           setIsAddCardModalOpen(false)
+          toast.success("Tarjeta añadida correctamente")
         }}
       />
+
+      {/* Authentication required dialog */}
+      <Dialog open={isAuthRequired} onOpenChange={setIsAuthRequired}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Authentication Required</DialogTitle>
+            <DialogDescription>
+              You need to be logged in to complete your purchase. Please log in or create an account.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex justify-end gap-2 sm:justify-end">
+            <Button variant="outline" onClick={() => setIsAuthRequired(false)}>
+              Continue as guest
+            </Button>
+            <Button onClick={handleLoginRedirect}>Log in</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

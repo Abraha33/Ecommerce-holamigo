@@ -14,6 +14,7 @@ import { TourProvider } from "@/contexts/tour-context"
 import { SiteTour } from "@/components/site-tour"
 import { TourButton } from "@/components/tour-button"
 import { WishlistProvider } from "@/components/wishlist-provider"
+import { ScrollToTopButton } from "@/components/scroll-to-top-button"
 import Image from "next/image"
 import { DeliveryProvider } from "@/contexts/delivery-context"
 import { AuthProvider } from "@/components/auth-provider"
@@ -97,6 +98,7 @@ export default function RootLayout({
                         </div>
                         <Footer />
                       </div>
+                      <ScrollToTopButton />
                       <Toaster />
                       <LoadingOverlay />
                       <SiteTour />

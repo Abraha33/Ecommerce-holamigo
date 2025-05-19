@@ -1,63 +1,88 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { getUserOrders } from "@/lib/order-service"
+import { useState } from "react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Input } from "@/components/ui/input"
+import { Search } from "lucide-react"
+import AccountSidebar from "@/components/account-sidebar"
+import { orders } from "@/lib/orders"
 import { OrderCard } from "@/components/order-card"
-import Link from "next/link"
-import { ArrowLeft } from "lucide-react"
 
 export default function OrdersPage() {
-  const [orders, setOrders] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [activeTab, setActiveTab] = useState("all")
 
-  useEffect(() => {
-    const loadOrders = async () => {
-      try {
-        setIsLoading(true)
-        const userOrders = await getUserOrders()
-        setOrders(userOrders)
-      } catch (error) {
-        console.error("Error al cargar los pedidos:", error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
+  // Filtrar órdenes según la pestaña activa
+  const filteredOrders = orders.filter((order) => {
+    if (activeTab === "all") return true
+    return order.status === activeTab
+  })
 
-    loadOrders()
-  }, [])
+  // Filtrar órdenes según la búsqueda
+  const searchedOrders = filteredOrders.filter((order) => {
+    if (!searchQuery) return true
+    return (
+      order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.items.some((item) => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    )
+  })
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="flex items-center mb-6">
-        <Link href="/" className="flex items-center text-sm text-gray-600 hover:text-gray-900 mr-4">
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          Volver al inicio
-        </Link>
-        <h1 className="text-2xl font-bold">Mis Pedidos</h1>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
+      <div className="bg-gradient-to-r from-red-100 to-red-50 text-red-600 py-3 px-4 text-center font-semibold shadow-sm">
+        ¡ERES UN CLIENTE MAYORISTA!
       </div>
 
-      {isLoading ? (
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="container mx-auto py-8 px-4">
+        <div className="flex flex-col md:flex-row gap-8">
+          {/* Sidebar compartido */}
+          <AccountSidebar />
+
+          {/* Contenido principal */}
+          <div className="flex-1">
+            <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 transition-all duration-300 hover:shadow-xl">
+              <h2 className="text-xl font-semibold mb-6 text-gray-800 border-b pb-4">Mis pedidos</h2>
+
+              <div className="mb-6">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <Input
+                    type="search"
+                    placeholder="Buscar por número de pedido o producto..."
+                    className="pl-10 py-6 bg-gray-50"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
+                <TabsList className="grid grid-cols-4 mb-6">
+                  <TabsTrigger value="all">Todos</TabsTrigger>
+                  <TabsTrigger value="processing">En proceso</TabsTrigger>
+                  <TabsTrigger value="shipped">Enviados</TabsTrigger>
+                  <TabsTrigger value="delivered">Entregados</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value={activeTab} className="space-y-4">
+                  {searchedOrders.length > 0 ? (
+                    searchedOrders.map((order) => <OrderCard key={order.id} order={order} />)
+                  ) : (
+                    <div className="text-center py-12 bg-gray-50 rounded-lg">
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">No se encontraron pedidos</h3>
+                      <p className="text-gray-500">
+                        {searchQuery
+                          ? "No hay pedidos que coincidan con tu búsqueda."
+                          : "No tienes pedidos en esta categoría."}
+                      </p>
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
+            </div>
+          </div>
         </div>
-      ) : orders.length === 0 ? (
-        <div className="text-center py-12">
-          <h2 className="text-xl font-medium text-gray-900 mb-2">No tienes pedidos aún</h2>
-          <p className="text-gray-500 mb-6">Cuando realices una compra, tus pedidos aparecerán aquí.</p>
-          <Link
-            href="/shop"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary/90"
-          >
-            Explorar productos
-          </Link>
-        </div>
-      ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-1">
-          {orders.map((order) => (
-            <OrderCard key={order.id} order={order} />
-          ))}
-        </div>
-      )}
+      </div>
     </div>
   )
 }

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { formatCurrency } from "@/lib/utils"
-import { Plus, Store, BikeIcon, Calendar, Minus, X, Truck } from "lucide-react"
+import { Plus, Store, BikeIcon, Calendar, Minus, X, Truck, AlertTriangle } from "lucide-react"
 import { WhatsAppSupport } from "@/components/whatsapp-support"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DeliveryOptionsModal } from "@/components/delivery-options-modal"
@@ -15,11 +15,22 @@ import { ScheduleDeliveryModal } from "@/components/schedule-delivery-modal"
 import { getDeliveryTime, getDeliveryTitle } from "@/lib/delivery-service"
 import { useDelivery } from "@/contexts/delivery-context"
 import { useCart } from "@/components/cart-provider"
+import { useAuth } from "@/components/auth-provider"
 import type { Address } from "@/lib/delivery-service"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { toast } from "sonner"
 
 export default function CheckoutPage() {
   const router = useRouter()
-  const { items, updateQuantity, removeItem, subtotal, isLoading } = useCart()
+  const { items, updateQuantity, removeItem, subtotal, isLoading, clearItems } = useCart()
+  const { user } = useAuth()
   const {
     deliveryInfo,
     isDeliveryModalOpen,
@@ -35,47 +46,54 @@ export default function CheckoutPage() {
   const [couponCode, setCouponCode] = useState("")
   const [receiveMethod, setReceiveMethod] = useState("personal")
   const [isAddressFormOpen, setIsAddressFormOpen] = useState(false)
+  const [showClearCartDialog, setShowClearCartDialog] = useState(false)
+  const [isAuthRequired, setIsAuthRequired] = useState(false)
 
-  // Añade esto después de las declaraciones de estado
+  // Add this after state declarations
   const [addresses, setAddresses] = useState<Address[]>([
-    { id: "1", name: "Casa", address: "KR 35 A # 45 - 25 CABECERA DEL LLANO", city: "Bucaramanga", isDefault: true },
-    { id: "2", name: "Oficina", address: "CL 56 # 23 - 15 APTO 502", city: "Bucaramanga", isDefault: false },
+    { id: "1", name: "Home", address: "KR 35 A # 45 - 25 CABECERA DEL LLANO", city: "Bucaramanga", isDefault: true },
+    { id: "2", name: "Office", address: "CL 56 # 23 - 15 APTO 502", city: "Bucaramanga", isDefault: false },
   ])
 
-  // Modificar el componente CheckoutPage para sincronizar correctamente con el contexto de entrega
+  // Modify the CheckoutPage component to properly sync with the delivery context
 
-  // 1. Modificar el useEffect para sincronizar con el contexto de entrega
-  // Reemplazar el useEffect existente con este
+  // 1. Modify useEffect to sync with delivery context
+  // Replace existing useEffect with this
   useEffect(() => {
-    // Cargar el método de recepción guardado
+    // Check if user is logged in
+    if (!user) {
+      setIsAuthRequired(true)
+    }
+
+    // Load saved receive method
     const savedReceiveMethod = localStorage.getItem("receiveMethod")
     if (savedReceiveMethod) {
       setReceiveMethod(savedReceiveMethod)
     }
 
-    // Sincronizar con el contexto de entrega
+    // Sync with delivery context
     if (deliveryInfo) {
-      // Si hay una dirección seleccionada en el contexto, usarla
+      // If there's a selected address in the context, use it
       if (deliveryInfo.selectedAddress) {
         setSelectedAddress(deliveryInfo.selectedAddress.address)
       } else if (addresses.length > 0) {
-        // Si no hay dirección seleccionada pero hay direcciones disponibles, usar la primera
+        // If no selected address but addresses available, use the first one
         setSelectedAddress(addresses[0].address)
         updateSelectedAddress(addresses[0])
       }
 
-      // Actualizar la UI basada en la información de entrega
+      // Update UI based on delivery info
       if (deliveryInfo.type === "programada" && deliveryInfo.schedule) {
-        // Si hay programación, actualizar la UI
-        console.log("Entrega programada:", deliveryInfo.schedule)
+        // If there's a schedule, update UI
+        console.log("Scheduled delivery:", deliveryInfo.schedule)
       } else if (deliveryInfo.type === "tienda" && deliveryInfo.storeAddress) {
-        // Si hay dirección de tienda, actualizar la UI
-        console.log("Recogida en tienda:", deliveryInfo.storeAddress)
+        // If there's a store address, update UI
+        console.log("Store pickup:", deliveryInfo.storeAddress)
       }
     }
-  }, [deliveryInfo, addresses, updateSelectedAddress])
+  }, [deliveryInfo, addresses, updateSelectedAddress, user])
 
-  // 2. Modificar la función getDeliveryIcon para ser más robusta
+  // 2. Modify getDeliveryIcon to be more robust
   const getDeliveryIcon = () => {
     if (!deliveryInfo) return <BikeIcon className="text-blue-600 mr-2" />
 
@@ -102,14 +120,41 @@ export default function CheckoutPage() {
   }
 
   const handleApplyCoupon = () => {
-    // Esta función se implementaría en un contexto real para aplicar un cupón
-    console.log(`Aplicar cupón: ${couponCode}`)
+    // This function would be implemented in a real context to apply a coupon
+    toast.success(`Coupon ${couponCode} applied`, {
+      description: "Discount has been applied to your order",
+    })
   }
 
   const handleGoToPayment = () => {
-    // Guardar el método de recepción en localStorage o en un estado global
+    // Check if user is logged in
+    if (!user) {
+      setIsAuthRequired(true)
+      return
+    }
+
+    // Save receive method in localStorage or global state
     localStorage.setItem("receiveMethod", receiveMethod)
     router.push("/checkout/payment")
+  }
+
+  const handleClearCart = () => {
+    setShowClearCartDialog(true)
+  }
+
+  const confirmClearCart = () => {
+    // Clear cart
+    clearItems()
+    setShowClearCartDialog(false)
+    toast.success("Cart cleared", {
+      description: "All items have been removed from your cart",
+    })
+  }
+
+  const handleLoginRedirect = () => {
+    // Save current path for redirect after login
+    localStorage.setItem("loginRedirect", "/checkout")
+    router.push("/login")
   }
 
   if (isLoading) {
@@ -132,10 +177,14 @@ export default function CheckoutPage() {
         <div className="lg:col-span-2">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold">
-              Carrito <span className="text-gray-500 text-lg">({items.length} productos)</span>
+              Cart <span className="text-gray-500 text-lg">({items.length} items)</span>
             </h1>
-            <Button variant="ghost" className="text-red-500 hover:text-red-700 hover:bg-red-50">
-              Vaciar carrito
+            <Button
+              variant="ghost"
+              className="text-red-500 hover:text-red-700 hover:bg-red-50"
+              onClick={handleClearCart}
+            >
+              Clear cart
             </Button>
           </div>
 
@@ -144,16 +193,16 @@ export default function CheckoutPage() {
               value={selectedAddress}
               onValueChange={(value) => {
                 setSelectedAddress(value)
-                // Buscar la dirección completa y actualizar el contexto
+                // Find complete address and update context
                 const addressObj = addresses.find((addr) => addr.address === value)
                 if (addressObj) {
-                  // Actualizar la dirección seleccionada en el contexto
+                  // Update selected address in context
                   updateSelectedAddress(addressObj)
                 }
               }}
             >
               <SelectTrigger className="w-full bg-blue-500 text-white py-2 px-4 rounded">
-                <SelectValue placeholder="Selecciona una dirección" />
+                <SelectValue placeholder="Select an address" />
               </SelectTrigger>
               <SelectContent>
                 {addresses.map((addr) => (
@@ -164,7 +213,7 @@ export default function CheckoutPage() {
               </SelectContent>
             </Select>
             <Button variant="link" className="text-blue-500 mt-2 p-0 h-auto" onClick={() => setIsAddressFormOpen(true)}>
-              Editar dirección
+              Edit address
             </Button>
           </div>
 
@@ -175,15 +224,15 @@ export default function CheckoutPage() {
                   {getDeliveryIcon()}
                   <div>
                     <div className="font-medium">{getDeliveryTitle(deliveryInfo.type)}</div>
-                    <div className="text-sm text-gray-500">Entregado por: Holamigo</div>
-                    <div className="text-sm text-gray-500">{items.length} productos</div>
+                    <div className="text-sm text-gray-500">Delivered by: Holamigo</div>
+                    <div className="text-sm text-gray-500">{items.length} products</div>
 
-                    {/* Mostrar dirección seleccionada para todos los tipos de entrega */}
+                    {/* Show selected address for all delivery types */}
                     {deliveryInfo.selectedAddress && (
                       <div className="text-sm text-gray-600">{deliveryInfo.selectedAddress.address}</div>
                     )}
 
-                    {/* Mostrar fecha y hora para entrega programada */}
+                    {/* Show date and time for scheduled delivery */}
                     {deliveryInfo.type === "programada" &&
                       deliveryInfo.schedule?.day &&
                       deliveryInfo.schedule?.timeSlot && (
@@ -192,9 +241,11 @@ export default function CheckoutPage() {
                         </div>
                       )}
 
-                    {/* Mostrar dirección de tienda para recogida en tienda */}
+                    {/* Show store address for store pickup */}
                     {deliveryInfo.type === "tienda" && deliveryInfo.storeAddress && (
-                      <div className="text-sm text-gray-600">{deliveryInfo.storeAddress} (2.5 km de tu ubicación)</div>
+                      <div className="text-sm text-gray-600">
+                        {deliveryInfo.storeAddress} (2.5 km from your location)
+                      </div>
                     )}
                   </div>
                 </div>
@@ -209,20 +260,20 @@ export default function CheckoutPage() {
                       {deliveryInfo.type === "sprint"
                         ? "Sprint"
                         : deliveryInfo.type === "programada"
-                          ? "Programado"
-                          : "Recogida"}
+                          ? "Scheduled"
+                          : "Pickup"}
                     </div>
                   </div>
                 </div>
 
-                {/* 3. Modificar el botón de programación para reflejar correctamente el estado */}
-                {/* Reemplazar el botón existente con este */}
+                {/* 3. Modify schedule button to correctly reflect state */}
+                {/* Replace existing button with this */}
                 <Button
                   variant="outline"
                   className="bg-white border-blue-200 text-blue-600 text-xs px-2 py-1 h-auto"
                   onClick={openDeliveryModal}
                 >
-                  Cambiar método
+                  Change method
                 </Button>
               </div>
             </div>
@@ -239,7 +290,7 @@ export default function CheckoutPage() {
                   <div className="flex-1">
                     <h3 className="font-medium text-sm">{item.name}</h3>
                     {item.variant && <p className="text-xs text-gray-500">{item.variant}</p>}
-                    <p className="text-xs text-gray-400">SKU: {item.sku}</p>
+                    <p className="text-xs text-gray-400">SKU: {item.sku || "N/A"}</p>
                   </div>
 
                   <div className="flex items-center space-x-4">
@@ -272,7 +323,7 @@ export default function CheckoutPage() {
         <div className="lg:col-span-1">
           <div className="border rounded-lg overflow-hidden sticky top-24">
             <div className="bg-muted px-4 py-3 font-medium">
-              <h2>Resumen del pedido</h2>
+              <h2>Order Summary</h2>
             </div>
             <div className="p-4">
               <div className="flex justify-between items-center mb-4">
@@ -284,8 +335,8 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                {/* 3. Modificar el botón de programación para reflejar correctamente el estado */}
-                {/* Reemplazar el botón existente con este */}
+                {/* 3. Modify schedule button to correctly reflect state */}
+                {/* Replace existing button with this */}
                 <Button
                   variant="outline"
                   className="text-blue-500 border-blue-200"
@@ -297,15 +348,15 @@ export default function CheckoutPage() {
                   }
                   title={
                     deliveryInfo.type === "programada" && deliveryInfo.schedule?.day && deliveryInfo.schedule?.timeSlot
-                      ? `Programado para: ${deliveryInfo.schedule.day}, ${deliveryInfo.schedule.timeSlot}`
-                      : "Programa tu pedido"
+                      ? `Scheduled for: ${deliveryInfo.schedule.day}, ${deliveryInfo.schedule.timeSlot}`
+                      : "Schedule your order"
                   }
                 >
                   <Calendar className="h-4 w-4 mr-1" />
                   <span className="text-xs">
                     {deliveryInfo.type === "programada" && deliveryInfo.schedule?.day && deliveryInfo.schedule?.timeSlot
-                      ? "Programado"
-                      : "Programa tu pedido"}
+                      ? "Scheduled"
+                      : "Schedule your order"}
                   </span>
                 </Button>
               </div>
@@ -315,23 +366,23 @@ export default function CheckoutPage() {
                   <Image src="/prime-number-concept.png" alt="Prime" fill className="object-contain" />
                 </div>
                 <div className="flex-1">
-                  <div className="text-sm">Siendo prime ahorrarías:</div>
+                  <div className="text-sm">As a prime member you would save:</div>
                   <div className="font-bold">{formatCurrency(7500)}</div>
                 </div>
-                <Button className="bg-yellow-400 hover:bg-yellow-500 text-black text-xs">Quiero ahorrar</Button>
+                <Button className="bg-yellow-400 hover:bg-yellow-500 text-black text-xs">I want to save</Button>
               </div>
 
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span>Costo de productos</span>
+                  <span>Product cost</span>
                   <span>{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-green-500">
-                  <span>Ahorro en productos</span>
+                  <span>Product savings</span>
                   <span>{formatCurrency(discount)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Costo Domicilio</span>
+                  <span>Delivery Cost</span>
                   <span>{formatCurrency(shipping)}</span>
                 </div>
                 <div className="border-t pt-2 mt-2 font-semibold flex justify-between">
@@ -343,19 +394,19 @@ export default function CheckoutPage() {
               <div className="mb-4 mt-4">
                 <div className="flex items-center mb-2">
                   <Input
-                    placeholder="Ingresa el cupón"
+                    placeholder="Enter coupon"
                     className="rounded-r-none"
                     value={couponCode}
                     onChange={(e) => setCouponCode(e.target.value)}
                   />
                   <Button className="rounded-l-none bg-blue-500 hover:bg-blue-600" onClick={handleApplyCoupon}>
-                    Redimir
+                    Apply
                   </Button>
                 </div>
               </div>
 
               <Button className="w-full mt-4 bg-blue-500 hover:bg-blue-600" onClick={handleGoToPayment}>
-                Ir a pagar
+                Proceed to payment
               </Button>
             </div>
 
@@ -364,10 +415,10 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      {/* Modal de programación de entrega */}
+      {/* Delivery schedule modal */}
       <ScheduleDeliveryModal isOpen={isScheduleModalOpen} onClose={closeScheduleModal} />
 
-      {/* Modal de selección de dirección */}
+      {/* Address selection modal */}
       <AddressSelectionModal
         isOpen={isAddressFormOpen}
         onClose={() => setIsAddressFormOpen(false)}
@@ -376,8 +427,49 @@ export default function CheckoutPage() {
         }}
       />
 
-      {/* Modal de opciones de entrega */}
+      {/* Delivery options modal */}
       <DeliveryOptionsModal isOpen={isDeliveryModalOpen} onClose={closeDeliveryModal} />
+
+      {/* Clear cart confirmation dialog */}
+      <Dialog open={showClearCartDialog} onOpenChange={setShowClearCartDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              Confirm action
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to clear your cart? This will remove all products.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex justify-end gap-2 sm:justify-end">
+            <Button variant="outline" onClick={() => setShowClearCartDialog(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmClearCart}>
+              Yes, clear cart
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Authentication required dialog */}
+      <Dialog open={isAuthRequired} onOpenChange={setIsAuthRequired}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Authentication Required</DialogTitle>
+            <DialogDescription>
+              You need to be logged in to proceed with checkout. Please log in or create an account.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex justify-end gap-2 sm:justify-end">
+            <Button variant="outline" onClick={() => setIsAuthRequired(false)}>
+              Continue as guest
+            </Button>
+            <Button onClick={handleLoginRedirect}>Log in</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

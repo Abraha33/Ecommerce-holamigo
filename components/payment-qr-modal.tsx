@@ -1,97 +1,98 @@
 "use client"
 
-import { Dialog, DialogContent, DialogClose, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import Image from "next/image"
 import { Copy, Check } from "lucide-react"
+import Image from "next/image"
 import { useState } from "react"
 
 interface PaymentQRModalProps {
   isOpen: boolean
   onClose: () => void
-  paymentMethod?: "nequi" | "bancolombia"
+  paymentMethod: "nequi" | "bancolombia"
 }
 
-export function PaymentQRModal({ isOpen, onClose, paymentMethod = "bancolombia" }: PaymentQRModalProps) {
-  const [copied, setCopied] = useState(false)
+export function PaymentQRModal({ isOpen, onClose, paymentMethod }: PaymentQRModalProps) {
+  const [copied, setCopied] = useState<string | null>(null)
 
-  const paymentInfo = {
+  const accountInfo = {
     nequi: {
-      title: "Pago con Nequi",
+      name: "Holamigo Store",
+      number: "300 123 4567",
       qrImage: "/nequi-qr.png",
-      accountNumber: "300 123 4567",
-      accountName: "Holamigo S.A.S.",
-      instructions: [
-        "Escanea el código QR con la app de Nequi",
-        "Confirma el monto a pagar",
-        "Completa la transacción en la app",
-        "Ingresa el número de confirmación en el campo correspondiente",
-      ],
     },
     bancolombia: {
-      title: "Pago con Bancolombia",
+      name: "Holamigo S.A.S.",
+      number: "123-456789-10",
       qrImage: "/bancolombia-qr.png",
-      accountNumber: "123-456789-10",
-      accountName: "Holamigo S.A.S.",
-      instructions: [
-        "Escanea el código QR con la app de Bancolombia",
-        "Selecciona la cuenta de origen",
-        "Confirma el monto a pagar",
-        "Ingresa el número de confirmación en el campo correspondiente",
-      ],
     },
   }
 
-  const info = paymentMethod ? paymentInfo[paymentMethod] : paymentInfo.bancolombia
+  const info = accountInfo[paymentMethod]
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(info.accountNumber)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+  const copyToClipboard = (text: string, field: string) => {
+    navigator.clipboard.writeText(text)
+    setCopied(field)
+    setTimeout(() => setCopied(null), 2000)
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md p-6 gap-0 rounded-md">
-        <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground" />
-
-        <DialogTitle className="text-xl font-bold mb-4 text-center">{info.title}</DialogTitle>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-center">
+            {paymentMethod === "nequi" ? "Nequi Payment" : "Bancolombia Transfer"}
+          </DialogTitle>
+        </DialogHeader>
 
         <div className="flex flex-col items-center">
-          <div className="relative w-48 h-48 mb-4">
+          <div className="w-48 h-48 relative mb-4">
             <Image
               src={info.qrImage || "/placeholder.svg"}
-              alt={`Código QR para ${info.title}`}
+              alt={`${paymentMethod} QR Code`}
               fill
               className="object-contain"
             />
           </div>
 
-          <div className="w-full bg-blue-50 p-4 rounded-lg mb-4">
-            <div className="flex justify-between items-center mb-2">
+          <div className="w-full space-y-3">
+            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
               <div>
-                <p className="text-sm text-gray-500">Número de cuenta:</p>
-                <p className="font-medium">{info.accountNumber}</p>
+                <p className="text-sm text-gray-500">Account Name</p>
+                <p className="font-medium">{info.name}</p>
               </div>
-              <Button variant="outline" size="sm" className="h-8 px-2" onClick={copyToClipboard}>
-                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => copyToClipboard(info.name, "name")}>
+                {copied === "name" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
               </Button>
             </div>
-            <p className="text-sm text-gray-500">Titular:</p>
-            <p className="font-medium">{info.accountName}</p>
+
+            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+              <div>
+                <p className="text-sm text-gray-500">{paymentMethod === "nequi" ? "Phone Number" : "Account Number"}</p>
+                <p className="font-medium">{info.number}</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2"
+                onClick={() => copyToClipboard(info.number, "number")}
+              >
+                {copied === "number" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
           </div>
 
-          <div className="w-full">
-            <h4 className="font-medium mb-2">Instrucciones:</h4>
-            <ol className="list-decimal pl-5 space-y-1 text-sm">
-              {info.instructions.map((instruction, index) => (
-                <li key={index}>{instruction}</li>
-              ))}
-            </ol>
+          <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md text-sm text-yellow-800 w-full">
+            <p className="font-medium mb-1">Important:</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Scan the QR code or use the account information to make your payment</li>
+              <li>Include your order number in the payment reference</li>
+              <li>After payment, add the confirmation number in the order comments</li>
+            </ul>
           </div>
 
-          <Button className="w-full mt-6 bg-blue-500 hover:bg-blue-600" onClick={onClose}>
-            Entendido
+          <Button className="mt-4 w-full" onClick={onClose}>
+            I've made the payment
           </Button>
         </div>
       </DialogContent>

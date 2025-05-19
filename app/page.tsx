@@ -1,93 +1,69 @@
-import { HeroSection } from "@/components/hero-section"
+import { Suspense } from "react"
+import { createServerComponentClient } from "@/lib/supabase"
 import { FeaturedProducts } from "@/components/featured-products"
-import { CategoryCircles } from "@/components/category-circles"
+import { PromoCarousel } from "@/components/promo-carousel"
+import { BrandCircles } from "@/components/brand-circles"
 import { TestimonialSection } from "@/components/testimonial-section"
-import { NewsletterSection } from "@/components/newsletter-section"
+import { CategoryShowcase } from "@/components/category-showcase"
+import CategorySlider from "@/components/category-slider"
 
-// Datos de categorías con estilo circular
-const categoryCircles = [
-  {
-    id: "insuperables",
-    name: "Insuperables",
-    image: "/categories/insuperables.png",
-    href: "/categories/insuperables",
-  },
-  {
-    id: "oferta-estrella",
-    name: "Oferta Estrella",
-    image: "/categories/oferta-estrella.png",
-    href: "/categories/oferta-estrella",
-  },
-  {
-    id: "lacteos",
-    name: "Lácteos",
-    image: "/categories/lacteos.png",
-    href: "/categories/lacteos",
-  },
-  {
-    id: "aseo",
-    name: "Aseo",
-    image: "/categories/aseo.png",
-    href: "/categories/aseo",
-  },
-  {
-    id: "licores",
-    name: "Licores",
-    image: "/categories/licores.png",
-    href: "/categories/licores",
-  },
-  {
-    id: "cosmeticos",
-    name: "Cosméticos",
-    image: "/categories/cosmeticos.png",
-    href: "/categories/cosmeticos",
-  },
-  {
-    id: "bebidas",
-    name: "Bebidas",
-    image: "/categories/bebidas.png",
-    href: "/categories/bebidas",
-  },
-  {
-    id: "frutas-verduras",
-    name: "Frutas y Verduras",
-    image: "/categories/frutas-verduras.png",
-    href: "/categories/frutas-verduras",
-  },
-  {
-    id: "carnes",
-    name: "Carnes",
-    image: "/categories/carnes.png",
-    href: "/categories/carnes",
-  },
-  {
-    id: "delicatessen",
-    name: "Delicatessen",
-    image: "/categories/delicatessen.png",
-    href: "/categories/delicatessen",
-  },
-  {
-    id: "snack",
-    name: "Snack",
-    image: "/categories/snack.png",
-    href: "/categories/snack",
-  },
-  {
-    id: "bebidas-hidratantes",
-    name: "Bebidas Hidratantes",
-    image: "/categories/bebidas-hidratantes.png",
-    href: "/categories/bebidas-hidratantes",
-  },
-]
+export default async function HomePage() {
+  const supabase = createServerComponentClient()
 
-export default function Home() {
+  // Fetch featured products
+  const { data: featuredProducts } = await supabase
+    .from("products")
+    .select(`
+      *,
+      category:categories(*),
+      brand:brands(*),
+      images:product_images(*)
+    `)
+    .eq("is_featured", true)
+    .eq("is_active", true)
+    .order("created_at", { ascending: false })
+    .limit(8)
+
+  // Fetch categories
+  const { data: categories } = await supabase
+    .from("categories")
+    .select("*")
+    .is("parent_id", null)
+    .eq("is_active", true)
+    .order("display_order", { ascending: true })
+    .limit(8)
+
+  // Fetch brands
+  const { data: brands } = await supabase.from("brands").select("*").eq("is_active", true).limit(8)
+
   return (
-    <div className="flex flex-col gap-12 pb-8">
-      <HeroSection />
-      <FeaturedProducts />
-      <CategoryCircles categories={categoryCircles} />
-      <TestimonialSection />
-      <NewsletterSection />
+    <div className="flex flex-col min-h-screen">
+      <PromoCarousel />
+
+      <main className="flex-1">
+        <section className="container mx-auto px-4 py-8">
+          <h2 className="text-2xl font-bold mb-6">Categorías Populares</h2>
+          <CategorySlider categories={categories || []} />
+        </section>
+
+        <section className="bg-gray-50 py-12">
+          <div className="container mx-auto px-4">
+            <h2 className="text-2xl font-bold mb-6">Productos Destacados</h2>
+            <Suspense fallback={<div>Cargando productos...</div>}>
+              <FeaturedProducts products={featuredProducts || []} />
+            </Suspense>
+          </div>
+        </section>
+
+        <section className="container mx-auto px-4 py-12">
+          <h2 className="text-2xl font-bold mb-6">Nuestras Marcas</h2>
+          <BrandCircles brands={brands || []} />
+        </section>
+
+        <CategoryShowcase />
+
+        <TestimonialSection />
+      </main>
     </div>
   )
 }

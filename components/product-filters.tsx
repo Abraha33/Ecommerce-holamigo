@@ -36,44 +36,44 @@ const materials = [
 // Actualizar los atributos de filtro para que coincidan con los solicitados
 const attributes = [
   {
-    name: "Color",
+    name: "COLOR",
     icon: <Palette className="h-5 w-5" />,
     options: [
-      { id: "negro", label: "Negro" },
-      { id: "blanco", label: "Blanco" },
-      { id: "azul", label: "Azul" },
-      { id: "verde", label: "Verde" },
-      { id: "rojo", label: "Rojo" },
+      { id: "negro", label: "NEGRO" },
+      { id: "blanco", label: "BLANCO" },
+      { id: "azul", label: "AZUL" },
+      { id: "verde", label: "VERDE" },
+      { id: "rojo", label: "ROJO" },
     ],
   },
   {
-    name: "Material",
+    name: "MATERIAL",
     icon: <Tag className="h-5 w-5" />,
     options: [
-      { id: "plastico-reciclado", label: "Plástico Reciclado" },
-      { id: "bioplastico", label: "Bioplástico" },
-      { id: "polietileno", label: "Polietileno" },
-      { id: "polipropileno", label: "Polipropileno" },
+      { id: "plastico-reciclado", label: "PLÁSTICO RECICLADO" },
+      { id: "bioplastico", label: "BIOPLÁSTICO" },
+      { id: "polietileno", label: "POLIETILENO" },
+      { id: "polipropileno", label: "POLIPROPILENO" },
     ],
   },
   {
-    name: "Tamaño",
+    name: "TAMAÑO",
     icon: <Layers className="h-5 w-5" />,
     options: [
-      { id: "pequeno", label: "Pequeño" },
-      { id: "mediano", label: "Mediano" },
-      { id: "grande", label: "Grande" },
-      { id: "extra-grande", label: "Extra Grande" },
+      { id: "pequeno", label: "PEQUEÑO" },
+      { id: "mediano", label: "MEDIANO" },
+      { id: "grande", label: "GRANDE" },
+      { id: "extra-grande", label: "EXTRA GRANDE" },
     ],
   },
   {
-    name: "Modelo",
+    name: "MODELO",
     icon: <ShoppingBag className="h-5 w-5" />,
     options: [
-      { id: "estandar", label: "Estándar" },
-      { id: "premium", label: "Premium" },
-      { id: "industrial", label: "Industrial" },
-      { id: "domestico", label: "Doméstico" },
+      { id: "estandar", label: "ESTÁNDAR" },
+      { id: "premium", label: "PREMIUM" },
+      { id: "industrial", label: "INDUSTRIAL" },
+      { id: "domestico", label: "DOMÉSTICO" },
     ],
   },
 ]
@@ -94,10 +94,10 @@ export function ProductFilters({ compact = false, onFilterChange }: ProductFilte
 
   // Añadir el estado para los atributos seleccionados
   const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string[]>>({
-    Color: [],
-    Material: [],
-    Tamaño: [],
-    Modelo: [],
+    COLOR: [],
+    MATERIAL: [],
+    TAMAÑO: [],
+    MODELO: [],
   })
 
   const handleCategoryChange = (id: string) => {
@@ -143,10 +143,10 @@ export function ProductFilters({ compact = false, onFilterChange }: ProductFilte
     setSelectedMaterials([])
     setSelectedBrands([])
     setSelectedAttributes({
-      Color: [],
-      Material: [],
-      Tamaño: [],
-      Modelo: [],
+      COLOR: [],
+      MATERIAL: [],
+      TAMAÑO: [],
+      MODELO: [],
     })
   }
 
@@ -164,13 +164,13 @@ export function ProductFilters({ compact = false, onFilterChange }: ProductFilte
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold flex items-center">
             <Filter className="mr-2 h-5 w-5" />
-            Filtros
+            FILTROS
             {totalFiltersApplied > 0 && <Badge className="ml-2 bg-[#004a93]">{totalFiltersApplied}</Badge>}
           </h2>
           {totalFiltersApplied > 0 && (
             <Button variant="outline" size="sm" onClick={handleReset} className="flex items-center">
               <CircleSlash className="h-4 w-4 mr-1" />
-              Limpiar
+              LIMPIAR
             </Button>
           )}
         </div>
@@ -218,7 +218,7 @@ export function ProductFilters({ compact = false, onFilterChange }: ProductFilte
             </PopoverTrigger>
             <PopoverContent className="w-80 p-0" align="start">
               <div className="p-4 border-b">
-                <h3 className="font-medium">{attribute.name}</h3>
+                <h3 className="font-medium uppercase">{attribute.name}</h3>
               </div>
               <div className="p-4">
                 <div className="grid grid-cols-2 gap-3">
@@ -231,7 +231,7 @@ export function ProductFilters({ compact = false, onFilterChange }: ProductFilte
                       />
                       <Label
                         htmlFor={`${attribute.name.toLowerCase()}-${option.id}`}
-                        className="text-sm font-normal cursor-pointer"
+                        className="text-sm font-normal cursor-pointer uppercase"
                       >
                         {option.label}
                       </Label>
@@ -241,10 +241,10 @@ export function ProductFilters({ compact = false, onFilterChange }: ProductFilte
               </div>
               <div className="p-4 border-t flex justify-between">
                 <Button variant="outline" size="sm" onClick={() => handleClearAttribute(attribute.name)}>
-                  Limpiar
+                  LIMPIAR
                 </Button>
                 <Button size="sm" onClick={() => setActiveFilter(null)}>
-                  Aplicar
+                  APLICAR
                 </Button>
               </div>
             </PopoverContent>
@@ -287,7 +287,7 @@ export function ProductFilters({ compact = false, onFilterChange }: ProductFilte
           </PopoverTrigger>
           <PopoverContent className="w-80 p-0" align="start">
             <div className="p-4 border-b">
-              <h3 className="font-medium">Rango de precio</h3>
+              <h3 className="font-medium uppercase">RANGO DE PRECIO</h3>
             </div>
             <div className="p-4">
               <div className="space-y-4">
@@ -300,10 +300,10 @@ export function ProductFilters({ compact = false, onFilterChange }: ProductFilte
             </div>
             <div className="p-4 border-t flex justify-between">
               <Button variant="outline" size="sm" onClick={() => setPriceRange([0, 100])}>
-                Limpiar
+                LIMPIAR
               </Button>
               <Button size="sm" onClick={() => setActiveFilter(null)}>
-                Aplicar
+                APLICAR
               </Button>
             </div>
           </PopoverContent>
@@ -312,7 +312,7 @@ export function ProductFilters({ compact = false, onFilterChange }: ProductFilte
 
       {!compact && (
         <div className="mt-6">
-          <Button className="w-full bg-[#004a93] hover:bg-[#0071bc]">Aplicar filtros</Button>
+          <Button className="w-full bg-[#004a93] hover:bg-[#0071bc] uppercase font-medium">APLICAR FILTROS</Button>
         </div>
       )}
     </div>
@@ -344,11 +344,11 @@ export function ActiveFilters({
   return (
     <div className="w-full bg-gray-50 p-3 rounded-lg mb-4 border border-gray-200">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-medium">Filtros aplicados:</h3>
+        <h3 className="text-sm font-medium uppercase">FILTROS APLICADOS:</h3>
         <Button
           variant="outline"
           size="sm"
-          className="text-xs h-7"
+          className="text-xs h-7 uppercase"
           onClick={() => {
             setPriceRange([0, 100])
             selectedCategories.forEach((id) => handleCategoryChange(id))
@@ -360,7 +360,7 @@ export function ActiveFilters({
           }}
         >
           <CircleSlash className="h-3 w-3 mr-1" />
-          Limpiar todos
+          LIMPIAR TODOS
         </Button>
       </div>
       <div className="flex flex-wrap gap-2">

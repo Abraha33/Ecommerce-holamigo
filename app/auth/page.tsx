@@ -3,20 +3,28 @@
 import type React from "react"
 
 import { useState } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import Link from "next/link"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { ArrowLeft, Smartphone, Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react"
+import { useToast } from "@/components/ui/use-toast"
+import { AuthService } from "@/lib/auth-service"
+import { Loader2, Mail, Lock, Eye, EyeOff, ArrowLeft, Smartphone } from "lucide-react"
+
+// Importa el nuevo componente
+import { GoogleAuthButton } from "@/components/ui/google-auth-button"
 
 export default function AuthPage() {
   const router = useRouter()
-  const supabase = createClientComponentClient()
+  const searchParams = useSearchParams()
+  const redirectTo = searchParams.get("redirectTo") || "/"
+  const { toast } = useToast()
+
   const [activeTab, setActiveTab] = useState("login")
   const [authMethod, setAuthMethod] = useState<"email" | "phone">("email")
   const [showPassword, setShowPassword] = useState(false)
@@ -26,29 +34,37 @@ export default function AuthPage() {
   const [success, setSuccess] = useState<string | null>(null)
   const [verificationStep, setVerificationStep] = useState(false)
   const [verificationCode, setVerificationCode] = useState("")
+  const [rememberMe, setRememberMe] = useState(false)
 
-  // Formulario de email
+  // Form states
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-
-  // Formulario de teléfono
   const [phone, setPhone] = useState("")
+  const [name, setName] = useState("")
 
   const handleSocialSignIn = async (provider: "google" | "facebook" | "apple") => {
     setLoadingProvider(provider)
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      })
+      const { error } = await AuthService.signInWithProvider(provider)
 
-      if (error) throw error
+      if (error) {
+        toast({
+          title: "Error de inicio de sesión",
+          description: error.message,
+          variant: "destructive",
+        })
+        setLoadingProvider(null)
+      }
+      // No need to do anything else here - the OAuth flow will redirect the user
     } catch (error: any) {
-      setError(`Error al iniciar sesión con ${provider}: ${error.message}`)
+      console.error(`Error al iniciar sesión con ${provider}:`, error)
+      toast({
+        title: "Error de inicio de sesión",
+        description: `No se pudo iniciar sesión con ${provider}. Por favor, intenta de nuevo.`,
+        variant: "destructive",
+      })
       setLoadingProvider(null)
     }
   }
@@ -59,16 +75,36 @@ export default function AuthPage() {
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await AuthService.signInWithPassword({
         email,
         password,
       })
 
-      if (error) throw error
+      if (error) {
+        setError(error.message)
+        setIsLoading(false)
+        return
+      }
 
-      router.push("/")
+      // Guardar información adicional en localStorage si rememberMe está activado
+      if (rememberMe) {
+        localStorage.setItem("userEmail", email)
+        localStorage.setItem("rememberMe", "true")
+
+        // Establecer una cookie para recordar al usuario
+        document.cookie = `holamigo-remember=true; max-age=${60 * 60 * 24 * 30}; path=/; samesite=lax`
+      }
+
+      toast({
+        title: "Inicio de sesión exitoso",
+        description: "Has iniciado sesión correctamente.",
+      })
+
+      // Forzar una actualización completa para asegurar que todos los componentes reconozcan el nuevo estado de autenticación
+      window.location.href = redirectTo
     } catch (error: any) {
-      setError(error.message || "Error al iniciar sesión")
+      setError("Error al iniciar sesión. Por favor, intenta de nuevo.")
+      console.error("Login error:", error)
       setIsLoading(false)
     }
   }
@@ -79,20 +115,44 @@ export default function AuthPage() {
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { error } = await AuthService.signUpWithPassword({
         email,
         password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
+        metadata: { name },
       })
 
-      if (error) throw error
+      if (error) {
+        setError(error.message)
+        setIsLoading(false)
+        return
+      }
 
       setSuccess("Se ha enviado un enlace de verificación a tu correo electrónico")
       setIsLoading(false)
     } catch (error: any) {
       setError(error.message || "Error al registrarse")
+      setIsLoading(false)
+    }
+  }
+
+  const handleMagicLinkSignIn = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const { error } = await AuthService.signInWithMagicLink(email)
+
+      if (error) {
+        setError(error.message)
+        setIsLoading(false)
+        return
+      }
+
+      setSuccess("Se ha enviado un enlace mágico a tu correo electrónico")
+      setIsLoading(false)
+    } catch (error: any) {
+      setError(error.message || "Error al enviar el enlace mágico")
       setIsLoading(false)
     }
   }
@@ -104,11 +164,13 @@ export default function AuthPage() {
 
     try {
       const formattedPhone = formatPhoneNumber(phone)
-      const { error } = await supabase.auth.signInWithOtp({
-        phone: formattedPhone,
-      })
+      const { error } = await AuthService.signInWithPhone(formattedPhone)
 
-      if (error) throw error
+      if (error) {
+        setError(error.message)
+        setIsLoading(false)
+        return
+      }
 
       setVerificationStep(true)
       setSuccess("Se ha enviado un código de verificación a tu teléfono")
@@ -125,15 +187,20 @@ export default function AuthPage() {
     setError(null)
 
     try {
-      const { error } = await supabase.auth.verifyOtp({
-        phone: formatPhoneNumber(phone),
-        token: verificationCode,
-        type: "sms",
+      const { data, error } = await AuthService.verifyPhoneOtp(formatPhoneNumber(phone), verificationCode)
+
+      if (error) {
+        setError(error.message)
+        setIsLoading(false)
+        return
+      }
+
+      toast({
+        title: "Verificación exitosa",
+        description: "Has iniciado sesión correctamente.",
       })
 
-      if (error) throw error
-
-      router.push("/")
+      router.push(redirectTo)
     } catch (error: any) {
       setError(error.message || "Código de verificación inválido")
       setIsLoading(false)
@@ -150,7 +217,7 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="container flex flex-col items-center justify-center min-h-[calc(100vh-200px)] py-10">
+    <div className="container flex flex-col items-center justify-center min-h-[calc(100vh-200px)] py-10 bg-gradient-to-br from-blue-50 via-white to-blue-50">
       <div className="w-full max-w-md">
         <div className="flex items-center mb-6">
           <Button variant="ghost" size="sm" className="mr-2" onClick={() => router.back()}>
@@ -159,7 +226,7 @@ export default function AuthPage() {
           </Button>
         </div>
 
-        <Card className="w-full">
+        <Card className="w-full shadow-xl border border-gray-100">
           <CardHeader className="space-y-1">
             <div className="flex justify-center mb-4">
               <Image
@@ -181,29 +248,17 @@ export default function AuthPage() {
               </TabsList>
 
               {/* Botones de redes sociales */}
-              <div className="grid grid-cols-1 gap-3 mb-4">
-                <Button
-                  variant="outline"
-                  className="w-full flex items-center justify-center gap-2 h-11"
-                  onClick={() => handleSocialSignIn("google")}
-                  disabled={loadingProvider !== null}
-                >
-                  {loadingProvider === "google" ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Image src="/google-logo.png" alt="Google" width={20} height={20} />
-                  )}
-                  Continuar con Google
-                </Button>
+              <div className="grid grid-cols-1 gap-4 mb-6">
+                <GoogleAuthButton mode={activeTab === "login" ? "login" : "register"} />
 
                 <Button
                   variant="outline"
-                  className="w-full flex items-center justify-center gap-2 h-11"
+                  className="w-full flex items-center justify-center gap-3 h-12 text-base hover:bg-gray-50 transition-all duration-200"
                   onClick={() => handleSocialSignIn("facebook")}
                   disabled={loadingProvider !== null}
                 >
                   {loadingProvider === "facebook" ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-5 w-5 animate-spin" />
                   ) : (
                     <Image src="/facebook-logo.png" alt="Facebook" width={20} height={20} />
                   )}
@@ -212,12 +267,12 @@ export default function AuthPage() {
 
                 <Button
                   variant="outline"
-                  className="w-full flex items-center justify-center gap-2 h-11"
+                  className="w-full flex items-center justify-center gap-3 h-12 text-base hover:bg-gray-50 transition-all duration-200"
                   onClick={() => handleSocialSignIn("apple")}
                   disabled={loadingProvider !== null}
                 >
                   {loadingProvider === "apple" ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-5 w-5 animate-spin" />
                   ) : (
                     <Image src="/apple-logo.png" alt="Apple" width={20} height={20} />
                   )}
@@ -274,9 +329,9 @@ export default function AuthPage() {
                 {authMethod === "email" ? (
                   <form onSubmit={handleEmailSignIn} className="space-y-4">
                     <div className="space-y-2">
-                      <label htmlFor="email" className="text-sm font-medium">
+                      <Label htmlFor="email" className="text-sm font-medium">
                         Correo electrónico
-                      </label>
+                      </Label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                         <Input
@@ -293,9 +348,9 @@ export default function AuthPage() {
 
                     <div className="space-y-2">
                       <div className="flex justify-between">
-                        <label htmlFor="password" className="text-sm font-medium">
+                        <Label htmlFor="password" className="text-sm font-medium">
                           Contraseña
-                        </label>
+                        </Label>
                         <Link href="/auth/forgot-password" className="text-xs text-blue-600 hover:underline">
                           ¿Olvidaste tu contraseña?
                         </Link>
@@ -321,6 +376,18 @@ export default function AuthPage() {
                       </div>
                     </div>
 
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        id="remember"
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
+                      />
+                      <Label htmlFor="remember" className="text-sm font-medium">
+                        Recordarme
+                      </Label>
+                    </div>
+
                     <Button type="submit" className="w-full bg-[#F47B20] hover:bg-[#e06a10]" disabled={isLoading}>
                       {isLoading ? (
                         <>
@@ -331,13 +398,28 @@ export default function AuthPage() {
                         "Iniciar sesión"
                       )}
                     </Button>
+
+                    <div className="text-center">
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="text-sm text-blue-600"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          handleMagicLinkSignIn(e)
+                        }}
+                        disabled={isLoading || !email}
+                      >
+                        Iniciar sesión con enlace mágico
+                      </Button>
+                    </div>
                   </form>
                 ) : verificationStep ? (
                   <form onSubmit={handleVerifyCode} className="space-y-4">
                     <div className="space-y-2">
-                      <label htmlFor="code" className="text-sm font-medium">
+                      <Label htmlFor="code" className="text-sm font-medium">
                         Código de verificación
-                      </label>
+                      </Label>
                       <Input
                         id="code"
                         type="text"
@@ -366,9 +448,9 @@ export default function AuthPage() {
                 ) : (
                   <form onSubmit={handlePhoneSignIn} className="space-y-4">
                     <div className="space-y-2">
-                      <label htmlFor="phone" className="text-sm font-medium">
+                      <Label htmlFor="phone" className="text-sm font-medium">
                         Número de teléfono
-                      </label>
+                      </Label>
                       <div className="relative">
                         <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                         <Input
@@ -402,9 +484,23 @@ export default function AuthPage() {
                 {authMethod === "email" ? (
                   <form onSubmit={handleEmailSignUp} className="space-y-4">
                     <div className="space-y-2">
-                      <label htmlFor="register-email" className="text-sm font-medium">
+                      <Label htmlFor="name" className="text-sm font-medium">
+                        Nombre completo
+                      </Label>
+                      <Input
+                        id="name"
+                        type="text"
+                        placeholder="Juan Pérez"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="register-email" className="text-sm font-medium">
                         Correo electrónico
-                      </label>
+                      </Label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                         <Input
@@ -420,9 +516,9 @@ export default function AuthPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <label htmlFor="register-password" className="text-sm font-medium">
+                      <Label htmlFor="register-password" className="text-sm font-medium">
                         Contraseña
-                      </label>
+                      </Label>
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                         <Input
@@ -459,9 +555,9 @@ export default function AuthPage() {
                 ) : verificationStep ? (
                   <form onSubmit={handleVerifyCode} className="space-y-4">
                     <div className="space-y-2">
-                      <label htmlFor="register-code" className="text-sm font-medium">
+                      <Label htmlFor="register-code" className="text-sm font-medium">
                         Código de verificación
-                      </label>
+                      </Label>
                       <Input
                         id="register-code"
                         type="text"
@@ -490,9 +586,23 @@ export default function AuthPage() {
                 ) : (
                   <form onSubmit={handlePhoneSignIn} className="space-y-4">
                     <div className="space-y-2">
-                      <label htmlFor="register-phone" className="text-sm font-medium">
+                      <Label htmlFor="register-name" className="text-sm font-medium">
+                        Nombre completo
+                      </Label>
+                      <Input
+                        id="register-name"
+                        type="text"
+                        placeholder="Juan Pérez"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="register-phone" className="text-sm font-medium">
                         Número de teléfono
-                      </label>
+                      </Label>
                       <div className="relative">
                         <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                         <Input

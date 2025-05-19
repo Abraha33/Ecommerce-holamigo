@@ -6,8 +6,13 @@ interface OrderHistoryProps {
 }
 
 export function OrderHistory({ order }: OrderHistoryProps) {
+  if (!order || !order.statusHistory) {
+    return <div className="p-4 text-center text-gray-500">No hay historial disponible para este pedido.</div>
+  }
   // Ordenar el historial por fecha, del más reciente al más antiguo
-  const sortedHistory = [...order.statusHistory].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  const sortedHistory = order?.statusHistory
+    ? [...order.statusHistory].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    : []
 
   return (
     <div className="flow-root">

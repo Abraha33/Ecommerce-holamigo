@@ -1,40 +1,27 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import Image from "next/image"
-import { useRouter } from "next/navigation"
-import { usePathname } from "next/navigation"
+import { ShoppingCart, X, ChevronRight, LogIn } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/components/cart-provider"
 import { formatCurrency } from "@/lib/utils"
-import { ShoppingCart, X, Plus, Minus, Info, Trash2 } from "lucide-react"
-import { toast } from "sonner"
+import Image from "next/image"
+import Link from "next/link"
+import { motion, AnimatePresence } from "framer-motion"
+import { useAuth } from "@/components/auth-provider"
+import { useRouter } from "next/navigation"
 
 export function PersistentCartSidebar() {
-  const router = useRouter()
-  const { items = [], removeItem, updateQuantity, subtotal = 0, isLoading } = useCart()
   const [isOpen, setIsOpen] = useState(false)
-  const pathname = usePathname()
-  const [isMounted, setIsMounted] = useState(false)
+  const { items, removeItem, updateQuantity, subtotal, itemCount, isTemporaryCart } = useCart()
+  const { user } = useAuth()
+  const router = useRouter()
 
-  // Verificar si estamos en el cliente
+  // Cerrar el carrito cuando se hace clic fuera
   useEffect(() => {
-    setIsMounted(true)
-  }, [])
-
-  // Verificar si estamos en la página de checkout
-  const isCheckoutPage = pathname?.includes("/checkout")
-
-  // Calcular el número de items solo si items está definido
-  const itemCount = isMounted && items ? items.reduce((count, item) => count + item.quantity, 0) : 0
-
-  // Cerrar el carrito al hacer clic fuera
-  useEffect(() => {
-    if (!isMounted) return
-
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement
-      if (isOpen && !target.closest(".cart-sidebar") && !target.closest(".cart-toggle")) {
+    const handleClickOutside = (event) => {
+      const sidebar = document.getElementById("cart-sidebar")
+      if (sidebar && !sidebar.contains(event.target) && isOpen) {
         setIsOpen(false)
       }
     }
@@ -43,237 +30,183 @@ export function PersistentCartSidebar() {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside)
     }
-  }, [isOpen, isMounted])
+  }, [isOpen])
 
-  // Prevenir scroll cuando el carrito está abierto
-  useEffect(() => {
-    if (!isMounted) return
-
-    if (isOpen) {
-      // Guardar la posición actual del scroll
-      const scrollY = window.scrollY
-
-      // Bloquear el scroll de la página y fijarla en la posición actual
-      document.body.style.overflow = "hidden"
-      document.body.style.position = "fixed"
-      document.body.style.top = `-${scrollY}px`
-      document.body.style.width = "100%"
-    } else {
-      // Restaurar el scroll cuando se cierra el carrito
-      const scrollY = document.body.style.top
-      document.body.style.overflow = ""
-      document.body.style.position = ""
-      document.body.style.top = ""
-      document.body.style.width = ""
-
-      // Volver a la posición original del scroll
-      if (scrollY) {
-        window.scrollTo(0, Number.parseInt(scrollY || "0") * -1)
-      }
-    }
-
-    return () => {
-      // Limpiar los estilos al desmontar el componente
-      document.body.style.overflow = ""
-      document.body.style.position = ""
-      document.body.style.top = ""
-      document.body.style.width = ""
-    }
-  }, [isOpen, isMounted])
-
-  const handleRemoveItem = async (itemId: string) => {
-    if (!itemId) return
-
-    try {
-      await removeItem(itemId)
-      toast({
-        title: "Producto eliminado",
-        description: "El producto ha sido eliminado del carrito",
-      })
-    } catch (error) {
-      console.error("Error al eliminar producto:", error)
-      toast({
-        title: "Error",
-        description: "No se pudo eliminar el producto",
-        variant: "destructive",
-      })
-    }
+  // Manejar cambio de cantidad
+  const handleQuantityChange = (id, currentQuantity, change) => {
+    const newQuantity = Math.max(1, currentQuantity + change)
+    updateQuantity(id, newQuantity)
   }
 
-  const handleUpdateQuantity = async (itemId: string, newQuantity: number) => {
-    if (!itemId) return
-
-    try {
-      await updateQuantity(itemId, newQuantity)
-    } catch (error) {
-      console.error("Error al actualizar cantidad:", error)
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar la cantidad",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const handleGoToCheckout = () => {
-    setIsOpen(false)
-    router.push("/checkout")
-  }
-
-  const handleContinueShopping = () => {
-    setIsOpen(false)
-    // Redirección a la página de tienda
-    console.log("Redirigiendo a la página de tienda: /tienda")
-    router.push("/tienda")
-  }
-
-  // Si no estamos montados en el cliente, no renderizamos nada o renderizamos un placeholder
-  if (!isMounted) {
-    return null // O un placeholder si prefieres
+  // Ir a la página de login
+  const handleLogin = () => {
+    router.push("/login?redirectTo=" + encodeURIComponent(window.location.pathname))
   }
 
   return (
     <>
-      {/* Botón del carrito */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="cart-toggle fixed right-4 top-20 z-40 bg-[#004a93] text-white p-3 rounded-full shadow-lg flex items-center justify-center hover:bg-[#0071bc] transition-all md:hidden"
-        aria-label="Abrir carrito"
-      >
-        <ShoppingCart className="h-5 w-5" />
-        {itemCount > 0 && (
-          <span className="absolute -top-2 -right-2 bg-[#e30613] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-            {itemCount}
-          </span>
-        )}
-      </button>
-
-      {/* Overlay oscuro cuando el carrito está abierto */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 transition-opacity duration-300"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
-
       {/* Sidebar del carrito */}
-      <div
-        className={`cart-sidebar fixed right-0 top-0 bottom-0 z-50 w-full max-w-md bg-white shadow-xl transform transition-transform duration-300 ease-in-out ${
-          isOpen ? "translate-x-0" : "translate-x-full"
-        }`}
-      >
-        {/* Encabezado */}
-        <div className="flex justify-between items-center p-4 border-b">
-          <h2 className="text-lg font-medium">Agregados al carrito</h2>
-          <button
-            onClick={() => setIsOpen(false)}
-            className="text-gray-500 hover:text-gray-700"
-            aria-label="Cerrar carrito"
-          >
-            <X className="h-6 w-6" />
-          </button>
-        </div>
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            {/* Overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.5 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black z-40"
+              onClick={() => setIsOpen(false)}
+            />
 
-        {/* Mensaje informativo */}
-        {items && items.length > 0 && (
-          <div className="bg-[#FFFF1A] p-3 mx-4 my-3 rounded-md flex items-start">
-            <Info className="h-5 w-5 text-gray-800 mr-2 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-gray-800">Los descuentos serán visualizados al seleccionar el método de pago</p>
-          </div>
-        )}
-
-        {/* Contenido del carrito */}
-        <div className="flex-1 overflow-auto p-4 max-h-[calc(100vh-200px)] overscroll-contain">
-          {isLoading && (
-            <div className="flex justify-center items-center h-40">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-            </div>
-          )}
-          {!isLoading && (!items || items.length === 0) && (
-            <div className="flex flex-col items-center justify-center h-40 text-gray-500">
-              <ShoppingCart className="h-12 w-12 mb-2 opacity-20" />
-              <p>Tu carrito está vacío</p>
-            </div>
-          )}
-          {!isLoading &&
-            items &&
-            items.map((item) => (
-              <div key={item.id} className="flex py-4 border-b">
-                {/* Imagen del producto */}
-                <div className="relative h-20 w-20 rounded overflow-hidden bg-gray-100 flex-shrink-0">
-                  <Image src={item.image || "/placeholder.svg"} alt={item.name} fill className="object-contain" />
-                </div>
-
-                {/* Información del producto */}
-                <div className="ml-3 flex-1">
-                  <h4 className="font-medium text-sm line-clamp-2">{item.name}</h4>
-                  <p className="text-xs text-gray-500 uppercase">{item.variant}</p>
-                  <div className="mt-1">
-                    <span className="font-bold text-base">{formatCurrency(item.price)}</span>
-                  </div>
-                </div>
-
-                {/* Controles de cantidad */}
-                <div className="flex flex-col items-end justify-between ml-2">
-                  <button
-                    onClick={() => item.id && handleRemoveItem(item.id)}
-                    className="text-gray-400 hover:text-[#e30613] p-1"
-                    aria-label="Eliminar producto"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-
-                  <div className="flex items-center border rounded-md bg-gray-50">
-                    <button
-                      onClick={() => item.id && handleUpdateQuantity(item.id, Math.max(1, item.quantity - 1))}
-                      className="px-2 py-1 text-gray-600 hover:bg-gray-200 rounded-l-md"
-                      aria-label="Disminuir cantidad"
-                    >
-                      <Minus className="h-4 w-4" />
-                    </button>
-                    <span className="px-3 py-1 text-sm font-medium">{item.quantity}</span>
-                    <span className="text-xs text-gray-500 mr-1">und.</span>
-                    <button
-                      onClick={() => item.id && handleUpdateQuantity(item.id, item.quantity + 1)}
-                      className="px-2 py-1 text-gray-600 hover:bg-gray-200 rounded-r-md"
-                      aria-label="Aumentar cantidad"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-        </div>
-
-        {/* Footer con subtotal y botones */}
-        {items && items.length > 0 && (
-          <div className="border-t p-4 bg-white">
-            <div className="flex justify-between items-center mb-4">
-              <span className="font-medium text-lg">Subtotal:</span>
-              <span className="font-bold text-xl">{formatCurrency(subtotal)}</span>
-            </div>
-
-            {!isCheckoutPage && (
-              <Button
-                className="w-full mb-2 bg-[#F47B20] hover:bg-[#e06a10] text-white font-medium py-3 h-auto"
-                onClick={handleGoToCheckout}
-              >
-                Ver carrito / Ir a pagar
-              </Button>
-            )}
-
-            <Button
-              variant="outline"
-              className="w-full border-[#004a93] text-[#004a93] font-medium"
-              onClick={handleContinueShopping}
-              data-testid="continue-shopping-button"
+            {/* Sidebar */}
+            <motion.div
+              id="cart-sidebar"
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="fixed top-0 right-0 h-full w-full sm:w-96 bg-white shadow-xl z-50 flex flex-col"
             >
-              Seguir comprando
-            </Button>
-          </div>
+              {/* Encabezado */}
+              <div className="p-4 border-b flex justify-between items-center">
+                <h2 className="text-xl font-bold flex items-center">
+                  <ShoppingCart className="h-5 w-5 mr-2" />
+                  Carrito
+                  {itemCount > 0 && <span className="ml-2 text-sm text-gray-500">({itemCount})</span>}
+                </h2>
+                <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+
+              {/* Indicador de carrito temporal */}
+              {isTemporaryCart && (
+                <div className="p-4 bg-blue-50 border-b border-blue-100">
+                  <div className="flex items-start">
+                    <div className="flex-shrink-0 mt-0.5">
+                      <LogIn className="h-5 w-5 text-blue-500" />
+                    </div>
+                    <div className="ml-3">
+                      <h3 className="text-sm font-medium text-blue-800">Carrito temporal</h3>
+                      <div className="mt-1 text-sm text-blue-700">
+                        <p>
+                          Estás usando un carrito temporal. Tus productos se guardarán localmente y se sincronizarán
+                          cuando inicies sesión.
+                        </p>
+                      </div>
+                      <div className="mt-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="text-blue-700 border-blue-300 hover:bg-blue-50"
+                          onClick={handleLogin}
+                        >
+                          <LogIn className="h-4 w-4 mr-1" />
+                          Iniciar sesión
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Contenido del carrito */}
+              <div className="flex-1 overflow-y-auto p-4">
+                {items.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-center">
+                    <ShoppingCart className="h-16 w-16 text-gray-300 mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-1">Tu carrito está vacío</h3>
+                    <p className="text-gray-500 mb-6">Agrega productos para comenzar tu compra</p>
+                    <Button
+                      variant="outline"
+                      className="flex items-center"
+                      onClick={() => {
+                        setIsOpen(false)
+                        router.push("/shop")
+                      }}
+                    >
+                      Explorar productos
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </div>
+                ) : (
+                  <ul className="divide-y">
+                    {items.map((item) => (
+                      <li key={item.id} className="py-4 flex">
+                        <div className="relative h-20 w-20 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
+                          <Image
+                            src={item.image || "/placeholder.svg"}
+                            alt={item.name}
+                            fill
+                            className="object-contain p-2"
+                          />
+                        </div>
+                        <div className="ml-4 flex-1">
+                          <div className="flex justify-between">
+                            <h4 className="text-sm font-medium text-gray-900 line-clamp-2">{item.name}</h4>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-gray-400 hover:text-gray-500"
+                              onClick={() => removeItem(item.id)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          {item.variant && <p className="text-xs text-gray-500">{item.variant}</p>}
+                          <div className="flex justify-between items-center mt-2">
+                            <div className="text-sm font-medium text-gray-900">{formatCurrency(item.price)}</div>
+                            <div className="flex items-center border rounded-md">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 rounded-none"
+                                onClick={() => handleQuantityChange(item.id, item.quantity, -1)}
+                              >
+                                <span className="text-lg font-medium">-</span>
+                              </Button>
+                              <span className="w-8 text-center text-sm">{item.quantity}</span>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 rounded-none"
+                                onClick={() => handleQuantityChange(item.id, item.quantity, 1)}
+                              >
+                                <span className="text-lg font-medium">+</span>
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              {/* Pie del carrito */}
+              {items.length > 0 && (
+                <div className="p-4 border-t">
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="text-base font-medium">Subtotal</span>
+                    <span className="text-lg font-bold">{formatCurrency(subtotal)}</span>
+                  </div>
+                  <div className="space-y-2">
+                    <Link href="/cart" onClick={() => setIsOpen(false)} className="w-full block">
+                      <Button variant="outline" className="w-full">
+                        Ver carrito
+                      </Button>
+                    </Link>
+                    <Link href="/checkout" onClick={() => setIsOpen(false)} className="w-full block">
+                      <Button className="w-full bg-[#004a93] hover:bg-[#003366]">Proceder al pago</Button>
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </>
         )}
-      </div>
+      </AnimatePresence>
     </>
   )
 }

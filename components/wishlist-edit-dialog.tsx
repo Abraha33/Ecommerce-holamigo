@@ -79,11 +79,7 @@ export function WishlistEditDialog({ open, onOpenChange, wishlistId }: WishlistE
     try {
       if (wishlistId) {
         // Update existing wishlist
-        updateWishlist(wishlistId, {
-          name,
-          description,
-          icon: selectedIcon,
-        })
+        updateWishlist(wishlistId, name, selectedIcon, description)
         toast({
           title: "Lista actualizada",
           description: `La lista "${name}" ha sido actualizada correctamente.`,

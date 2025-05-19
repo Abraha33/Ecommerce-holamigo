@@ -1,18 +1,17 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { formatCurrency } from "@/lib/utils"
-import { ShoppingCart, Star, Check, Minus, Plus, ChevronLeft, ChevronRight } from "lucide-react"
+import { ShoppingCart, Check, Minus, Plus, LogIn, Trash2 } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { useCart } from "@/components/cart-provider"
 import { Input } from "@/components/ui/input"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { motion, AnimatePresence } from "framer-motion"
-import { WishlistButton } from "@/components/wishlist-button"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/components/auth-provider"
 
 interface ProductDetailsModalProps {
   isOpen: boolean
@@ -28,92 +27,43 @@ const packageTypes = [
   { value: "bulk", label: "Bulto (500)", factor: 500 },
 ]
 
-// Imágenes adicionales simuladas para la galería
-const getAdditionalImages = (mainImage) => {
-  // Extraer el nombre base de la imagen
-  const parts = mainImage.split(".")
-  const ext = parts.pop()
-  const baseName = parts.join(".")
-
-  // Generar variantes de la imagen
-  return [
-    mainImage,
-    `${baseName}-alt1.${ext}`.replace(".png", ".png"),
-    `${baseName}-alt2.${ext}`.replace(".png", ".png"),
-    `${baseName}-alt3.${ext}`.replace(".png", ".png"),
-  ]
-}
-
 export function ProductDetailsModal({ isOpen, onClose, product }: ProductDetailsModalProps) {
   const [quantity, setQuantity] = useState(1)
-  const [selectedColor, setSelectedColor] = useState("default")
-  const [selectedTab, setSelectedTab] = useState("details")
   const [isAdding, setIsAdding] = useState(false)
+  const [isRemoving, setIsRemoving] = useState(false)
   const [selectedPackage, setSelectedPackage] = useState(packageTypes[0])
   const { toast } = useToast()
-  const { addItem } = useCart()
-  const [selectedUnit, setSelectedUnit] = useState(product?.units ? product.units[0] : null)
-  const [showBrands, setShowBrands] = useState(false)
+  const { addItem, items, removeItem } = useCart()
+  const router = useRouter()
+  const { user } = useAuth()
+  const contentRef = useRef<HTMLDivElement>(null)
 
-  // Estado para la galería de imágenes
-  const productImages = product ? getAdditionalImages(product.image || "/placeholder.svg") : []
-  const [currentImageIndex, setCurrentImageIndex] = useState(0)
-
-  // Colores disponibles (simulados)
-  const availableColors = [
-    { id: "default", name: "Estándar", hex: "#e2e2e2" },
-    { id: "blue", name: "Azul", hex: "#3b82f6" },
-    { id: "green", name: "Verde", hex: "#22c55e" },
-  ]
-
-  // Marcas disponibles
-  const availableBrands = [
-    { id: "darnel", name: "Darnel", logo: "/abstract-geometric-logo.png" },
-    { id: "fabol", name: "Fabol", logo: "/abstract-geometric-logo.png" },
-    { id: "fadevesa", name: "Fadevesa", logo: "/Abstract Geometric Logo.png" },
-    { id: "carvajal", name: "Carvajal", logo: "/abstract-geometric-logo.png" },
-  ]
-  const [selectedBrand, setSelectedBrand] = useState(availableBrands[0].id)
+  // Verificar si el producto ya está en el carrito
+  const cartItem = items.find((item) => item.product_id === product?.id?.toString())
+  const isInCart = !!cartItem
+  const cartQuantity = cartItem?.quantity || 0
 
   // Calcular el precio base por unidad (sin descuentos)
   const baseUnitPrice = product?.price || 0
 
-  // Calcular el precio según el tipo de empaque seleccionado y la cantidad
-  const calculatePrice = () => {
+  // Calcular el descuento si hay precio original
+  const hasDiscount = product?.originalPrice && product.originalPrice > product.price
+  const discountAmount = hasDiscount ? product.originalPrice - product.price : 0
+  const discountPercentage = hasDiscount
+    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+    : 0
+
+  // Calcular el precio total según el tipo de empaque seleccionado y la cantidad
+  const calculateTotalPrice = () => {
     if (!product) return 0
     const packageType = packageTypes.find((p) => p.value === selectedPackage.value) || packageTypes[0]
-    // Aplicar un pequeño descuento por volumen
-    const discountFactor =
-      packageType.factor === 1 ? 1 : packageType.factor <= 10 ? 0.95 : packageType.factor <= 100 ? 0.9 : 0.85
-    return product.price * packageType.factor * discountFactor * (quantity / packageType.factor)
+    return product.price * quantity * packageType.factor
   }
 
-  // Calcular el precio por unidad para cada tipo de empaque
-  const calculateUnitPrice = (packageType) => {
-    if (!product) return 0
-    const discountFactor =
-      packageType.factor === 1 ? 1 : packageType.factor <= 10 ? 0.95 : packageType.factor <= 100 ? 0.9 : 0.85
-    return (product.price * packageType.factor * discountFactor) / packageType.factor
-  }
-
-  // Calcular el ahorro por unidad para un tipo de empaque
-  const calculateUnitSavings = (packageType) => {
-    const unitPrice = calculateUnitPrice(packageType)
-    return baseUnitPrice - unitPrice
-  }
-
-  // Calcular el ahorro total
-  const calculateTotalSavings = () => {
-    const regularPrice = baseUnitPrice * quantity * selectedPackage.factor
-    const discountedPrice = calculatePrice()
-    return regularPrice - discountedPrice
-  }
-
-  // Calcular el porcentaje de ahorro total
-  const savingsPercentage = () => {
-    const regularPrice = baseUnitPrice * quantity * selectedPackage.factor
-    const discountedPrice = calculatePrice()
-    return Math.round(((regularPrice - discountedPrice) / regularPrice) * 100)
+  // Calcular el total de unidades base
+  const calculateTotalUnits = () => {
+    const packageType = packageTypes.find((p) => p.value === selectedPackage.value) || packageTypes[0]
+    return quantity * packageType.factor
   }
 
   // Manejar selección de paquete
@@ -121,13 +71,29 @@ export function ProductDetailsModal({ isOpen, onClose, product }: ProductDetails
     const selected = packageTypes.find((p) => p.value === value)
     if (selected) {
       setSelectedPackage(selected)
-
-      // Ajustar la cantidad para que sea un múltiplo del factor del paquete
-      if (quantity < 1) {
-        setQuantity(1)
-      }
     }
   }
+
+  // Efecto para manejar la animación de eliminación
+  useEffect(() => {
+    if (isRemoving && contentRef.current) {
+      const timer = setTimeout(() => {
+        // Después de que termine la animación, eliminar el producto y cerrar el modal
+        if (cartItem) {
+          removeItem(cartItem.id)
+          toast({
+            title: "Producto eliminado",
+            description: `${product.name} ha sido eliminado del carrito`,
+            variant: "default",
+          })
+        }
+        setIsRemoving(false)
+        onClose()
+      }, 800) // Duración de la animación
+
+      return () => clearTimeout(timer)
+    }
+  }, [isRemoving, cartItem, removeItem, product, onClose, toast])
 
   const handleAddToCart = async () => {
     if (!product) return
@@ -138,21 +104,31 @@ export function ProductDetailsModal({ isOpen, onClose, product }: ProductDetails
       await addItem({
         product_id: product.id.toString(),
         name: product.name,
-        price: calculateUnitPrice(selectedPackage),
+        price: product.price,
         image: product.image,
-        quantity: quantity * selectedPackage.factor,
-        variant: `${availableBrands.find((b) => b.id === selectedBrand)?.name} - ${
-          selectedColor !== "default"
-            ? `${availableColors.find((c) => c.id === selectedColor)?.name} - ${selectedPackage.label}`
-            : selectedPackage.label
-        }`,
+        quantity: calculateTotalUnits(),
+        variant: selectedPackage.label,
       })
 
-      toast({
-        title: "Producto agregado",
-        description: `${quantity} ${selectedPackage.label}(s) de ${product.name} agregado al carrito.`,
-        className: "max-w-xs",
-      })
+      // Mensaje específico dependiendo si es carrito temporal o de usuario
+      if (!user) {
+        toast({
+          title: "Producto agregado al carrito temporal",
+          description: `${quantity} ${selectedPackage.label}(s) de ${product.name} agregado. Se sincronizará cuando inicies sesión.`,
+          className: "max-w-xs",
+        })
+      } else {
+        toast({
+          title: "Producto agregado",
+          description: `${quantity} ${selectedPackage.label}(s) de ${product.name} agregado al carrito.`,
+          className: "max-w-xs",
+        })
+      }
+
+      // Cerrar el modal después de agregar exitosamente
+      setTimeout(() => {
+        onClose()
+      }, 1500)
     } catch (error) {
       console.error("Error al agregar al carrito:", error)
       toast({
@@ -168,410 +144,220 @@ export function ProductDetailsModal({ isOpen, onClose, product }: ProductDetails
   }
 
   const handleQuantityChange = (newQuantity) => {
-    if (newQuantity >= 1) {
+    if (newQuantity > 0) {
       setQuantity(newQuantity)
+    } else if (newQuantity === 0) {
+      // Iniciar la animación de eliminación
+      setIsRemoving(true)
     }
   }
 
-  // Navegación de la galería
-  const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % productImages.length)
-  }
-
-  const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + productImages.length) % productImages.length)
-  }
-
-  const selectImage = (index) => {
-    setCurrentImageIndex(index)
+  const handleLogin = () => {
+    router.push(`/login?redirectTo=${encodeURIComponent(window.location.pathname)}`)
   }
 
   if (!product) return null
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[900px] p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
+    <Dialog open={isOpen} onOpenChange={(open) => !isRemoving && onClose()}>
+      <DialogContent className="sm:max-w-[550px] p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
         <DialogHeader className="p-4 sm:p-6 border-b">
           <DialogTitle className="text-xl">{product.name}</DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Galería de imágenes */}
-          <div className="p-4 space-y-4">
-            {/* Imagen principal */}
-            <div className="relative h-[250px] md:h-[300px] bg-gray-50 rounded-lg overflow-hidden">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentImageIndex}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute inset-0"
-                >
-                  <Image
-                    src={productImages[currentImageIndex] || "/placeholder.svg"}
-                    alt={`${product.name} - Vista ${currentImageIndex + 1}`}
-                    fill
-                    className="object-contain p-2"
-                  />
-                </motion.div>
-              </AnimatePresence>
+        <div
+          ref={contentRef}
+          className={`p-4 sm:p-6 transition-all duration-800 ${
+            isRemoving ? "opacity-50 scale-95 animate-shake" : "opacity-100 scale-100"
+          }`}
+        >
+          {/* Imagen del producto - Agrandada */}
+          <div className="mb-6">
+            <div className="relative w-full h-[250px] bg-gray-50 rounded-lg overflow-hidden">
+              <Image src={product.image || "/placeholder.svg"} alt={product.name} fill className="object-contain p-4" />
 
               {/* Badges */}
-              <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
+              <div className="absolute top-2 left-2 flex flex-col gap-1">
                 {product.isNew && <Badge className="bg-[#004a93] hover:bg-[#004a93]">Nuevo</Badge>}
-                {product.isSale && <Badge className="bg-[#e30613] hover:bg-[#e30613]">Oferta</Badge>}
+                {hasDiscount && <Badge className="bg-[#e30613] hover:bg-[#e30613]">{discountPercentage}% DCTO</Badge>}
               </div>
-
-              {/* Controles de navegación */}
-              <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 rounded-full bg-white/70 hover:bg-white/90 shadow-sm"
-                  onClick={prevImage}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 rounded-full bg-white/70 hover:bg-white/90 shadow-sm"
-                  onClick={nextImage}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Miniaturas */}
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {productImages.map((img, index) => (
-                <div
-                  key={index}
-                  className={`relative h-16 w-16 flex-shrink-0 cursor-pointer rounded-md border-2 ${
-                    currentImageIndex === index ? "border-[#004a93]" : "border-transparent"
-                  } overflow-hidden`}
-                  onClick={() => selectImage(index)}
-                >
-                  <Image src={img || "/placeholder.svg"} alt={`Miniatura ${index + 1}`} fill className="object-cover" />
-                </div>
-              ))}
             </div>
           </div>
 
-          {/* Información del producto */}
-          <div className="p-4 sm:p-6 flex flex-col h-full">
-            <Tabs value={selectedTab} onValueChange={setSelectedTab} className="flex-grow">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="details">Detalles</TabsTrigger>
-                <TabsTrigger value="specs">Especificaciones</TabsTrigger>
-                <TabsTrigger value="reviews">Reseñas</TabsTrigger>
-              </TabsList>
+          {/* Información de precio y descuento */}
+          <div className="mb-6">
+            <div className="flex items-baseline">
+              <div className="text-black font-bold text-2xl">{formatCurrency(product.price)}</div>
+              <span className="text-sm text-gray-500 font-normal ml-1"> / unidad</span>
 
-              <TabsContent value="details" className="flex-grow">
-                <div className="space-y-4">
-                  <div className="flex items-baseline">
-                    <div className="text-[#e30613] font-bold text-2xl">{formatCurrency(product.price)}</div>
-                    <span className="text-sm text-gray-500 font-normal ml-1"> / unidad</span>
-                    {product.originalPrice && (
-                      <span className="text-sm text-gray-500 line-through ml-2">
-                        {formatCurrency(product.originalPrice)}
-                      </span>
-                    )}
-                  </div>
-
-                  <p className="text-sm text-gray-600">
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore
-                    et dolore magna aliqua.
-                  </p>
-
-                  {/* Selector de unidades */}
-                  <div>
-                    <h4 className="text-sm font-medium mb-2">Presentación:</h4>
-                    <div className="grid grid-cols-2 gap-2">
-                      {packageTypes.map((pkg) => {
-                        const unitPrice = calculateUnitPrice(pkg)
-                        const unitSavings = calculateUnitSavings(pkg)
-                        const isSelected = selectedPackage.value === pkg.value
-                        return (
-                          <div
-                            key={pkg.value}
-                            onClick={() => handlePackageSelect(pkg.value)}
-                            className={`cursor-pointer rounded p-3 transition-all relative border ${
-                              isSelected
-                                ? "bg-[#004a93] text-white border-[#004a93]"
-                                : "bg-white text-gray-800 border-gray-200 hover:bg-gray-50"
-                            }`}
-                          >
-                            <div className="flex justify-between items-center">
-                              <div>
-                                <div className="font-medium">{pkg.label}</div>
-                                <div className="text-xs opacity-80">x{pkg.factor}</div>
-                              </div>
-                              <div className={`${isSelected ? "text-white" : "text-[#e30613]"} font-semibold`}>
-                                {formatCurrency(unitPrice)}
-                              </div>
-                            </div>
-                            {isSelected && (
-                              <div className="absolute -top-1 -right-1 bg-white rounded-full p-0.5 shadow-sm">
-                                <Check className="h-3 w-3 text-[#004a93]" />
-                              </div>
-                            )}
-
-                            {/* Mostrar ahorro por unidad */}
-                            {unitSavings > 0 && (
-                              <div
-                                className={`mt-1 text-xs ${
-                                  isSelected ? "bg-white/20 text-white" : "bg-blue-50 text-[#004a93]"
-                                } rounded-sm px-1`}
-                              >
-                                Ahorra {formatCurrency(unitSavings)} por unidad
-                              </div>
-                            )}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Selector de color */}
-                  <div>
-                    <h4 className="text-sm font-medium mb-2">Color:</h4>
-                    <div className="flex gap-2">
-                      {availableColors.map((color) => (
-                        <button
-                          key={color.id}
-                          onClick={() => setSelectedColor(color.id)}
-                          className={`w-8 h-8 rounded-full relative ${
-                            selectedColor === color.id ? "ring-2 ring-offset-2 ring-[#004a93]" : ""
-                          }`}
-                          style={{ backgroundColor: color.hex }}
-                          title={color.name}
-                        >
-                          {selectedColor === color.id && (
-                            <Check className="h-4 w-4 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white" />
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Selector de tamaño */}
-                  <div>
-                    <h4 className="text-sm font-medium mb-2">Tamaño:</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {["S", "M", "L", "XL"].map((size) => (
-                        <button
-                          key={size}
-                          className="w-10 h-10 rounded-md border flex items-center justify-center hover:border-[#004a93] hover:bg-blue-50"
-                        >
-                          {size}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Selector de modelo */}
-                  <div>
-                    <h4 className="text-sm font-medium mb-2">Modelo:</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {["Estándar", "Premium", "Eco"].map((model) => (
-                        <button
-                          key={model}
-                          className="px-3 py-1 rounded-md border flex items-center justify-center hover:border-[#004a93] hover:bg-blue-50"
-                        >
-                          {model}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Selector de marca */}
-                  <div>
-                    <h4 className="text-sm font-medium mb-2">Marca:</h4>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-between bg-blue-50 border-[#004a93] text-[#004a93]"
-                      onClick={() => setShowBrands(!showBrands)}
-                    >
-                      {availableBrands.find((b) => b.id === selectedBrand)?.name}
-                      {showBrands ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                    </Button>
-
-                    {showBrands && (
-                      <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 border rounded-md bg-white">
-                        {availableBrands.map((brand) => (
-                          <div
-                            key={brand.id}
-                            className={`cursor-pointer flex flex-col items-center p-2 rounded-full ${
-                              selectedBrand === brand.id ? "bg-blue-100 ring-2 ring-[#004a93]" : "hover:bg-gray-100"
-                            }`}
-                            onClick={() => {
-                              setSelectedBrand(brand.id)
-                              setShowBrands(false)
-                            }}
-                          >
-                            <div className="relative w-16 h-16 rounded-full overflow-hidden mb-1">
-                              <Image
-                                src={brand.logo || "/placeholder.svg"}
-                                alt={brand.name}
-                                fill
-                                className="object-contain p-2"
-                              />
-                            </div>
-                            <span className="text-xs font-medium">{brand.name}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Control de cantidad */}
-                  <div>
-                    <h4 className="text-sm font-medium mb-2">Cantidad ({selectedPackage.label}):</h4>
-                    <div className="flex items-center">
-                      <div className="flex border rounded shadow-sm">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 rounded-none border-r"
-                          onClick={() => handleQuantityChange(quantity - 1)}
-                          disabled={quantity <= 1}
-                        >
-                          <Minus className="h-3 w-3" />
-                        </Button>
-                        <Input
-                          type="number"
-                          min="1"
-                          value={quantity}
-                          onChange={(e) => handleQuantityChange(Number.parseInt(e.target.value) || 1)}
-                          className="w-12 h-8 text-center border-none"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 rounded-none border-l"
-                          onClick={() => handleQuantityChange(quantity + 1)}
-                        >
-                          <Plus className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Resumen de ahorro total */}
-                  {calculateTotalSavings() > 0 && (
-                    <div className="mt-2 text-sm bg-blue-50 text-[#004a93] p-2 rounded flex items-center justify-between shadow-sm">
-                      <span>Ahorro total:</span>
-                      <span className="font-bold">
-                        {formatCurrency(calculateTotalSavings())} ({savingsPercentage()}%)
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm">
-                      Total: <span className="font-bold text-[#e30613]">{formatCurrency(calculatePrice())}</span>
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="specs" className="flex-grow">
-                <div className="space-y-4">
-                  <h3 className="font-medium">Especificaciones técnicas</h3>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div className="bg-gray-50 p-2">Material</div>
-                    <div className="p-2">Plástico reciclado</div>
-
-                    <div className="bg-gray-50 p-2">Dimensiones</div>
-                    <div className="p-2">10 x 15 x 5 cm</div>
-
-                    <div className="bg-gray-50 p-2">Peso</div>
-                    <div className="p-2">250g</div>
-
-                    <div className="bg-gray-50 p-2">Origen</div>
-                    <div className="p-2">Colombia</div>
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="reviews" className="flex-grow">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <div className="flex">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star key={star} className="h-5 w-5 text-yellow-400 fill-yellow-400" />
-                      ))}
-                    </div>
-                    <span className="text-sm font-medium">5.0</span>
-                    <span className="text-sm text-gray-500">(12 reseñas)</span>
-                  </div>
-
-                  <div className="border-t pt-4">
-                    <div className="space-y-4">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <div className="font-medium">Juan Pérez</div>
-                          <div className="flex">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <Star key={star} className="h-3 w-3 text-yellow-400 fill-yellow-400" />
-                            ))}
-                          </div>
-                        </div>
-                        <div className="text-sm text-gray-600 mt-1">
-                          Excelente producto, muy buena calidad y entrega rápida.
-                        </div>
-                      </div>
-
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <div className="font-medium">María López</div>
-                          <div className="flex">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <Star key={star} className="h-3 w-3 text-yellow-400 fill-yellow-400" />
-                            ))}
-                          </div>
-                        </div>
-                        <div className="text-sm text-gray-600 mt-1">Muy satisfecha con mi compra, lo recomiendo.</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-            </Tabs>
-
-            {/* Botones de acción */}
-            <div className="mt-6 grid grid-cols-2 gap-3 pt-4 border-t">
-              <WishlistButton
-                productId={product.id}
-                productName={product.name}
-                productImage={product.image}
-                productPrice={product.price}
-                variant="full"
-              />
-              <Button
-                className="bg-[#004a93] hover:bg-[#0071bc] flex items-center justify-center gap-2"
-                onClick={handleAddToCart}
-                disabled={isAdding}
-              >
-                {isAdding ? (
-                  <>
-                    <Check className="h-4 w-4" />
-                    Agregado
-                  </>
-                ) : (
-                  <>
-                    <ShoppingCart className="h-4 w-4" />
-                    Agregar
-                  </>
-                )}
-              </Button>
+              {hasDiscount && (
+                <span className="text-sm text-gray-500 line-through ml-2">{formatCurrency(product.originalPrice)}</span>
+              )}
             </div>
+
+            {/* Mostrar ahorro por descuento si existe */}
+            {hasDiscount && (
+              <div className="mt-2 text-sm bg-red-50 text-red-600 p-2 rounded flex items-center justify-between">
+                <span>Ahorro por descuento:</span>
+                <span className="font-bold">
+                  {formatCurrency(discountAmount)} ({discountPercentage}%)
+                </span>
+              </div>
+            )}
+
+            <p className="text-sm text-gray-600 mt-3">
+              Selecciona la presentación y cantidad que deseas agregar al carrito
+            </p>
+          </div>
+
+          {/* Aviso de carrito temporal para usuarios no autenticados */}
+          {!user && (
+            <div className="mb-6 bg-blue-50 p-3 rounded-md border border-blue-100">
+              <div className="flex items-start">
+                <div className="flex-shrink-0 mt-0.5">
+                  <LogIn className="h-5 w-5 text-blue-500" />
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-blue-800">Carrito temporal</h3>
+                  <div className="mt-1 text-sm text-blue-700">
+                    <p>
+                      Estás usando un carrito temporal. Tus productos se guardarán localmente y se sincronizarán cuando
+                      inicies sesión.
+                    </p>
+                  </div>
+                  <div className="mt-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="text-blue-700 border-blue-300 hover:bg-blue-50"
+                      onClick={handleLogin}
+                    >
+                      <LogIn className="h-4 w-4 mr-1" />
+                      Iniciar sesión
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Selector de unidades */}
+          <div className="mb-6">
+            <h4 className="text-sm font-medium mb-3">Presentación:</h4>
+            <div className="grid grid-cols-2 gap-3">
+              {packageTypes.map((pkg) => {
+                const isSelected = selectedPackage.value === pkg.value
+                return (
+                  <div
+                    key={pkg.value}
+                    onClick={() => handlePackageSelect(pkg.value)}
+                    className={`cursor-pointer rounded p-3 transition-all relative border ${
+                      isSelected
+                        ? "bg-[#004a93] text-white border-[#004a93]"
+                        : "bg-white text-gray-800 border-gray-200 hover:bg-gray-50"
+                    }`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <div className="font-medium">{pkg.label}</div>
+                        <div className="text-xs opacity-80">x{pkg.factor} unidades</div>
+                      </div>
+                      <div className={`${isSelected ? "text-white" : "text-black"} font-semibold`}>
+                        {formatCurrency(product.price * pkg.factor)}
+                      </div>
+                    </div>
+                    {isSelected && (
+                      <div className="absolute -top-1 -right-1 bg-white rounded-full p-0.5 shadow-sm">
+                        <Check className="h-3 w-3 text-[#004a93]" />
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Control de cantidad */}
+          <div className="mb-6">
+            <h4 className="text-sm font-medium mb-2">Cantidad ({selectedPackage.label}):</h4>
+            <div className="flex items-center">
+              <div
+                className={`flex border-2 border-[#004a93] rounded shadow-sm transition-all ${
+                  quantity === 1 ? "hover:border-red-500" : ""
+                }`}
+              >
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className={`h-10 w-10 rounded-none border-r transition-colors ${
+                    quantity === 1 ? "hover:bg-red-50 hover:text-red-500" : ""
+                  }`}
+                  onClick={() => handleQuantityChange(quantity - 1)}
+                >
+                  {quantity === 1 ? <Trash2 className="h-4 w-4" /> : <Minus className="h-4 w-4" />}
+                </Button>
+                <Input
+                  type="number"
+                  min="1"
+                  value={quantity}
+                  onChange={(e) => handleQuantityChange(Number.parseInt(e.target.value) || 1)}
+                  className="w-16 h-10 text-center border-none text-lg font-bold"
+                  inputMode="numeric"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 rounded-none border-l"
+                  onClick={() => handleQuantityChange(quantity + 1)}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Resumen de total - Destacando más las unidades */}
+          <div className="bg-gray-50 p-4 rounded-lg mb-6">
+            <div className="text-sm text-gray-600 flex justify-between mb-2">
+              <span>Total:</span>
+              <span className="font-bold text-base text-black">
+                {quantity} {selectedPackage.label}
+                {quantity > 1 ? "s" : ""}
+                <span className="text-gray-600 font-normal ml-1">({calculateTotalUnits()} unidades)</span>
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-medium">Subtotal:</div>
+              <div className="font-bold">{formatCurrency(calculateTotalPrice())}</div>
+            </div>
+          </div>
+
+          {/* Botones de acción */}
+          <div className="grid grid-cols-2 gap-3 pt-4 border-t">
+            <Button variant="outline" onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button
+              className="bg-[#004a93] hover:bg-[#003366] flex items-center justify-center gap-2 text-white"
+              onClick={handleAddToCart}
+              disabled={isAdding || isRemoving}
+            >
+              {isAdding ? (
+                <>
+                  <Check className="h-4 w-4" />
+                  Agregado
+                </>
+              ) : (
+                <>
+                  <ShoppingCart className="h-4 w-4" />
+                  Agregar
+                </>
+              )}
+            </Button>
           </div>
         </div>
       </DialogContent>

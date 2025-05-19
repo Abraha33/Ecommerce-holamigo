@@ -2,15 +2,16 @@
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 
-// Update the interfaces to support multiple wishlists
-interface WishlistItem {
-  id: string | number
+export interface WishlistItem {
+  id: string
   name: string
-  image: string
   price: number
+  image?: string
+  quantity: number
+  unit: string
 }
 
-interface Wishlist {
+export interface Wishlist {
   id: string
   name: string
   icon: string
@@ -24,88 +25,104 @@ interface WishlistContextType {
   wishlists: Wishlist[]
   activeWishlistId: string | null
   setActiveWishlistId: (id: string | null) => void
-  createWishlist: (name: string, icon: string, description: string) => void
-  updateWishlist: (id: string, data: Partial<Omit<Wishlist, "id" | "items" | "createdAt" | "updatedAt">>) => void
+  createWishlist: (name: string, icon?: string, description?: string) => string
+  updateWishlist: (id: string, name: string, icon?: string, description?: string) => void
   deleteWishlist: (id: string) => void
   addToWishlist: (wishlistId: string, item: WishlistItem) => void
-  removeFromWishlist: (wishlistId: string, itemId: string | number) => void
-  isInWishlist: (wishlistId: string, itemId: string | number) => boolean
+  removeFromWishlist: (wishlistId: string, itemId: string) => void
   clearWishlist: (wishlistId: string) => void
+  updateItemQuantity: (wishlistId: string, itemId: string, quantity: number) => void
+  updateItemUnit: (wishlistId: string, itemId: string, unit: string) => void
+  isInWishlist: (wishlistId: string, itemId: string | number) => boolean
   wishlistCount: number
-  getWishlistById: (id: string) => Wishlist | undefined
-  getAllWishlistItems: () => WishlistItem[]
 }
 
-// Crear el contexto
 const WishlistContext = createContext<WishlistContextType | undefined>(undefined)
 
-// Replace the existing WishlistProvider with this updated version
 export function WishlistProvider({ children }: { children: ReactNode }) {
   const [wishlists, setWishlists] = useState<Wishlist[]>([])
   const [activeWishlistId, setActiveWishlistId] = useState<string | null>(null)
-  const [wishlistCount, setWishlistCount] = useState(0)
+  const [isMounted, setIsMounted] = useState(false)
 
-  // Generate a unique ID for new wishlists
-  const generateId = () => {
-    return Date.now().toString(36) + Math.random().toString(36).substring(2)
-  }
-
-  // Load wishlists from localStorage on init
+  // Cargar las listas de deseos al iniciar
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedWishlists = localStorage.getItem("wishlists")
-      if (savedWishlists) {
-        try {
-          const parsedWishlists = JSON.parse(savedWishlists, (key, value) => {
-            // Convert date strings back to Date objects
-            if (key === "createdAt" || key === "updatedAt") {
-              return new Date(value)
+    setIsMounted(true)
+    const loadWishlists = () => {
+      try {
+        if (typeof window !== "undefined") {
+          const savedWishlists = localStorage.getItem("wishlists")
+          if (savedWishlists) {
+            const parsedWishlists = JSON.parse(savedWishlists)
+            // Convertir las fechas de string a Date
+            const processedWishlists = parsedWishlists.map((wishlist: any) => ({
+              ...wishlist,
+              createdAt: new Date(wishlist.createdAt),
+              updatedAt: new Date(wishlist.updatedAt),
+              // Asegurarse de que todos los items tengan una unidad
+              items: wishlist.items.map((item: any) => ({
+                ...item,
+                unit: item.unit || "unidad",
+              })),
+            }))
+            setWishlists(processedWishlists)
+          } else {
+            // Crear una lista por defecto si no hay ninguna
+            const defaultWishlist: Wishlist = {
+              id: `wishlist-${Date.now()}`,
+              name: "Mi lista de compras",
+              icon: "shopping-bag",
+              description: "",
+              items: [],
+              createdAt: new Date(),
+              updatedAt: new Date(),
             }
-            return value
-          })
-          setWishlists(parsedWishlists)
-
-          // Set total count of all items across all wishlists
-          const totalItems = parsedWishlists.reduce((total, list) => total + list.items.length, 0)
-          setWishlistCount(totalItems)
-
-          // Set active wishlist to the first one if it exists
-          if (parsedWishlists.length > 0 && !activeWishlistId) {
-            setActiveWishlistId(parsedWishlists[0].id)
+            setWishlists([defaultWishlist])
+            setActiveWishlistId(defaultWishlist.id)
           }
-        } catch (error) {
-          console.error("Error parsing wishlists from localStorage", error)
+
+          const savedActiveWishlistId = localStorage.getItem("activeWishlistId")
+          if (savedActiveWishlistId) {
+            setActiveWishlistId(savedActiveWishlistId)
+          }
         }
-      } else {
-        // Create a default wishlist if none exists
-        const defaultWishlist = {
-          id: generateId(),
-          name: "Favoritos",
-          icon: "heart",
-          description: "Mi lista de productos favoritos",
-          items: [],
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }
-        setWishlists([defaultWishlist])
-        setActiveWishlistId(defaultWishlist.id)
+      } catch (error) {
+        console.error("Error al cargar las listas de deseos:", error)
       }
     }
+
+    loadWishlists()
   }, [])
 
-  // Save wishlists to localStorage when they change
+  // Guardar las listas de deseos cuando cambien
   useEffect(() => {
-    if (typeof window !== "undefined" && wishlists.length > 0) {
-      localStorage.setItem("wishlists", JSON.stringify(wishlists))
-      const totalItems = wishlists.reduce((total, list) => total + list.items.length, 0)
-      setWishlistCount(totalItems)
+    if (isMounted && typeof window !== "undefined") {
+      try {
+        localStorage.setItem("wishlists", JSON.stringify(wishlists))
+      } catch (error) {
+        console.error("Error al guardar las listas de deseos:", error)
+      }
     }
-  }, [wishlists])
+  }, [wishlists, isMounted])
 
-  // Create a new wishlist
-  const createWishlist = (name: string, icon: string, description: string) => {
+  // Guardar el ID de la lista activa cuando cambie
+  useEffect(() => {
+    if (isMounted && typeof window !== "undefined") {
+      try {
+        if (activeWishlistId) {
+          localStorage.setItem("activeWishlistId", activeWishlistId)
+        } else {
+          localStorage.removeItem("activeWishlistId")
+        }
+      } catch (error) {
+        console.error("Error al guardar el ID de la lista activa:", error)
+      }
+    }
+  }, [activeWishlistId, isMounted])
+
+  // Crear una nueva lista de deseos
+  const createWishlist = (name: string, icon = "shopping-bag", description = ""): string => {
     const newWishlist: Wishlist = {
-      id: generateId(),
+      id: `wishlist-${Date.now()}`,
       name,
       icon,
       description,
@@ -114,18 +131,21 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
       updatedAt: new Date(),
     }
 
-    setWishlists((prev) => [...prev, newWishlist])
+    setWishlists((prevWishlists) => [...prevWishlists, newWishlist])
+    setActiveWishlistId(newWishlist.id)
     return newWishlist.id
   }
 
-  // Update an existing wishlist
-  const updateWishlist = (id: string, data: Partial<Omit<Wishlist, "id" | "items" | "createdAt" | "updatedAt">>) => {
-    setWishlists((prev) =>
-      prev.map((wishlist) =>
+  // Actualizar una lista de deseos
+  const updateWishlist = (id: string, name: string, icon = "shopping-bag", description = "") => {
+    setWishlists((prevWishlists) =>
+      prevWishlists.map((wishlist) =>
         wishlist.id === id
           ? {
               ...wishlist,
-              ...data,
+              name,
+              icon,
+              description,
               updatedAt: new Date(),
             }
           : wishlist,
@@ -133,46 +153,78 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     )
   }
 
-  // Delete a wishlist
+  // Eliminar una lista de deseos
   const deleteWishlist = (id: string) => {
-    setWishlists((prev) => prev.filter((wishlist) => wishlist.id !== id))
-
-    // If the active wishlist is deleted, set the first available one as active
+    setWishlists((prevWishlists) => prevWishlists.filter((wishlist) => wishlist.id !== id))
     if (activeWishlistId === id) {
-      setActiveWishlistId((prev) => {
-        const remaining = wishlists.filter((w) => w.id !== id)
-        return remaining.length > 0 ? remaining[0].id : null
-      })
+      setActiveWishlistId(null)
     }
   }
 
-  // Add an item to a wishlist
+  // Añadir un producto a una lista de deseos
   const addToWishlist = (wishlistId: string, item: WishlistItem) => {
-    setWishlists((prev) =>
-      prev.map((wishlist) => {
+    setWishlists((prevWishlists) => {
+      const updatedWishlists = prevWishlists.map((wishlist) => {
         if (wishlist.id === wishlistId) {
-          // Only add if not already in this wishlist
-          if (!wishlist.items.some((i) => String(i.id) === String(item.id))) {
-            return {
-              ...wishlist,
-              items: [...wishlist.items, item],
-              updatedAt: new Date(),
+          // Verificar si el producto ya existe en la lista
+          const existingItemIndex = wishlist.items.findIndex((i) => i.id === item.id)
+          let updatedItems
+
+          if (existingItemIndex >= 0) {
+            // Si el producto ya existe, actualizar la cantidad
+            updatedItems = [...wishlist.items]
+            updatedItems[existingItemIndex] = {
+              ...updatedItems[existingItemIndex],
+              quantity: updatedItems[existingItemIndex].quantity + (item.quantity || 1),
             }
+          } else {
+            // Si el producto no existe, añadirlo a la lista
+            updatedItems = [
+              ...wishlist.items,
+              {
+                ...item,
+                quantity: item.quantity || 1,
+                unit: item.unit || "unidad",
+              },
+            ]
+          }
+
+          return {
+            ...wishlist,
+            items: updatedItems,
+            updatedAt: new Date(),
           }
         }
         return wishlist
-      }),
-    )
+      })
+
+      // Guardar en localStorage inmediatamente para asegurar persistencia
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("wishlists", JSON.stringify(updatedWishlists))
+        } catch (error) {
+          console.error("Error al guardar las listas de deseos:", error)
+        }
+      }
+
+      // Disparar un evento personalizado para notificar a otros componentes
+      if (typeof window !== "undefined") {
+        const event = new CustomEvent("wishlist-update", { detail: { wishlists: updatedWishlists } })
+        window.dispatchEvent(event)
+      }
+
+      return updatedWishlists
+    })
   }
 
-  // Remove an item from a wishlist
-  const removeFromWishlist = (wishlistId: string, itemId: string | number) => {
-    setWishlists((prev) =>
-      prev.map((wishlist) => {
+  // Eliminar un producto de una lista de deseos
+  const removeFromWishlist = (wishlistId: string, itemId: string) => {
+    setWishlists((prevWishlists) =>
+      prevWishlists.map((wishlist) => {
         if (wishlist.id === wishlistId) {
           return {
             ...wishlist,
-            items: wishlist.items.filter((item) => String(item.id) !== String(itemId)),
+            items: wishlist.items.filter((item) => item.id !== itemId),
             updatedAt: new Date(),
           }
         }
@@ -181,16 +233,10 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     )
   }
 
-  // Check if an item is in a specific wishlist
-  const isInWishlist = (wishlistId: string, itemId: string | number) => {
-    const wishlist = wishlists.find((w) => w.id === wishlistId)
-    return wishlist ? wishlist.items.some((item) => String(item.id) === String(itemId)) : false
-  }
-
-  // Clear all items from a wishlist
+  // Vaciar una lista de deseos
   const clearWishlist = (wishlistId: string) => {
-    setWishlists((prev) =>
-      prev.map((wishlist) => {
+    setWishlists((prevWishlists) =>
+      prevWishlists.map((wishlist) => {
         if (wishlist.id === wishlistId) {
           return {
             ...wishlist,
@@ -203,15 +249,51 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     )
   }
 
-  // Get a wishlist by ID
-  const getWishlistById = (id: string) => {
-    return wishlists.find((w) => w.id === id)
+  // Actualizar la cantidad de un producto en una lista de deseos
+  const updateItemQuantity = (wishlistId: string, itemId: string, quantity: number) => {
+    setWishlists((prevWishlists) =>
+      prevWishlists.map((wishlist) => {
+        if (wishlist.id === wishlistId) {
+          return {
+            ...wishlist,
+            items: wishlist.items.map((item) => (item.id === itemId ? { ...item, quantity } : item)),
+            updatedAt: new Date(),
+          }
+        }
+        return wishlist
+      }),
+    )
   }
 
-  // Get all items from all wishlists (for displaying total count)
-  const getAllWishlistItems = () => {
-    return wishlists.flatMap((w) => w.items)
+  // Actualizar la unidad de un producto en una lista de deseos
+  const updateItemUnit = (wishlistId: string, itemId: string, unit: string) => {
+    setWishlists((prevWishlists) =>
+      prevWishlists.map((wishlist) => {
+        if (wishlist.id === wishlistId) {
+          return {
+            ...wishlist,
+            items: wishlist.items.map((item) => (item.id === itemId ? { ...item, unit } : item)),
+            updatedAt: new Date(),
+          }
+        }
+        return wishlist
+      }),
+    )
   }
+
+  // Verificar si un producto está en una lista de deseos específica
+  const isInWishlist = (wishlistId: string, itemId: string | number) => {
+    const wishlist = wishlists.find((w) => w.id === wishlistId)
+    return wishlist ? wishlist.items.some((item) => String(item.id) === String(itemId)) : false
+  }
+
+  // Añadir esta propiedad calculada al contexto
+  const wishlistCount = wishlists.reduce((count, wishlist) => {
+    // Contar productos únicos en todas las listas
+    const uniqueProductIds = new Set()
+    wishlist.items.forEach((item) => uniqueProductIds.add(item.id))
+    return count + uniqueProductIds.size
+  }, 0)
 
   return (
     <WishlistContext.Provider
@@ -224,11 +306,11 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
         deleteWishlist,
         addToWishlist,
         removeFromWishlist,
-        isInWishlist,
         clearWishlist,
-        wishlistCount,
-        getWishlistById,
-        getAllWishlistItems,
+        updateItemQuantity,
+        updateItemUnit,
+        isInWishlist,
+        wishlistCount, // Añadir esta propiedad
       }}
     >
       {children}
@@ -236,7 +318,6 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   )
 }
 
-// Update the hook to match the new context
 export function useWishlist() {
   const context = useContext(WishlistContext)
   if (context === undefined) {

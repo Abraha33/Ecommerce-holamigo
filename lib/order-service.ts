@@ -1,6 +1,7 @@
-import { createClientComponentClient } from "./supabase"
+import { createClientComponentClient } from "@/lib/supabase"
+import type { User } from "@supabase/supabase-js"
 import { v4 as uuidv4 } from "uuid"
-import type { CartItem } from "./cart-service"
+import type { CartItem } from "@/lib/cart-sync-service"
 
 export interface ShippingAddress {
   fullName: string
@@ -32,7 +33,7 @@ export interface Order {
   items: CartItem[]
 }
 
-// Generar un número de orden único
+// Generate a unique order number
 export const generateOrderNumber = (): string => {
   const date = new Date()
   const year = date.getFullYear().toString().slice(-2)
@@ -45,7 +46,7 @@ export const generateOrderNumber = (): string => {
   return `ORD-${year}${month}${day}-${random}`
 }
 
-// Crear un nuevo pedido
+// Create a new order
 export const createOrder = async (
   items: CartItem[],
   shippingAddress: ShippingAddress,
@@ -56,17 +57,17 @@ export const createOrder = async (
   try {
     const supabase = createClientComponentClient()
 
-    // Verificar si el usuario está autenticado
+    // Check if user is authenticated
     const {
       data: { user },
     } = await supabase.auth.getUser()
 
-    // Calcular el total
-    const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
-    const shippingCost = deliveryType === "express" ? 15000 : 8000 // Ejemplo de costo de envío
-    const discount = 0 // Implementar lógica de descuentos si es necesario
+    // Calculate totals
+    const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+    const shippingCost = deliveryType === "express" ? 15000 : 8000 // Example shipping cost
+    const discount = 0 // Implement discount logic if needed
 
-    // Crear el pedido
+    // Create the order
     const orderId = uuidv4()
     const orderNumber = generateOrderNumber()
 
@@ -75,7 +76,7 @@ export const createOrder = async (
       order_number: orderNumber,
       user_id: user?.id,
       status: "pending",
-      total: total + shippingCost - discount,
+      total: subtotal + shippingCost - discount,
       shipping_cost: shippingCost,
       discount: discount,
       shipping_address: shippingAddress,
@@ -86,13 +87,13 @@ export const createOrder = async (
       items: items,
     }
 
-    // Insertar el pedido en la base de datos
+    // Insert the order into the database
     const { error: orderError } = await supabase.from("orders").insert({
       id: orderId,
       order_number: orderNumber,
       user_id: user?.id,
       status: "pending",
-      total: total + shippingCost - discount,
+      total: subtotal + shippingCost - discount,
       shipping_cost: shippingCost,
       discount: discount,
       shipping_address: shippingAddress,
@@ -100,69 +101,87 @@ export const createOrder = async (
       payment_status: paymentMethod.includes("contraentrega") ? "pending" : "processing",
       delivery_type: deliveryType,
       notes: notes,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     })
 
     if (orderError) {
-      console.error("Error al crear el pedido:", orderError)
+      console.error("Error creating order:", orderError)
       return null
     }
 
-    // Insertar los items del pedido
-    const orderItems = items.map((item) => ({
-      order_id: orderId,
-      product_id: item.product_id,
-      name: item.name,
-      price: item.price,
-      quantity: item.quantity,
-      image: item.image,
-      variant: item.variant,
-      unit: item.unit,
-      sku: item.sku,
-    }))
+    // Prepare order items
+    const orderItems = items.map((item) => {
+      // Ensure product_id is valid
+      const product_id = item.product_id || `temp-${uuidv4()}`
 
+      return {
+        id: uuidv4(),
+        order_id: orderId,
+        product_id: product_id,
+        name: item.name || "Unnamed product",
+        price: item.price || 0,
+        quantity: item.quantity || 1,
+        image: item.image || null,
+        variant: item.variant || null,
+        unit: item.unit || null,
+        sku: item.sku || null,
+        created_at: new Date().toISOString(),
+      }
+    })
+
+    // Check if there are items to insert
+    if (orderItems.length === 0) {
+      console.error("No items to insert in the order")
+      return null
+    }
+
+    // Insert order items
     const { error: itemsError } = await supabase.from("order_items").insert(orderItems)
 
     if (itemsError) {
-      console.error("Error al insertar los items del pedido:", itemsError)
+      console.error("Error inserting order items:", itemsError)
       return null
     }
 
-    // Registrar el estado inicial del pedido
+    // Record initial order status
     const { error: statusError } = await supabase.from("order_status_history").insert({
+      id: uuidv4(),
       order_id: orderId,
       status: "pending",
-      description: "Pedido recibido",
+      description: "Order received",
+      created_at: new Date().toISOString(),
     })
 
     if (statusError) {
-      console.error("Error al registrar el estado del pedido:", statusError)
+      console.error("Error recording order status:", statusError)
     }
 
     return order
   } catch (error) {
-    console.error("Error al crear el pedido:", error)
+    console.error("Error creating order:", error)
     return null
   }
 }
 
-// Obtener un pedido por ID
+// Get an order by ID
 export const getOrderById = async (orderId: string): Promise<Order | null> => {
   try {
     const supabase = createClientComponentClient()
 
-    // Obtener el pedido
+    // Get the order
     const { data: order, error: orderError } = await supabase.from("orders").select("*").eq("id", orderId).single()
 
     if (orderError) {
-      console.error("Error al obtener el pedido:", orderError)
+      console.error("Error getting order:", orderError)
       return null
     }
 
-    // Obtener los items del pedido
+    // Get order items
     const { data: items, error: itemsError } = await supabase.from("order_items").select("*").eq("order_id", orderId)
 
     if (itemsError) {
-      console.error("Error al obtener los items del pedido:", itemsError)
+      console.error("Error getting order items:", itemsError)
       return null
     }
 
@@ -171,26 +190,21 @@ export const getOrderById = async (orderId: string): Promise<Order | null> => {
       items: items || [],
     }
   } catch (error) {
-    console.error("Error al obtener el pedido:", error)
+    console.error("Error getting order:", error)
     return null
   }
 }
 
-// Obtener los pedidos de un usuario
-export const getUserOrders = async (): Promise<Order[]> => {
+// Get user's orders
+export const getUserOrders = async (user: User | null): Promise<Order[]> => {
   try {
-    const supabase = createClientComponentClient()
-
-    // Verificar si el usuario está autenticado
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
     if (!user) {
       return []
     }
 
-    // Obtener los pedidos del usuario
+    const supabase = createClientComponentClient()
+
+    // Get user's orders
     const { data: orders, error: ordersError } = await supabase
       .from("orders")
       .select("*")
@@ -198,11 +212,11 @@ export const getUserOrders = async (): Promise<Order[]> => {
       .order("created_at", { ascending: false })
 
     if (ordersError) {
-      console.error("Error al obtener los pedidos:", ordersError)
+      console.error("Error getting orders:", ordersError)
       return []
     }
 
-    // Para cada pedido, obtener sus items
+    // Get items for each order
     const ordersWithItems = await Promise.all(
       orders.map(async (order) => {
         const { data: items, error: itemsError } = await supabase
@@ -211,7 +225,7 @@ export const getUserOrders = async (): Promise<Order[]> => {
           .eq("order_id", order.id)
 
         if (itemsError) {
-          console.error("Error al obtener los items del pedido:", itemsError)
+          console.error("Error getting order items:", itemsError)
           return { ...order, items: [] }
         }
 
@@ -221,42 +235,85 @@ export const getUserOrders = async (): Promise<Order[]> => {
 
     return ordersWithItems
   } catch (error) {
-    console.error("Error al obtener los pedidos:", error)
+    console.error("Error getting orders:", error)
     return []
   }
 }
 
-// Actualizar el estado de un pedido
+// Get the latest order for a user
+export const getLatestOrder = async (user: User | null): Promise<Order | null> => {
+  try {
+    if (!user) {
+      return null
+    }
+
+    const supabase = createClientComponentClient()
+
+    // Get the most recent order
+    const { data: order, error: orderError } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single()
+
+    if (orderError) {
+      console.error("Error getting latest order:", orderError)
+      return null
+    }
+
+    // Get order items
+    const { data: items, error: itemsError } = await supabase.from("order_items").select("*").eq("order_id", order.id)
+
+    if (itemsError) {
+      console.error("Error getting order items:", itemsError)
+      return null
+    }
+
+    return {
+      ...order,
+      items: items || [],
+    }
+  } catch (error) {
+    console.error("Error getting latest order:", error)
+    return null
+  }
+}
+
+// Update order status
 export const updateOrderStatus = async (orderId: string, status: string, description?: string): Promise<boolean> => {
   try {
     const supabase = createClientComponentClient()
 
-    // Actualizar el estado del pedido
+    // Update order status
     const { error: updateError } = await supabase
       .from("orders")
       .update({ status, updated_at: new Date().toISOString() })
       .eq("id", orderId)
 
     if (updateError) {
-      console.error("Error al actualizar el estado del pedido:", updateError)
+      console.error("Error updating order status:", updateError)
       return false
     }
 
-    // Registrar el cambio de estado en el historial
+    // Record status change in history
     const { error: historyError } = await supabase.from("order_status_history").insert({
+      id: uuidv4(),
       order_id: orderId,
       status,
-      description: description || `Estado actualizado a ${status}`,
+      description: description || `Status updated to ${status}`,
+      created_at: new Date().toISOString(),
     })
 
     if (historyError) {
-      console.error("Error al registrar el historial de estado:", historyError)
+      console.error("Error recording status history:", historyError)
       return false
     }
 
     return true
   } catch (error) {
-    console.error("Error al actualizar el estado del pedido:", error)
+    console.error("Error updating order status:", error)
     return false
   }
 }

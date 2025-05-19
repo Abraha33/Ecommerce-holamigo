@@ -7,6 +7,9 @@ export type OrderItem = {
   price: number
   quantity: number
   image: string
+  variant?: string
+  unit?: string
+  sku?: string
 }
 
 export type Order = {
@@ -15,6 +18,10 @@ export type Order = {
   status: OrderStatus
   items: OrderItem[]
   total: number
+  subtotal: number
+  shipping: number
+  tax: number
+  discount: number
   shippingAddress: {
     name: string
     street: string
@@ -32,7 +39,7 @@ export type Order = {
 }
 
 // Datos de ejemplo para mostrar en la interfaz
-export const mockOrders: Order[] = [
+export const orders: Order[] = [
   {
     id: "ORD-2023-0001",
     date: "2023-04-15T10:30:00Z",
@@ -56,6 +63,10 @@ export const mockOrders: Order[] = [
       },
     ],
     total: 43000,
+    subtotal: 43000,
+    shipping: 0,
+    tax: 0,
+    discount: 0,
     shippingAddress: {
       name: "Carlos Rodríguez",
       street: "Calle 45 #28-15",
@@ -103,6 +114,10 @@ export const mockOrders: Order[] = [
       },
     ],
     total: 22000,
+    subtotal: 22000,
+    shipping: 0,
+    tax: 0,
+    discount: 0,
     shippingAddress: {
       name: "Carlos Rodríguez",
       street: "Calle 45 #28-15",
@@ -153,6 +168,10 @@ export const mockOrders: Order[] = [
       },
     ],
     total: 83000,
+    subtotal: 83000,
+    shipping: 0,
+    tax: 0,
+    discount: 0,
     shippingAddress: {
       name: "Carlos Rodríguez",
       street: "Calle 45 #28-15",
@@ -177,9 +196,9 @@ export const mockOrders: Order[] = [
 ]
 
 export function getOrderById(id: string): Order | undefined {
-  return mockOrders.find((order) => order.id === id)
+  return orders.find((order) => order.id === id)
 }
 
 export function getAllOrders(): Order[] {
-  return mockOrders
+  return orders
 }
