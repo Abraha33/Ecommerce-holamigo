@@ -312,7 +312,7 @@ export default function PromosPage() {
     <div className="bg-gray-50 min-h-screen pb-16">
       {/* Breadcrumb */}
       <div className="bg-white border-b">
-        <div className="container mx-auto px-4 py-3">
+        <div className="container mx-auto px-4 py-1">
           <Breadcrumb
             items={[
               { label: "Inicio", href: "/" },

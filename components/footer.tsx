@@ -29,6 +29,9 @@ export default function Footer() {
             <Link href="/terms" className="hover:text-blue-300 transition-colors">
               TÉRMINOS Y CONDICIONES
             </Link>
+            <Link href="/politica-datos" className="hover:text-blue-300 transition-colors">
+              POLÍTICA DE DATOS
+            </Link>
             <Link href="/cookies" className="hover:text-blue-300 transition-colors">
               POLÍTICA DE COOKIES
             </Link>
@@ -71,7 +74,7 @@ export default function Footer() {
             </svg>
           </a>
           <a
-            href="https://facebook.com"
+            href="https://www.facebook.com/envax.santander.3"
             target="_blank"
             rel="noopener noreferrer"
             className="bg-blue-600 hover:bg-blue-700 transition-colors p-2 rounded-full"
@@ -80,7 +83,7 @@ export default function Footer() {
             <Facebook size={20} />
           </a>
           <a
-            href="https://instagram.com"
+            href="https://www.instagram.com/desechables.envax/"
             target="_blank"
             rel="noopener noreferrer"
             className="bg-pink-600 hover:bg-pink-700 transition-colors p-2 rounded-full"

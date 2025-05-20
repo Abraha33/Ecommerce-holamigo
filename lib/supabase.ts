@@ -1,50 +1,42 @@
-import { createClient as createSupabaseClient } from "@supabase/supabase-js"
-import { cookies } from "next/headers"
-import { createServerComponentClient as createSupaServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { createClientComponentClient as createSupaClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import type { Database } from "@/types/supabase"
+"use client"
 
-// Singleton pattern for the Supabase client on the client-side
-let clientSingleton: ReturnType<typeof createSupabaseClient> | null = null
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 
-// Create a client-side Supabase client (for client components)
-export const createClientComponentClient = () => {
-  if (clientSingleton) return clientSingleton
+// Singleton para el cliente de Supabase en el lado del cliente
+let supabaseClient
 
-  // Create client with explicit persistence
-  clientSingleton = createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!, 
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, 
-    {
-      auth: {
-        persistSession: true,
-        storageKey: "holamigo-auth-token",
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-      },
-    }
-  )
-
-  return clientSingleton
+export const getSupabaseClient = () => {
+  if (!supabaseClient) {
+    supabaseClient = createClientComponentClient()
+  }
+  return supabaseClient
 }
 
-// Create a server-side Supabase client (for server components)
-export const createServerComponentClient = () => {
-  const cookieStore = cookies()
-  return createSupaServerComponentClient<Database>({ cookies: () => cookieStore })
+// Función para obtener el usuario actual
+export const getCurrentUser = async () => {
+  const supabase = getSupabaseClient()
+  const { data } = await supabase.auth.getUser()
+  return data.user
 }
 
-// Create a server-side Supabase client with admin privileges (for API routes)
-export const createServiceClient = () => {
-  const supabaseUrl = process.env.SUPABASE_URL!
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-  return createSupabaseClient<Database>(supabaseUrl, supabaseServiceKey, {
-    auth: {
-      persistSession: false,
-    },
-  })
+// Función para obtener la sesión actual
+export const getSession = async () => {
+  const supabase = getSupabaseClient()
+  const { data } = await supabase.auth.getSession()
+  return data.session
 }
 
-// Export createClient as an alias for createClientComponentClient for backward compatibility
-export const createClient = createClientComponentClient
+// Función para verificar si el usuario está autenticado
+export const isAuthenticated = async () => {
+  const session = await getSession()
+  return !!session
+}
+
+// Función para cerrar sesión
+export const signOut = async () => {
+  const supabase = getSupabaseClient()
+  return await supabase.auth.signOut()
+}
+
+// Exportamos directamente createClientComponentClient para compatibilidad
+export { createClientComponentClient } from "@supabase/auth-helpers-nextjs"

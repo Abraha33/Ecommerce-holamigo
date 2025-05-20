@@ -4,10 +4,9 @@ import { useState } from "react"
 import Image from "next/image"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { toast } from "@/components/ui/use-toast"
-import { Loader2 } from "lucide-react"
 
 interface GoogleAuthButtonProps {
-  mode: "signin" | "signup"
+  mode: "signin" | "signup" | "login" | "register"
   className?: string
   redirectTo?: string
 }
@@ -49,7 +48,7 @@ export function GoogleAuthButton({ mode, className = "", redirectTo = "/" }: Goo
     }
   }
 
-  const buttonText = mode === "signin" ? "Iniciar sesión con Google" : "Registrarse con Google"
+  const buttonText = mode === "signin" || mode === "login" ? "Iniciar sesión con Google" : "Registrarse con Google"
 
   return (
     <button
@@ -59,7 +58,7 @@ export function GoogleAuthButton({ mode, className = "", redirectTo = "/" }: Goo
       className={`flex items-center justify-center gap-3 border border-gray-300 rounded-md py-2.5 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all w-full ${className}`}
     >
       {isLoading ? (
-        <Loader2 className="h-5 w-5 animate-spin" />
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-600 border-t-transparent" />
       ) : (
         <Image src="/google-logo.png" alt="Google" width={20} height={20} className="rounded-full" />
       )}

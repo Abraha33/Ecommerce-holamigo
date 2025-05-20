@@ -1,5 +1,5 @@
 import { Suspense } from "react"
-import { createServerComponentClient } from "@/lib/supabase"
+import { createServerSupabaseClient } from "@/lib/supabase-server"
 import { FeaturedProducts } from "@/components/featured-products"
 import { PromoCarousel } from "@/components/promo-carousel"
 import { BrandCircles } from "@/components/brand-circles"
@@ -8,7 +8,7 @@ import { CategoryShowcase } from "@/components/category-showcase"
 import CategorySlider from "@/components/category-slider"
 
 export default async function HomePage() {
-  const supabase = createServerComponentClient()
+  const supabase = createServerSupabaseClient()
 
   // Fetch featured products
   const { data: featuredProducts } = await supabase

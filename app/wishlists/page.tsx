@@ -36,8 +36,13 @@ import {
   Clock,
   Trash,
   Edit,
+  Share2,
+  Download,
+  Printer,
+  CheckCircle2,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 // Opciones de unidades disponibles
 const unitOptions = [
@@ -74,6 +79,7 @@ export default function WishlistsPage() {
   const [isAddingToCart, setIsAddingToCart] = useState<Record<string, boolean>>({})
   const [itemQuantities, setItemQuantities] = useState<Record<string, number>>({})
   const [activeTab, setActiveTab] = useState("lists")
+  const [addingItemId, setAddingItemId] = useState<string | null>(null)
 
   useEffect(() => {
     setIsMounted(true)
@@ -87,6 +93,11 @@ export default function WishlistsPage() {
         })
       })
       setItemQuantities(quantities)
+    }
+
+    // Inicializar las listas expandidas (mostrar la primera por defecto)
+    if (wishlists && wishlists.length > 0) {
+      setShowProducts({ [wishlists[0].id]: true })
     }
   }, [wishlists])
 
@@ -187,6 +198,7 @@ export default function WishlistsPage() {
   }
 
   const addItemToCart = async (item: any, quantity: number) => {
+    setAddingItemId(item.id)
     try {
       await addItem({
         // No pasar el id para evitar conflictos
@@ -211,6 +223,8 @@ export default function WishlistsPage() {
         description: "Ocurrió un error al añadir el producto al carrito",
         variant: "destructive",
       })
+    } finally {
+      setTimeout(() => setAddingItemId(null), 1000)
     }
   }
 
@@ -224,6 +238,91 @@ export default function WishlistsPage() {
       month: "numeric",
       day: "numeric",
     })
+  }
+
+  const shareWishlist = (wishlist: any) => {
+    if (navigator.share) {
+      navigator
+        .share({
+          title: `Lista de compra: ${wishlist.name}`,
+          text: `Mira mi lista de compra "${wishlist.name}" con ${wishlist.items.length} productos`,
+          url: window.location.href,
+        })
+        .catch((error) => console.log("Error compartiendo", error))
+    } else {
+      toast({
+        title: "Compartir no disponible",
+        description: "Tu navegador no soporta la función de compartir",
+      })
+    }
+  }
+
+  const printWishlist = (wishlist: any) => {
+    const printWindow = window.open("", "_blank")
+    if (printWindow) {
+      const content = `
+        <html>
+        <head>
+          <title>Lista de compra: ${wishlist.name}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            h1 { color: #0066cc; }
+            .item { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+            .header { display: flex; justify-content: space-between; align-items: center; }
+            .date { color: #666; font-size: 14px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Lista de compra: ${wishlist.name}</h1>
+            <div class="date">Fecha: ${new Date().toLocaleDateString()}</div>
+          </div>
+          <p>Total de productos: ${wishlist.items.length}</p>
+          <hr>
+          ${wishlist.items
+            .map(
+              (item: any) => `
+            <div class="item">
+              <h3>${item.name}</h3>
+              <p>Precio: ${formatCurrency(item.price)}</p>
+              <p>Cantidad: ${itemQuantities[item.id] || item.quantity || 1} ${item.unit || "unidad"}(es)</p>
+            </div>
+          `,
+            )
+            .join("")}
+        </body>
+        </html>
+      `
+      printWindow.document.open()
+      printWindow.document.write(content)
+      printWindow.document.close()
+      printWindow.print()
+    }
+  }
+
+  const downloadWishlist = (wishlist: any) => {
+    const items = wishlist.items
+      .map((item: any) => {
+        return `${item.name} - ${itemQuantities[item.id] || item.quantity || 1} ${item.unit || "unidad"}(es) - ${formatCurrency(item.price)}`
+      })
+      .join("\n")
+
+    const content = `Lista de compra: ${wishlist.name}\nFecha: ${new Date().toLocaleDateString()}\n\n${items}`
+
+    const element = document.createElement("a")
+    element.setAttribute("href", "data:text/plain;charset=utf-8," + encodeURIComponent(content))
+    element.setAttribute("download", `lista-${wishlist.name.replace(/\s+/g, "-").toLowerCase()}.txt`)
+    element.style.display = "none"
+    document.body.appendChild(element)
+    element.click()
+    document.body.removeChild(element)
+  }
+
+  const getTotalPrice = (wishlist: any) => {
+    return wishlist.items.reduce((total: number, item: any) => {
+      const quantity = itemQuantities[item.id] || item.quantity || 1
+      return total + item.price * quantity
+    }, 0)
   }
 
   return (
@@ -260,20 +359,23 @@ export default function WishlistsPage() {
           </TabsList>
 
           <TabsContent value="lists" className="mt-0">
-            <div className="mb-6 bg-white p-6 rounded-xl shadow-md border border-gray-100">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <div className="mb-6 bg-gradient-to-r from-blue-600 to-blue-700 p-6 rounded-xl shadow-md text-white">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-2">
                 <div>
-                  <h2 className="text-xl font-bold text-blue-800 mb-2">Mis listas de mercado</h2>
-                  <p className="text-gray-700">
+                  <h2 className="text-xl font-bold mb-2 flex items-center">
+                    <Heart className="h-5 w-5 mr-2 fill-white" />
+                    Mis listas de mercado
+                  </h2>
+                  <p className="text-blue-100">
                     Crea y organiza tus listas para hacer tus compras más rápido.
-                    <span className="font-medium text-blue-700 ml-1">
+                    <span className="font-medium text-white ml-1 block md:inline-block mt-1 md:mt-0">
                       Recuerda seleccionar tu método de envío antes de agregar productos.
                     </span>
                   </p>
                 </div>
                 <Button
                   onClick={handleCreateWishlist}
-                  className="whitespace-nowrap bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all"
+                  className="whitespace-nowrap bg-white text-blue-700 hover:bg-blue-50 shadow-md hover:shadow-lg transition-all"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Crear nueva lista
@@ -282,19 +384,21 @@ export default function WishlistsPage() {
             </div>
 
             {wishlists.length === 0 ? (
-              <Card className="p-8 text-center bg-white shadow-md border border-gray-100">
-                <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Heart className="h-10 w-10 text-blue-300" />
-                </div>
-                <CardTitle className="text-xl mb-2">No tienes listas de mercado</CardTitle>
-                <CardDescription className="text-gray-500 mb-6">
-                  Crea tu primera lista para organizar tus compras y ahorrar tiempo
-                </CardDescription>
-                <Button onClick={handleCreateWishlist} className="bg-blue-600 hover:bg-blue-700 text-white shadow-md">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Crear mi primera lista
-                </Button>
-              </Card>
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+                <Card className="p-8 text-center bg-white shadow-md border border-gray-100">
+                  <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Heart className="h-10 w-10 text-blue-300" />
+                  </div>
+                  <CardTitle className="text-xl mb-2">No tienes listas de mercado</CardTitle>
+                  <CardDescription className="text-gray-500 mb-6">
+                    Crea tu primera lista para organizar tus compras y ahorrar tiempo
+                  </CardDescription>
+                  <Button onClick={handleCreateWishlist} className="bg-blue-600 hover:bg-blue-700 text-white shadow-md">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Crear mi primera lista
+                  </Button>
+                </Card>
+              </motion.div>
             ) : (
               <div className="space-y-6">
                 <AnimatePresence>
@@ -329,10 +433,71 @@ export default function WishlistsPage() {
                                   <Calendar className="h-4 w-4 mr-1 text-blue-500" />
                                   <span>Actualizada: {formatDate(wishlist.updatedAt)}</span>
                                 </div>
+                                {wishlist.items.length > 0 && (
+                                  <div className="hidden md:flex items-center">
+                                    <span className="font-medium text-blue-600">
+                                      {formatCurrency(getTotalPrice(wishlist))}
+                                    </span>
+                                  </div>
+                                )}
                               </div>
                             </div>
 
                             <div className="flex items-center mt-4 md:mt-0 space-x-2">
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="icon"
+                                      onClick={() => shareWishlist(wishlist)}
+                                      className="h-8 w-8 text-blue-600 border-blue-200"
+                                    >
+                                      <Share2 className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Compartir lista</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="icon"
+                                      onClick={() => downloadWishlist(wishlist)}
+                                      className="h-8 w-8 text-blue-600 border-blue-200"
+                                    >
+                                      <Download className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Descargar lista</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="icon"
+                                      onClick={() => printWishlist(wishlist)}
+                                      className="h-8 w-8 text-blue-600 border-blue-200"
+                                    >
+                                      <Printer className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Imprimir lista</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -445,8 +610,13 @@ export default function WishlistsPage() {
                                                 size="icon"
                                                 className="ml-2 h-8 w-8 rounded-full text-blue-600 hover:text-blue-800 hover:bg-blue-50"
                                                 onClick={() => addItemToCart(item, quantity)}
+                                                disabled={addingItemId === item.id}
                                               >
-                                                <ShoppingCart className="h-4 w-4" />
+                                                {addingItemId === item.id ? (
+                                                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                                ) : (
+                                                  <ShoppingCart className="h-4 w-4" />
+                                                )}
                                               </Button>
                                             </div>
                                           </div>
@@ -461,8 +631,16 @@ export default function WishlistsPage() {
                         </AnimatePresence>
 
                         <CardFooter className="p-4 bg-gray-50 flex flex-col sm:flex-row gap-2 justify-between items-center">
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-gray-500 flex items-center">
                             <span className="font-medium">{wishlist.items.length}</span> productos en esta lista
+                            {wishlist.items.length > 0 && (
+                              <span className="ml-2 md:hidden">
+                                • Total:{" "}
+                                <span className="font-medium text-blue-600">
+                                  {formatCurrency(getTotalPrice(wishlist))}
+                                </span>
+                              </span>
+                            )}
                           </div>
                           <div className="flex flex-col sm:flex-row gap-2">
                             <Button
@@ -470,8 +648,17 @@ export default function WishlistsPage() {
                               className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
                               disabled={wishlist.items.length === 0 || isAddingToCart[wishlist.id]}
                             >
-                              <ShoppingCart className="h-4 w-4 mr-2" />
-                              {isAddingToCart[wishlist.id] ? "Añadiendo..." : "Añadir al Carrito"}
+                              {isAddingToCart[wishlist.id] ? (
+                                <>
+                                  <span className="animate-pulse mr-2">●</span>
+                                  Añadiendo...
+                                </>
+                              ) : (
+                                <>
+                                  <ShoppingCart className="h-4 w-4 mr-2" />
+                                  Añadir al Carrito
+                                </>
+                              )}
                             </Button>
                             <Button
                               variant="outline"

@@ -7,7 +7,6 @@ import { Breadcrumb } from "@/components/breadcrumb"
 import { ProductCard } from "@/components/product-card"
 import { Button } from "@/components/ui/button"
 import { List, SlidersHorizontal, Grid, Tag, X, Check, ChevronDown, ChevronRight, ChevronLeft } from "lucide-react"
-import { CategoryBanner } from "@/components/category-banner"
 import { motion } from "framer-motion"
 import { Pagination } from "@/components/pagination"
 import { Slider } from "@/components/ui/slider"
@@ -408,16 +407,31 @@ export function ShopClient({ initialProducts }: ShopClientProps) {
   }, [])
 
   return (
-    <div>
-      {/* Banner de categoría - altura reducida */}
-      <CategoryBanner
-        title="Productos Sostenibles"
-        description="Soluciones eco-amigables para todas tus necesidades"
-        image="/eco-conscious-living.png"
-        breadcrumbs={[{ name: "Products", href: "/products" }]}
-      />
+    <div className="bg-gray-50">
+      {/* Banner de categoría AGRANDADO */}
+      <div className="w-full bg-gradient-to-r from-[#004a93] to-[#0071bc] py-16">
+        <div className="container mx-auto px-4">
+          <Breadcrumb
+            items={[
+              { label: "Inicio", href: "/" },
+              { label: "Tienda", href: "/shop", active: true },
+            ]}
+            className="text-white/80 mb-6"
+          />
 
-      <div className="container max-w-[1920px] px-6 sm:px-8 md:px-12 lg:px-16 py-8 mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="text-center md:text-left mb-6 md:mb-0">
+              <h1 className="text-5xl font-bold text-white mb-4">Productos Sostenibles</h1>
+              <p className="text-white/90 max-w-2xl text-xl">Soluciones eco-amigables para todas tus necesidades</p>
+            </div>
+            <Badge variant="outline" className="text-2xl px-6 py-3 bg-white text-[#004a93] font-semibold">
+              {sortedProducts.length} productos
+            </Badge>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-8">
         <Breadcrumb
           items={[
             { label: "Home", href: "/" },

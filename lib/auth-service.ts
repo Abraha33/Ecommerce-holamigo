@@ -1,5 +1,7 @@
-import { createClientComponentClient } from "./supabase"
-import type { User, Session } from "@supabase/supabase-js"
+"use client"
+
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import type { User } from "@supabase/supabase-js"
 
 export type AuthError = {
   message: string
@@ -28,6 +30,91 @@ export type Provider = "google" | "facebook" | "twitter" | "apple"
  * Authentication service for handling all auth-related operations
  */
 export const AuthService = {
+  signInWithPassword: async ({ email, password }) => {
+    const supabase = createClientComponentClient()
+    return await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+  },
+
+  signUpWithPassword: async ({ email, password, metadata = {} }) => {
+    const supabase = createClientComponentClient()
+    return await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: metadata,
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
+  },
+
+  signInWithMagicLink: async (email) => {
+    const supabase = createClientComponentClient()
+    return await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
+  },
+
+  signInWithPhone: async (phone) => {
+    const supabase = createClientComponentClient()
+    return await supabase.auth.signInWithOtp({
+      phone,
+    })
+  },
+
+  verifyPhoneOtp: async (phone, token) => {
+    const supabase = createClientComponentClient()
+    return await supabase.auth.verifyOtp({
+      phone,
+      token,
+      type: "sms",
+    })
+  },
+
+  signInWithProvider: async (provider) => {
+    const supabase = createClientComponentClient()
+    return await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
+  },
+
+  signOut: async () => {
+    const supabase = createClientComponentClient()
+    return await supabase.auth.signOut()
+  },
+
+  getSession: async () => {
+    const supabase = createClientComponentClient()
+    return await supabase.auth.getSession()
+  },
+
+  getUser: async () => {
+    const supabase = createClientComponentClient()
+    return await supabase.auth.getUser()
+  },
+
+  resetPasswordForEmail: async (email) => {
+    const supabase = createClientComponentClient()
+    return await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/reset-password`,
+    })
+  },
+
+  updatePassword: async (password) => {
+    const supabase = createClientComponentClient()
+    return await supabase.auth.updateUser({
+      password,
+    })
+  },
+
   /**
    * Guarda la información del usuario en la base de datos
    */
@@ -93,219 +180,6 @@ export const AuthService = {
   },
 
   /**
-   * Sign in with email and password
-   */
-  signInWithPassword: async (credentials: SignInWithPasswordCredentials): Promise<AuthResponse<Session>> => {
-    const supabase = createClientComponentClient()
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: credentials.email,
-        password: credentials.password,
-        options: {
-          // Asegurar que la sesión persista por 30 días
-          persistSession: true,
-        },
-      })
-
-      if (error) {
-        return { data: null, error: { message: error.message, status: error.status } }
-      }
-
-      // Guardar explícitamente en localStorage para mayor seguridad
-      if (data.session) {
-        localStorage.setItem("supabase.auth.token", JSON.stringify(data.session))
-
-        // Guardar el usuario en la base de datos
-        if (data.user) {
-          await AuthService.saveUserToDatabase(data.user)
-        }
-      }
-
-      return { data: data.session, error: null }
-    } catch (err) {
-      console.error("Error signing in:", err)
-      return {
-        data: null,
-        error: { message: err instanceof Error ? err.message : "An unknown error occurred during sign in" },
-      }
-    }
-  },
-
-  /**
-   * Sign up with email and password
-   */
-  signUpWithPassword: async (credentials: SignUpWithPasswordCredentials): Promise<AuthResponse> => {
-    const supabase = createClientComponentClient()
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email: credentials.email,
-        password: credentials.password,
-        options: {
-          data: credentials.metadata,
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-      })
-
-      if (error) {
-        return { data: null, error: { message: error.message, status: error.status } }
-      }
-
-      // Si la autenticación es inmediata (sin verificación por email), guardar el usuario
-      if (data.user && data.session) {
-        await AuthService.saveUserToDatabase(data.user)
-      }
-
-      return { data: null, error: null }
-    } catch (err) {
-      console.error("Error signing up:", err)
-      return {
-        data: null,
-        error: { message: err instanceof Error ? err.message : "An unknown error occurred during sign up" },
-      }
-    }
-  },
-
-  /**
-   * Sign in with a third-party provider
-   */
-  signInWithProvider: async (provider: Provider): Promise<AuthResponse> => {
-    const supabase = createClientComponentClient()
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-          queryParams: {
-            // Solicitar acceso al perfil y email del usuario
-            access_type: "offline",
-            prompt: "consent",
-          },
-        },
-      })
-
-      if (error) {
-        return { data: null, error: { message: error.message, status: error.status } }
-      }
-
-      return { data: null, error: null }
-    } catch (err) {
-      console.error(`Error signing in with ${provider}:`, err)
-      return {
-        data: null,
-        error: { message: err instanceof Error ? err.message : `An unknown error occurred during ${provider} sign in` },
-      }
-    }
-  },
-
-  /**
-   * Sign in with magic link (passwordless)
-   */
-  signInWithMagicLink: async (email: string): Promise<AuthResponse> => {
-    const supabase = createClientComponentClient()
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-      })
-
-      if (error) {
-        return { data: null, error: { message: error.message, status: error.status } }
-      }
-
-      return { data: null, error: null }
-    } catch (err) {
-      console.error("Error sending magic link:", err)
-      return {
-        data: null,
-        error: { message: err instanceof Error ? err.message : "An unknown error occurred sending magic link" },
-      }
-    }
-  },
-
-  /**
-   * Sign in with phone OTP
-   */
-  signInWithPhone: async (phone: string): Promise<AuthResponse> => {
-    const supabase = createClientComponentClient()
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        phone,
-      })
-
-      if (error) {
-        return { data: null, error: { message: error.message, status: error.status } }
-      }
-
-      return { data: null, error: null }
-    } catch (err) {
-      console.error("Error sending OTP:", err)
-      return {
-        data: null,
-        error: { message: err instanceof Error ? err.message : "An unknown error occurred sending OTP" },
-      }
-    }
-  },
-
-  /**
-   * Verify phone OTP
-   */
-  verifyPhoneOtp: async (phone: string, token: string): Promise<AuthResponse<Session>> => {
-    const supabase = createClientComponentClient()
-    try {
-      const { data, error } = await supabase.auth.verifyOtp({
-        phone,
-        token,
-        type: "sms",
-      })
-
-      if (error) {
-        return { data: null, error: { message: error.message, status: error.status } }
-      }
-
-      // Guardar el usuario en la base de datos si la verificación es exitosa
-      if (data.user) {
-        await AuthService.saveUserToDatabase(data.user)
-      }
-
-      return { data: data.session, error: null }
-    } catch (err) {
-      console.error("Error verifying OTP:", err)
-      return {
-        data: null,
-        error: { message: err instanceof Error ? err.message : "An unknown error occurred verifying OTP" },
-      }
-    }
-  },
-
-  /**
-   * Sign out the current user
-   */
-  signOut: async (): Promise<AuthResponse> => {
-    const supabase = createClientComponentClient()
-    try {
-      const { error } = await supabase.auth.signOut()
-
-      if (error) {
-        return { data: null, error: { message: error.message, status: error.status } }
-      }
-
-      // Limpiar localStorage
-      localStorage.removeItem("username")
-      localStorage.removeItem("supabase.auth.token")
-
-      return { data: null, error: null }
-    } catch (err) {
-      console.error("Error signing out:", err)
-      return {
-        data: null,
-        error: { message: err instanceof Error ? err.message : "An unknown error occurred during sign out" },
-      }
-    }
-  },
-
-  /**
    * Get the current user
    */
   getCurrentUser: async (): Promise<AuthResponse<User>> => {
@@ -323,54 +197,6 @@ export const AuthService = {
       return {
         data: null,
         error: { message: err instanceof Error ? err.message : "An unknown error occurred getting user" },
-      }
-    }
-  },
-
-  /**
-   * Reset password
-   */
-  resetPassword: async (email: string): Promise<AuthResponse> => {
-    const supabase = createClientComponentClient()
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
-      })
-
-      if (error) {
-        return { data: null, error: { message: error.message, status: error.status } }
-      }
-
-      return { data: null, error: null }
-    } catch (err) {
-      console.error("Error resetting password:", err)
-      return {
-        data: null,
-        error: { message: err instanceof Error ? err.message : "An unknown error occurred resetting password" },
-      }
-    }
-  },
-
-  /**
-   * Update password
-   */
-  updatePassword: async (password: string): Promise<AuthResponse> => {
-    const supabase = createClientComponentClient()
-    try {
-      const { error } = await supabase.auth.updateUser({
-        password,
-      })
-
-      if (error) {
-        return { data: null, error: { message: error.message, status: error.status } }
-      }
-
-      return { data: null, error: null }
-    } catch (err) {
-      console.error("Error updating password:", err)
-      return {
-        data: null,
-        error: { message: err instanceof Error ? err.message : "An unknown error occurred updating password" },
       }
     }
   },

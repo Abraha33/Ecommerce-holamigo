@@ -75,26 +75,30 @@ export default function AdminProductsPage() {
   }
 
   return (
-    <div className="container py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Administrar Productos</h1>
-        <Button>
-          <PlusCircle className="mr-2 h-4 w-4" />
+    <div className="w-full px-4 py-6 md:py-8">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+        <h1 className="text-2xl md:text-3xl font-bold text-center sm:text-left">Administrar Productos</h1>
+        <Button size="lg" className="w-full sm:w-auto py-6 sm:py-2 text-base">
+          <PlusCircle className="mr-2 h-5 w-5" />
           Nuevo Producto
         </Button>
       </div>
 
-      <Card className="max-w-3xl mx-auto">
-        <CardHeader>
-          <CardTitle>Añadir Nuevo Producto</CardTitle>
-          <CardDescription>Completa el formulario para añadir un nuevo producto a la tienda</CardDescription>
+      <Card className="w-full shadow-md">
+        <CardHeader className="text-center sm:text-left">
+          <CardTitle className="text-xl md:text-2xl">Añadir Nuevo Producto</CardTitle>
+          <CardDescription className="text-base">
+            Completa el formulario para añadir un nuevo producto a la tienda
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nombre del producto *</Label>
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="grid grid-cols-1 gap-8">
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <Label htmlFor="name" className="text-base">
+                    Nombre del producto *
+                  </Label>
                   <Input
                     id="name"
                     name="name"
@@ -102,11 +106,14 @@ export default function AdminProductsPage() {
                     onChange={handleChange}
                     placeholder="Ej: Botella Ecológica 500ml"
                     required
+                    className="h-12 text-base px-4"
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="price">Precio (COP) *</Label>
+                <div className="space-y-3">
+                  <Label htmlFor="price" className="text-base">
+                    Precio (COP) *
+                  </Label>
                   <Input
                     id="price"
                     name="price"
@@ -115,11 +122,14 @@ export default function AdminProductsPage() {
                     onChange={handleChange}
                     placeholder="Ej: 25000"
                     required
+                    className="h-12 text-base px-4"
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="description">Descripción</Label>
+                <div className="space-y-3">
+                  <Label htmlFor="description" className="text-base">
+                    Descripción
+                  </Label>
                   <Textarea
                     id="description"
                     name="description"
@@ -127,17 +137,24 @@ export default function AdminProductsPage() {
                     onChange={handleChange}
                     placeholder="Describe el producto..."
                     rows={5}
+                    className="text-base p-4 min-h-[120px]"
                   />
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <ImageUploader onImageUploaded={handleImageUploaded} folder="products" />
+              <div className="space-y-6">
+                <div className="flex flex-col items-center sm:items-start">
+                  <Label className="text-base mb-3">Imagen del producto *</Label>
+                  <ImageUploader onImageUploaded={handleImageUploaded} folder="products" />
+                </div>
 
                 {formData.imageUrl && (
-                  <div className="mt-4">
-                    <Label>Imagen seleccionada:</Label>
-                    <div className="mt-2 border rounded-md overflow-hidden">
+                  <div className="mt-6">
+                    <Label className="text-base block mb-3 text-center sm:text-left">Imagen seleccionada:</Label>
+                    <div
+                      className="mt-2 border rounded-md overflow-hidden mx-auto sm:mx-0"
+                      style={{ maxWidth: "300px" }}
+                    >
                       <div className="aspect-square relative">
                         <Image
                           src={formData.imageUrl || "/placeholder.svg"}
@@ -152,11 +169,11 @@ export default function AdminProductsPage() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
+            <Button type="submit" className="w-full h-14 text-lg font-medium mt-8" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
                   <svg
-                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
@@ -179,7 +196,7 @@ export default function AdminProductsPage() {
                 </>
               ) : (
                 <>
-                  <Save className="mr-2 h-4 w-4" />
+                  <Save className="mr-2 h-5 w-5" />
                   Guardar Producto
                 </>
               )}

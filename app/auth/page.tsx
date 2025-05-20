@@ -13,17 +13,15 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useToast } from "@/components/ui/use-toast"
-import { AuthService } from "@/lib/auth-service"
 import { Loader2, Mail, Lock, Eye, EyeOff, ArrowLeft, Smartphone } from "lucide-react"
-
-// Importa el nuevo componente
-import { GoogleAuthButton } from "@/components/ui/google-auth-button"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 
 export default function AuthPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get("redirectTo") || "/"
   const { toast } = useToast()
+  const supabase = createClientComponentClient()
 
   const [activeTab, setActiveTab] = useState("login")
   const [authMethod, setAuthMethod] = useState<"email" | "phone">("email")
@@ -47,7 +45,12 @@ export default function AuthPage() {
     setError(null)
 
     try {
-      const { error } = await AuthService.signInWithProvider(provider)
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?redirectTo=${encodeURIComponent(redirectTo)}`,
+        },
+      })
 
       if (error) {
         toast({
@@ -75,7 +78,7 @@ export default function AuthPage() {
     setError(null)
 
     try {
-      const { data, error } = await AuthService.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
@@ -115,10 +118,12 @@ export default function AuthPage() {
     setError(null)
 
     try {
-      const { error } = await AuthService.signUpWithPassword({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
-        metadata: { name },
+        options: {
+          data: { name },
+        },
       })
 
       if (error) {
@@ -141,7 +146,12 @@ export default function AuthPage() {
     setError(null)
 
     try {
-      const { error } = await AuthService.signInWithMagicLink(email)
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback?redirectTo=${encodeURIComponent(redirectTo)}`,
+        },
+      })
 
       if (error) {
         setError(error.message)
@@ -164,7 +174,10 @@ export default function AuthPage() {
 
     try {
       const formattedPhone = formatPhoneNumber(phone)
-      const { error } = await AuthService.signInWithPhone(formattedPhone)
+
+      const { error } = await supabase.auth.signInWithOtp({
+        phone: formattedPhone,
+      })
 
       if (error) {
         setError(error.message)
@@ -187,7 +200,11 @@ export default function AuthPage() {
     setError(null)
 
     try {
-      const { data, error } = await AuthService.verifyPhoneOtp(formatPhoneNumber(phone), verificationCode)
+      const { data, error } = await supabase.auth.verifyOtp({
+        phone: formatPhoneNumber(phone),
+        token: verificationCode,
+        type: "sms",
+      })
 
       if (error) {
         setError(error.message)
@@ -249,7 +266,19 @@ export default function AuthPage() {
 
               {/* Botones de redes sociales */}
               <div className="grid grid-cols-1 gap-4 mb-6">
-                <GoogleAuthButton mode={activeTab === "login" ? "login" : "register"} />
+                <Button
+                  variant="outline"
+                  className="w-full flex items-center justify-center gap-3 h-12 text-base hover:bg-gray-50 transition-all duration-200"
+                  onClick={() => handleSocialSignIn("google")}
+                  disabled={loadingProvider !== null}
+                >
+                  {loadingProvider === "google" ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <Image src="/google-logo.png" alt="Google" width={20} height={20} />
+                  )}
+                  Continuar con Google
+                </Button>
 
                 <Button
                   variant="outline"

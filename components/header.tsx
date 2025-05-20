@@ -582,7 +582,7 @@ export default function Header() {
             {/* Iconos de usuario */}
             <div className="flex items-center gap-6 ml-auto">
               {/* Notifications icon */}
-              <Link href="/notifications" className="flex flex-col items-center">
+              <Link href="/account/notifications" className="flex flex-col items-center">
                 <div className="relative">
                   <Bell className="h-6 w-6" />
                   <span className="absolute -top-1 -right-1 bg-[#1e3a8a] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
