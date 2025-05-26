@@ -10,11 +10,11 @@ import { SearchModal } from "@/components/search-modal"
 export function MobileBottomNav() {
   const pathname = usePathname()
   const router = useRouter()
-  const { itemCount } = useCart()
+  const { itemCount, isCartSidebarOpen } = useCart()
   const [showSearch, setShowSearch] = useState(false)
 
-  // No mostrar en páginas de checkout
-  if (pathname?.includes("/checkout") || pathname?.includes("/mobile-checkout")) {
+  // No mostrar en páginas de checkout o cuando el sidebar del carrito esté abierto
+  if (pathname?.includes("/checkout") || pathname?.includes("/mobile-checkout") || isCartSidebarOpen) {
     return null
   }
 

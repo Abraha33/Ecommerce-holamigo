@@ -236,7 +236,7 @@ export function CategorySidebar() {
       <Button
         variant="ghost"
         size="icon"
-        className="mr-2 relative overflow-hidden group md:h-10 md:w-10 h-12 w-12 flex items-center justify-center md:text-gray-700 text-[#0A3D91]"
+        className="md:mr-2 relative overflow-hidden group md:h-10 md:w-10 h-12 w-12 flex items-center justify-center md:text-gray-700 text-[#0A3D91]"
         onClick={toggleMenu}
         aria-expanded={isMenuOpen}
         aria-label="Menú principal"

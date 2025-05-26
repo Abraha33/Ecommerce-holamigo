@@ -54,7 +54,7 @@ export function PersistentCartSidebar() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.5 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black z-40"
+              className="fixed inset-0 bg-black z-[90]"
               onClick={() => setIsOpen(false)}
             />
 
@@ -65,7 +65,7 @@ export function PersistentCartSidebar() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed top-0 right-0 h-full w-full sm:w-96 bg-white shadow-xl z-50 flex flex-col"
+              className="fixed top-0 right-0 h-full w-full sm:w-96 bg-white shadow-xl z-[100] flex flex-col"
             >
               {/* Encabezado */}
               <div className="p-4 border-b flex justify-between items-center">

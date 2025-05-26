@@ -30,7 +30,6 @@ export function WhatsAppSupport() {
       >
         <MessageSquare className="mr-2 h-5 w-5" />
         WhatsApp
-        <span className="ml-2 text-xs hidden sm:inline">+57 319 210 2438</span>
       </Button>
     </div>
   )

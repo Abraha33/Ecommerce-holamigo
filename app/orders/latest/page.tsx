@@ -36,6 +36,43 @@ import { useCart } from "@/components/cart-provider"
 import { toast } from "@/components/ui/use-toast"
 import { motion, AnimatePresence } from "framer-motion"
 
+// Datos de ejemplo para mostrar siempre un pedido
+const DEMO_ORDER = {
+  id: "ORD-2024-0001",
+  orderNumber: "37096825",
+  date: new Date().toISOString(),
+  status: "En camino",
+  items: [
+    {
+      id: "item-1",
+      name: "Contenedor Ecológico 500ml",
+      price: 12500,
+      quantity: 1,
+      image: "/open-eco-container.png",
+    },
+    {
+      id: "item-2",
+      name: "Set de Vasos Biodegradables",
+      price: 18000,
+      quantity: 1,
+      image: "/colorful-plastic-cups.png",
+    },
+  ],
+  total: 30500,
+  subtotal: 30500,
+  shipping: 0,
+  discount: 440,
+  deliveryAddress: {
+    street: "KR 35 A # 45 - 25 CABECERA DEL LLANO",
+    city: "BUCARAMANGA",
+    state: "SANTANDER",
+    country: "COLOMBIA",
+  },
+  paymentMethod: "Efectivo",
+  deliveryType: "Express",
+  estimatedDelivery: "15 min",
+}
+
 // Simplificar el componente OrderMap para reducir animaciones
 const OrderMap = () => {
   return (
@@ -439,6 +476,24 @@ interface OrderProduct {
 }
 
 export default function LatestOrderPage() {
+  // Usar datos de ejemplo si no hay pedidos reales
+  const [orderData, setOrderData] = useState(DEMO_ORDER)
+  const [hasRealOrder, setHasRealOrder] = useState(false)
+
+  useEffect(() => {
+    // Intentar cargar pedido real del localStorage o API
+    const savedOrder = localStorage.getItem("latestOrder")
+    if (savedOrder) {
+      try {
+        const parsedOrder = JSON.parse(savedOrder)
+        setOrderData(parsedOrder)
+        setHasRealOrder(true)
+      } catch (error) {
+        console.log("Using demo order data")
+      }
+    }
+  }, [])
+
   const router = useRouter()
   const [showDetails, setShowDetails] = useState(false)
   const [isCancelled, setIsCancelled] = useState(false)
@@ -566,6 +621,21 @@ export default function LatestOrderPage() {
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6 max-w-6xl">
+      {!hasRealOrder && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <div className="flex items-center">
+            <div className="bg-blue-100 rounded-full p-2 mr-3">
+              <Package className="h-5 w-5 text-blue-600" />
+            </div>
+            <div>
+              <h3 className="font-medium text-blue-800">Vista de Demostración</h3>
+              <p className="text-sm text-blue-600">
+                Este es un pedido de ejemplo. Realiza una compra para ver tu pedido real aquí.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="flex items-center mb-6">
         <Link href="/orders" className="text-gray-700 hover:text-gray-900 flex items-center">
           <ArrowLeft className="mr-1 h-4 w-4" />
@@ -595,7 +665,7 @@ export default function LatestOrderPage() {
                   <Package size={20} className="text-white" />
                 </div>
                 <div>
-                  <h2 className="font-bold text-gray-800">Pedido Express #37096825</h2>
+                  <h2 className="font-bold text-gray-800">Pedido Express #{orderData.orderNumber}</h2>
                   <p className="text-sm text-gray-600">2 productos • Entrega hoy</p>
                 </div>
               </div>
@@ -746,7 +816,9 @@ export default function LatestOrderPage() {
           <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
             <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
               <h2 className="font-bold">Resumen de compra</h2>
-              <div className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">#37096825</div>
+              <div className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                #{orderData.orderNumber}
+              </div>
             </div>
 
             <div className="p-4 space-y-4">
@@ -767,11 +839,11 @@ export default function LatestOrderPage() {
                 <div>
                   <h3 className="font-medium">Dirección de entrega</h3>
                   <p className="text-sm">
-                    KR 35 A # 45 - 25 CABECERA DEL LLANO
+                    {orderData.deliveryAddress.street}
                     <br />
-                    BUCARAMANGA, BUCARAMANGA
+                    {orderData.deliveryAddress.city}, {orderData.deliveryAddress.city}
                     <br />
-                    SANTANDER COLOMBIA
+                    {orderData.deliveryAddress.state} {orderData.deliveryAddress.country}
                   </p>
                 </div>
               </div>
@@ -791,7 +863,7 @@ export default function LatestOrderPage() {
                     <div className="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center mr-2">
                       <span className="text-xs font-bold text-yellow-800">$</span>
                     </div>
-                    <p className="text-sm">Efectivo</p>
+                    <p className="text-sm">{orderData.paymentMethod}</p>
                   </div>
                 </div>
               </div>
@@ -803,7 +875,7 @@ export default function LatestOrderPage() {
                     <Truck size={16} className="text-white" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-blue-800">Express</p>
+                    <p className="text-sm font-medium text-blue-800">{orderData.deliveryType}</p>
                     <p className="text-xs text-blue-600">Entrega en 30-45 minutos</p>
                   </div>
                 </div>

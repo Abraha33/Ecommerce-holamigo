@@ -34,10 +34,19 @@ interface ProductCardProps {
   viewMode?: "grid" | "list" | string
 }
 
+// Mock wishlists data - En producción esto vendría de la API
+const mockWishlists = [
+  { id: 1, name: "Favoritos", count: 12 },
+  { id: 2, name: "Para el hogar", count: 8 },
+  { id: 3, name: "Regalos", count: 5 },
+  { id: 4, name: "Comprar después", count: 15 },
+]
+
 export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
   const [isWishlistHovered, setIsWishlistHovered] = useState(false)
+  const [showWishlistDropdown, setShowWishlistDropdown] = useState(false)
   const [isDetailsHovered, setIsDetailsHovered] = useState(false)
   const [isLoginHovered, setIsLoginHovered] = useState(false)
   const { user } = useAuth()
@@ -77,9 +86,16 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
       router.push("/login?redirectTo=" + encodeURIComponent(window.location.pathname))
       return
     }
+    // Si hay listas, mostrar dropdown
+    setShowWishlistDropdown(true)
+  }
+
+  // Función para agregar a una lista específica
+  const handleAddToWishlist = (wishlistId: number, wishlistName: string) => {
+    setShowWishlistDropdown(false)
     toast({
-      title: "Producto guardado",
-      description: `${product.name} ha sido agregado a tu lista de deseos`,
+      title: "Producto agregado",
+      description: `${product.name} ha sido agregado a "${wishlistName}"`,
       variant: "default",
     })
   }
@@ -253,15 +269,46 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
               </Button>
             )}
 
-            {/* Botón de wishlist */}
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 rounded-md border-2 border-gray-300 hover:border-[#004a93] hover:bg-gray-50 touch-target"
-              onClick={handleWishlistClick}
-            >
-              <Heart className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 text-gray-700" />
-            </Button>
+            {/* Botón de wishlist con dropdown */}
+            <div className="relative">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 rounded-md border-2 border-gray-300 hover:border-[#004a93] hover:bg-gray-50 touch-target"
+                onClick={handleWishlistClick}
+                onMouseEnter={() => user && setShowWishlistDropdown(true)}
+                onMouseLeave={() => setShowWishlistDropdown(false)}
+              >
+                <Heart className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 text-gray-700" />
+              </Button>
+
+              {/* Dropdown de listas de deseos */}
+              {user && showWishlistDropdown && (
+                <div
+                  className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 min-w-[200px]"
+                  onMouseEnter={() => setShowWishlistDropdown(true)}
+                  onMouseLeave={() => setShowWishlistDropdown(false)}
+                >
+                  <div className="p-2">
+                    <p className="text-xs font-medium text-gray-500 mb-2">Agregar a lista:</p>
+                    {mockWishlists.map((wishlist) => (
+                      <button
+                        key={wishlist.id}
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded-md flex justify-between items-center"
+                        onClick={() => handleAddToWishlist(wishlist.id, wishlist.name)}
+                      >
+                        <span>{wishlist.name}</span>
+                        <span className="text-xs text-gray-400">({wishlist.count})</span>
+                      </button>
+                    ))}
+                    <hr className="my-2" />
+                    <button className="w-full text-left px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-md">
+                      + Crear nueva lista
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Botón de ver detalles */}
             <Button
@@ -374,25 +421,61 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
               </TooltipProvider>
             )}
 
-            <TooltipProvider>
-              <Tooltip open={isWishlistHovered} delayDuration={700}>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="icon"
-                    variant="secondary"
-                    className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 rounded-full bg-white shadow-md hover:bg-gray-100 touch-target"
-                    onClick={handleWishlistClick}
-                    onMouseEnter={() => setIsWishlistHovered(true)}
-                    onMouseLeave={() => setIsWishlistHovered(false)}
-                  >
-                    <Heart className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 text-gray-700" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="left" className="bg-amber-400 border-amber-400 text-black font-medium">
-                  <p>Wishlist</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            {/* Botón de wishlist con dropdown */}
+            <div className="relative">
+              <TooltipProvider>
+                <Tooltip open={isWishlistHovered && !showWishlistDropdown} delayDuration={700}>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="secondary"
+                      className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 rounded-full bg-white shadow-md hover:bg-gray-100 touch-target"
+                      onClick={handleWishlistClick}
+                      onMouseEnter={() => {
+                        setIsWishlistHovered(true)
+                        if (user) setShowWishlistDropdown(true)
+                      }}
+                      onMouseLeave={() => {
+                        setIsWishlistHovered(false)
+                        setTimeout(() => setShowWishlistDropdown(false), 100)
+                      }}
+                    >
+                      <Heart className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 text-gray-700" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="left" className="bg-amber-400 border-amber-400 text-black font-medium">
+                    <p>Wishlist</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              {/* Dropdown de listas de deseos */}
+              {user && showWishlistDropdown && (
+                <div
+                  className="absolute top-0 right-full mr-2 bg-white border border-gray-200 rounded-md shadow-lg z-50 min-w-[200px]"
+                  onMouseEnter={() => setShowWishlistDropdown(true)}
+                  onMouseLeave={() => setShowWishlistDropdown(false)}
+                >
+                  <div className="p-2">
+                    <p className="text-xs font-medium text-gray-500 mb-2">Agregar a lista:</p>
+                    {mockWishlists.map((wishlist) => (
+                      <button
+                        key={wishlist.id}
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded-md flex justify-between items-center"
+                        onClick={() => handleAddToWishlist(wishlist.id, wishlist.name)}
+                      >
+                        <span>{wishlist.name}</span>
+                        <span className="text-xs text-gray-400">({wishlist.count})</span>
+                      </button>
+                    ))}
+                    <hr className="my-2" />
+                    <button className="w-full text-left px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-md">
+                      + Crear nueva lista
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
 
             <TooltipProvider>
               <Tooltip open={isDetailsHovered} delayDuration={700}>

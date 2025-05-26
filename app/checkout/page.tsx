@@ -47,7 +47,6 @@ export default function CheckoutPage() {
   const [receiveMethod, setReceiveMethod] = useState("personal")
   const [isAddressFormOpen, setIsAddressFormOpen] = useState(false)
   const [showClearCartDialog, setShowClearCartDialog] = useState(false)
-  const [isAuthRequired, setIsAuthRequired] = useState(false)
 
   // Add this after state declarations
   const [addresses, setAddresses] = useState<Address[]>([
@@ -60,11 +59,6 @@ export default function CheckoutPage() {
   // 1. Modify useEffect to sync with delivery context
   // Replace existing useEffect with this
   useEffect(() => {
-    // Check if user is logged in
-    if (!user) {
-      setIsAuthRequired(true)
-    }
-
     // Load saved receive method
     const savedReceiveMethod = localStorage.getItem("receiveMethod")
     if (savedReceiveMethod) {
@@ -73,25 +67,14 @@ export default function CheckoutPage() {
 
     // Sync with delivery context
     if (deliveryInfo) {
-      // If there's a selected address in the context, use it
       if (deliveryInfo.selectedAddress) {
         setSelectedAddress(deliveryInfo.selectedAddress.address)
       } else if (addresses.length > 0) {
-        // If no selected address but addresses available, use the first one
         setSelectedAddress(addresses[0].address)
         updateSelectedAddress(addresses[0])
       }
-
-      // Update UI based on delivery info
-      if (deliveryInfo.type === "programada" && deliveryInfo.schedule) {
-        // If there's a schedule, update UI
-        console.log("Scheduled delivery:", deliveryInfo.schedule)
-      } else if (deliveryInfo.type === "tienda" && deliveryInfo.storeAddress) {
-        // If there's a store address, update UI
-        console.log("Store pickup:", deliveryInfo.storeAddress)
-      }
     }
-  }, [deliveryInfo, addresses, updateSelectedAddress, user])
+  }, [deliveryInfo, addresses, updateSelectedAddress])
 
   // 2. Modify getDeliveryIcon to be more robust
   const getDeliveryIcon = () => {
@@ -127,13 +110,7 @@ export default function CheckoutPage() {
   }
 
   const handleGoToPayment = () => {
-    // Check if user is logged in
-    if (!user) {
-      setIsAuthRequired(true)
-      return
-    }
-
-    // Save receive method in localStorage or global state
+    // Save receive method in localStorage
     localStorage.setItem("receiveMethod", receiveMethod)
     router.push("/checkout/payment")
   }
@@ -449,24 +426,6 @@ export default function CheckoutPage() {
             <Button variant="destructive" onClick={confirmClearCart}>
               Yes, clear cart
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Authentication required dialog */}
-      <Dialog open={isAuthRequired} onOpenChange={setIsAuthRequired}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Authentication Required</DialogTitle>
-            <DialogDescription>
-              You need to be logged in to proceed with checkout. Please log in or create an account.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex justify-end gap-2 sm:justify-end">
-            <Button variant="outline" onClick={() => setIsAuthRequired(false)}>
-              Continue as guest
-            </Button>
-            <Button onClick={handleLoginRedirect}>Log in</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

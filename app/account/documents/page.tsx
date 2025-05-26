@@ -180,10 +180,10 @@ export default function DocumentsPage() {
               <div className="space-y-4">
                 {filteredDocuments.map((doc) => (
                   <Card key={doc.id} className="p-4 hover:shadow-md transition-shadow">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex items-start gap-4 min-w-0 flex-1">
                         <div
-                          className={`p-2 rounded-lg ${
+                          className={`p-2 rounded-lg flex-shrink-0 ${
                             doc.type === "invoice"
                               ? "bg-blue-100"
                               : doc.type === "electronic"
@@ -202,9 +202,9 @@ export default function DocumentsPage() {
                             }
                           />
                         </div>
-                        <div>
-                          <h3 className="font-medium text-gray-800">{doc.name}</h3>
-                          <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-medium text-gray-800 truncate">{doc.name}</h3>
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-500 mt-1">
                             <span className="flex items-center gap-1">
                               <Calendar size={14} />
                               {doc.date}
@@ -214,7 +214,7 @@ export default function DocumentsPage() {
                               {doc.size}
                             </span>
                             <span
-                              className={`px-2 py-0.5 rounded-full text-xs ${
+                              className={`px-2 py-0.5 rounded-full text-xs w-fit ${
                                 doc.status === "Pagada"
                                   ? "bg-green-100 text-green-700"
                                   : doc.status === "Pendiente"
@@ -227,17 +227,17 @@ export default function DocumentsPage() {
                           </div>
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-shrink-0">
                         <Button
                           variant="outline"
                           size="sm"
-                          className="text-blue-600 border-blue-200"
+                          className="text-blue-600 border-blue-200 text-xs px-3"
                           onClick={() => handleViewDocument(doc)}
                         >
-                          <Eye size={16} className="mr-1" /> Ver
+                          <Eye size={14} className="mr-1" /> Ver
                         </Button>
-                        <Button variant="outline" size="sm" className="text-green-600 border-green-200">
-                          <Download size={16} className="mr-1" /> Descargar
+                        <Button variant="outline" size="sm" className="text-green-600 border-green-200 text-xs px-3">
+                          <Download size={14} className="mr-1" /> Descargar
                         </Button>
                       </div>
                     </div>
@@ -293,7 +293,22 @@ export default function DocumentsPage() {
 
               <div className="mb-4">
                 <h4 className="font-medium mb-2">Detalles de la compra</h4>
-                <div className="border rounded-md overflow-hidden">
+                <div className="space-y-3 sm:hidden">
+                  {/* Vista móvil - Cards en lugar de tabla */}
+                  {selectedDocument.items.map((item: any) => (
+                    <div key={item.id} className="bg-gray-50 rounded-lg p-3">
+                      <div className="font-medium text-sm">{item.name}</div>
+                      <div className="flex justify-between text-sm text-gray-600 mt-1">
+                        <span>Cantidad: {item.quantity}</span>
+                        <span>{formatCurrency(item.price)}</span>
+                      </div>
+                      <div className="text-right font-medium text-sm mt-1">Total: {formatCurrency(item.total)}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Vista desktop - Tabla original */}
+                <div className="hidden sm:block border rounded-md overflow-hidden">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>

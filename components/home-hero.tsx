@@ -1,9 +1,6 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import Image from "next/image"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
 interface HeroSlide {
@@ -41,40 +38,8 @@ export function HomeHero({ slides }: HomeHeroProps) {
   }, [nextSlide])
 
   return (
-    <div className="relative h-[600px] w-full overflow-hidden">
+    <div className="relative h-0 w-full overflow-hidden">
       {/* Slides */}
-      {slides.map((slide, index) => (
-        <div
-          key={index}
-          className={`absolute inset-0 transition-opacity duration-1000 ${
-            currentSlide === index ? "opacity-100 z-10" : "opacity-0 z-0"
-          }`}
-        >
-          {/* Background image */}
-          <div className="absolute inset-0">
-            <Image
-              src={slide.image || "/placeholder.svg"}
-              alt={slide.title}
-              fill
-              className="object-cover brightness-[0.7]"
-              priority={index === 0}
-            />
-          </div>
-
-          {/* Slide content */}
-          <div className="container mx-auto h-full flex items-center relative z-10">
-            <div className="max-w-2xl text-white p-6">
-              <h1 className="text-4xl md:text-6xl font-bold mb-4">{slide.title}</h1>
-              <p className="text-lg mb-8">{slide.description}</p>
-              <Link href={slide.ctaLink}>
-                <Button className="bg-[#004a93] hover:bg-[#003a73] text-white font-bold px-8 py-3 rounded-full text-lg transition-all">
-                  {slide.cta}
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      ))}
 
       {/* Controls */}
       <button

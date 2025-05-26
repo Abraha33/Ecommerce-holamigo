@@ -473,14 +473,19 @@ export default function Header() {
         </div>
 
         <div className={`container mx-auto px-4`}>
-          <div className={`flex items-center ${isScrolled ? "h-16" : "h-20"} py-4 transition-all duration-300`}>
-            {/* Hamburger menu for categories sidebar - Larger for mobile */}
-            <div className="flex items-center">
-              <CategorySidebar className="text-2xl md:text-base" />
+          <div
+            className={`flex items-center justify-between md:justify-start ${isScrolled ? "h-16" : "h-20"} py-4 transition-all duration-300`}
+          >
+            {/* Hamburger menu for categories sidebar - Solo visible en desktop */}
+            <div className="hidden md:flex items-center">
+              <CategorySidebar className="text-base" />
             </div>
 
-            {/* Logo */}
-            <Link href="/inicio" className="flex items-center mr-6">
+            {/* Logo - Centrado en móviles */}
+            <Link
+              href="/inicio"
+              className="flex items-center mr-6 md:mr-6 absolute left-1/2 transform -translate-x-1/2 md:relative md:left-auto md:transform-none"
+            >
               <div className="relative h-12 w-12 mr-2">
                 <Image src={logoSrc || "/placeholder.svg"} alt="Envax Logo" fill className="object-contain" />
               </div>
@@ -587,6 +592,10 @@ export default function Header() {
 
             {/* Iconos de usuario */}
             <div className="flex items-center gap-6 ml-auto">
+              {/* Hamburger menu para móviles */}
+              <div className="md:hidden">
+                <CategorySidebar className="text-2xl" />
+              </div>
               {/* En móviles, solo mostrar wishlist y carrito */}
               <div className="md:flex items-center gap-6 hidden">
                 {/* Notifications icon */}
