@@ -90,7 +90,7 @@ const subcategoriesData: Record<string, { name: string; slug: string }[]> = {
 
 // Actualizar el array de navegación para incluir el enlace a Promos
 const navigation = [
-  // { name: "Inicio", href: "/", icon: <Home className="w-5 h-5" /> },
+  { name: "Inicio", href: "/inicio", icon: <Menu className="w-5 h-5" /> },
   // { name: "Nosotros", href: "/about", icon: <FileText className="w-5 h-5" /> },
   { name: "Tienda", href: "/shop", icon: <ShoppingCart className="w-5 h-5" /> },
   { name: "Promos", href: "/promos", icon: <Settings className="w-5 h-5" /> },
@@ -151,7 +151,7 @@ export default function Header() {
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 0)
+      setIsScrolled(window.scrollY > 10)
     }
 
     window.addEventListener("scroll", handleScroll)
@@ -390,9 +390,13 @@ export default function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-40 w-full">
+    <header
+      className={`md:fixed relative top-0 z-40 w-full bg-white transition-all duration-300 ease-in-out ${
+        isScrolled ? "shadow-md" : ""
+      }`}
+    >
       {/* Barra superior - estilo Druco */}
-      <div className="bg-[#1e3a8a] text-white py-2 px-4">
+      <div className={`bg-[#1e3a8a] text-white ${isScrolled ? "py-1" : "py-2"} px-4 transition-all duration-300`}>
         <div className="container mx-auto flex justify-between items-center">
           <div className="hidden md:flex space-x-6">
             <Link href="/help" className="text-sm hover:text-gray-300 transition-colors">
@@ -429,7 +433,7 @@ export default function Header() {
       </div>
 
       {/* Barra principal - estilo mejorado */}
-      <div className="bg-white border-b shadow-sm">
+      <div className={`bg-white border-b ${isScrolled ? "shadow-sm" : ""} transition-all duration-300`}>
         {/* Barra de información de entrega */}
         <div className="bg-gray-100 py-2 border-b">
           <div className="container mx-auto px-4">
@@ -468,13 +472,15 @@ export default function Header() {
           </div>
         </div>
 
-        <div className="container mx-auto px-4">
-          <div className="flex items-center h-20 py-4">
-            {/* Hamburger menu for categories sidebar */}
-            <CategorySidebar />
+        <div className={`container mx-auto px-4`}>
+          <div className={`flex items-center ${isScrolled ? "h-16" : "h-20"} py-4 transition-all duration-300`}>
+            {/* Hamburger menu for categories sidebar - Larger for mobile */}
+            <div className="flex items-center">
+              <CategorySidebar className="text-2xl md:text-base" />
+            </div>
 
             {/* Logo */}
-            <Link href="/shop" className="flex items-center mr-6">
+            <Link href="/inicio" className="flex items-center mr-6">
               <div className="relative h-12 w-12 mr-2">
                 <Image src={logoSrc || "/placeholder.svg"} alt="Envax Logo" fill className="object-contain" />
               </div>
@@ -581,60 +587,63 @@ export default function Header() {
 
             {/* Iconos de usuario */}
             <div className="flex items-center gap-6 ml-auto">
-              {/* Notifications icon */}
-              <Link href="/account/notifications" className="flex flex-col items-center">
-                <div className="relative">
-                  <Bell className="h-6 w-6" />
-                  <span className="absolute -top-1 -right-1 bg-[#1e3a8a] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    3
-                  </span>
-                </div>
-                <span className="text-xs mt-1 hidden md:block">Alertas</span>
-              </Link>
-              {/* Cuenta de usuario */}
-              <div className="relative group">
-                <Link href={user ? "/account" : "/login"} className="flex flex-col items-center">
-                  <User className="h-6 w-6" />
-                  <span className="text-xs mt-1 hidden md:block">
-                    {persistentUsername ? persistentUsername : user ? "Mi perfil" : "Mi cuenta"}
-                  </span>
-                </Link>
-
-                {/* Menú desplegable para cambiar nombre */}
-                {user && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 hidden group-hover:block">
-                    <div className="px-4 py-2 text-sm text-gray-700 border-b">
-                      <p className="font-medium">Hola, {persistentUsername}</p>
-                      <p className="text-xs text-gray-500">{user.email}</p>
-                    </div>
-                    <Link href="/account" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                      Mi cuenta
-                    </Link>
-                    <button
-                      onClick={() => {
-                        setNewDisplayName(persistentUsername)
-                        setIsEditNameDialogOpen(true)
-                      }}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Cambiar nombre
-                    </button>
-                    <button
-                      onClick={async () => {
-                        await supabase.auth.signOut()
-                        localStorage.removeItem("username")
-                        setPersistentUsername("")
-                        router.push("/shop")
-                      }}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-100"
-                    >
-                      Cerrar sesión
-                    </button>
+              {/* En móviles, solo mostrar wishlist y carrito */}
+              <div className="md:flex items-center gap-6 hidden">
+                {/* Notifications icon */}
+                <Link href="/account/notifications" className="flex flex-col items-center">
+                  <div className="relative">
+                    <Bell className="h-6 w-6" />
+                    <span className="absolute -top-1 -right-1 bg-[#1e3a8a] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      3
+                    </span>
                   </div>
-                )}
+                  <span className="text-xs mt-1 hidden md:block">Alertas</span>
+                </Link>
+                {/* Cuenta de usuario */}
+                <div className="relative group">
+                  <Link href={user ? "/account" : "/login"} className="flex flex-col items-center">
+                    <User className="h-6 w-6" />
+                    <span className="text-xs mt-1 hidden md:block">
+                      {persistentUsername ? persistentUsername : user ? "Mi perfil" : "Mi cuenta"}
+                    </span>
+                  </Link>
+
+                  {/* Menú desplegable para cambiar nombre */}
+                  {user && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 hidden group-hover:block">
+                      <div className="px-4 py-2 text-sm text-gray-700 border-b">
+                        <p className="font-medium">Hola, {persistentUsername}</p>
+                        <p className="text-xs text-gray-500">{user.email}</p>
+                      </div>
+                      <Link href="/account" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        Mi cuenta
+                      </Link>
+                      <button
+                        onClick={() => {
+                          setNewDisplayName(persistentUsername)
+                          setIsEditNameDialogOpen(true)
+                        }}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        Cambiar nombre
+                      </button>
+                      <button
+                        onClick={async () => {
+                          await supabase.auth.signOut()
+                          localStorage.removeItem("username")
+                          setPersistentUsername("")
+                          router.push("/shop")
+                        }}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-100"
+                      >
+                        Cerrar sesión
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Wishlist */}
+              {/* Wishlist - visible en todos los dispositivos */}
               <Link href="/wishlists" className="flex flex-col items-center">
                 <div className="relative">
                   <Heart className="h-6 w-6" />
@@ -647,7 +656,7 @@ export default function Header() {
                 <span className="text-xs mt-1 hidden md:block">Favoritos</span>
               </Link>
 
-              {/* Carrito */}
+              {/* Carrito - visible en todos los dispositivos */}
               <Link
                 href="/shop"
                 onClick={(e) => {
@@ -667,14 +676,14 @@ export default function Header() {
                 <span className="text-xs mt-1 hidden md:block">{formatCurrency(subtotal)}</span>
               </Link>
 
-              {/* Botón de menú móvil */}
+              {/* Botón de menú móvil con icono más grande */}
               <Button
                 variant="ghost"
                 size="icon"
-                className="md:hidden"
+                className="hidden"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               >
-                <Menu className="h-6 w-6" />
+                <Menu className="h-8 w-8" />
               </Button>
             </div>
           </div>
@@ -685,7 +694,7 @@ export default function Header() {
       <MainNavigation />
 
       {/* Menú móvil */}
-      {isMobileMenuOpen && (
+      {isMobileMenuOpen && false && (
         <div className="md:hidden bg-white border-b shadow-md">
           <div className="container mx-auto py-2">
             <nav className="flex flex-col">
@@ -936,6 +945,13 @@ export default function Header() {
         .animate-marquee {
           display: inline-block;
           animation: marquee 20s linear infinite;
+        }
+
+        /* Añadir padding al contenido principal para compensar el header fijo solo en pantallas md y superiores */
+        @media (min-width: 768px) {
+          main {
+            padding-top: 180px; /* Ajusta este valor según la altura total del header */
+          }
         }
       `}</style>
     </header>

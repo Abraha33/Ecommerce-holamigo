@@ -37,7 +37,7 @@ const materials = [
 const attributes = [
   {
     name: "COLOR",
-    icon: <Palette className="h-5 w-5" />,
+    icon: <Palette className="h-4 w-4" />,
     options: [
       { id: "negro", label: "NEGRO" },
       { id: "blanco", label: "BLANCO" },
@@ -48,7 +48,7 @@ const attributes = [
   },
   {
     name: "MATERIAL",
-    icon: <Tag className="h-5 w-5" />,
+    icon: <Tag className="h-4 w-4" />,
     options: [
       { id: "plastico-reciclado", label: "PLÁSTICO RECICLADO" },
       { id: "bioplastico", label: "BIOPLÁSTICO" },
@@ -58,7 +58,7 @@ const attributes = [
   },
   {
     name: "TAMAÑO",
-    icon: <Layers className="h-5 w-5" />,
+    icon: <Layers className="h-4 w-4" />,
     options: [
       { id: "pequeno", label: "PEQUEÑO" },
       { id: "mediano", label: "MEDIANO" },
@@ -68,7 +68,7 @@ const attributes = [
   },
   {
     name: "MODELO",
-    icon: <ShoppingBag className="h-5 w-5" />,
+    icon: <ShoppingBag className="h-4 w-4" />,
     options: [
       { id: "estandar", label: "ESTÁNDAR" },
       { id: "premium", label: "PREMIUM" },
@@ -187,7 +187,7 @@ export function ProductFilters({ compact = false, onFilterChange }: ProductFilte
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
-                className={`${compact ? "h-10 px-3 py-1" : "rounded-full h-14 w-14 p-0 flex flex-col"} items-center justify-center transition-all transform active:scale-95 ${
+                className={`${compact ? "h-7 sm:h-8 px-2 sm:px-3 py-0 text-xs" : "rounded-full h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 p-0 flex flex-col"} items-center justify-center transition-all transform active:scale-95 ${
                   selectedAttributes?.[attribute.name]?.length > 0
                     ? "border-[#004a93] bg-[#004a93] text-white"
                     : "border-[#004a93] text-[#004a93] hover:bg-blue-50"
@@ -196,19 +196,19 @@ export function ProductFilters({ compact = false, onFilterChange }: ProductFilte
                 {compact ? (
                   <div className="flex items-center gap-1">
                     {attribute.icon}
-                    <span>{attribute.name}</span>
+                    <span className="text-xs">{attribute.name}</span>
                     {selectedAttributes?.[attribute.name]?.length > 0 && (
-                      <span className="bg-white text-[#004a93] rounded-full w-5 h-5 flex items-center justify-center text-xs ml-1">
+                      <span className="bg-white text-[#004a93] rounded-full w-4 h-4 flex items-center justify-center text-[10px] ml-1">
                         {selectedAttributes[attribute.name].length}
                       </span>
                     )}
                   </div>
                 ) : (
                   <>
-                    {attribute.icon}
-                    <span className="text-xs mt-1">{attribute.name}</span>
+                    <div className={compact ? "" : "scale-75 sm:scale-90 md:scale-100"}>{attribute.icon}</div>
+                    <span className="text-[9px] sm:text-[10px] md:text-xs mt-0.5">{attribute.name}</span>
                     {selectedAttributes?.[attribute.name]?.length > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-white text-[#004a93] border border-[#004a93] rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                      <span className="absolute -top-1 -right-1 bg-white text-[#004a93] border border-[#004a93] rounded-full w-4 h-4 flex items-center justify-center text-[10px]">
                         {selectedAttributes[attribute.name].length}
                       </span>
                     )}
@@ -216,22 +216,23 @@ export function ProductFilters({ compact = false, onFilterChange }: ProductFilte
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 p-0" align="start">
-              <div className="p-4 border-b">
-                <h3 className="font-medium uppercase">{attribute.name}</h3>
+            <PopoverContent className="w-[45vw] sm:w-56 p-0 shadow-md" align="end" sideOffset={5}>
+              <div className="p-1.5 sm:p-2 border-b bg-gray-50">
+                <h3 className="font-medium text-xs uppercase text-[#004a93]">{attribute.name}</h3>
               </div>
-              <div className="p-4">
-                <div className="grid grid-cols-2 gap-3">
+              <div className="p-1.5 sm:p-2 max-h-[30vh] overflow-y-auto">
+                <div className="grid grid-cols-1 gap-1">
                   {attribute.options.map((option) => (
-                    <div key={option.id} className="flex items-center space-x-2">
+                    <div key={option.id} className="flex items-center space-x-1.5 hover:bg-gray-50 p-0.5 rounded">
                       <Checkbox
                         id={`${attribute.name.toLowerCase()}-${option.id}`}
                         checked={selectedAttributes?.[attribute.name]?.includes(option.id) || false}
                         onCheckedChange={() => handleAttributeChange(attribute.name, option.id)}
+                        className="h-3 w-3 sm:h-3.5 sm:w-3.5"
                       />
                       <Label
                         htmlFor={`${attribute.name.toLowerCase()}-${option.id}`}
-                        className="text-sm font-normal cursor-pointer uppercase"
+                        className="text-[10px] sm:text-xs font-normal cursor-pointer uppercase"
                       >
                         {option.label}
                       </Label>
@@ -239,11 +240,16 @@ export function ProductFilters({ compact = false, onFilterChange }: ProductFilte
                   ))}
                 </div>
               </div>
-              <div className="p-4 border-t flex justify-between">
-                <Button variant="outline" size="sm" onClick={() => handleClearAttribute(attribute.name)}>
+              <div className="p-1.5 sm:p-2 border-t bg-gray-50 flex justify-between">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleClearAttribute(attribute.name)}
+                  className="h-6 text-[10px] px-1.5"
+                >
                   LIMPIAR
                 </Button>
-                <Button size="sm" onClick={() => setActiveFilter(null)}>
+                <Button size="sm" onClick={() => setActiveFilter(null)} className="h-6 text-[10px] px-1.5 bg-[#004a93]">
                   APLICAR
                 </Button>
               </div>
@@ -256,7 +262,7 @@ export function ProductFilters({ compact = false, onFilterChange }: ProductFilte
           <PopoverTrigger asChild>
             <Button
               variant="outline"
-              className={`${compact ? "h-10 px-3 py-1" : "rounded-full h-14 w-14 p-0 flex flex-col"} items-center justify-center transition-all transform active:scale-95 ${
+              className={`${compact ? "h-7 sm:h-8 px-2 sm:px-3 py-0 text-xs" : "rounded-full h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 p-0 flex flex-col"} items-center justify-center transition-all transform active:scale-95 ${
                 priceRange[0] > 0 || priceRange[1] < 100
                   ? "border-[#004a93] bg-[#004a93] text-white"
                   : "border-[#004a93] text-[#004a93] hover:bg-blue-50"
@@ -264,20 +270,20 @@ export function ProductFilters({ compact = false, onFilterChange }: ProductFilte
             >
               {compact ? (
                 <div className="flex items-center gap-1">
-                  <Star className="h-4 w-4" />
-                  <span>Precio</span>
+                  <Star className="h-3.5 w-3.5" />
+                  <span className="text-xs">Precio</span>
                   {(priceRange[0] > 0 || priceRange[1] < 100) && (
-                    <span className="bg-white text-[#004a93] rounded-full w-5 h-5 flex items-center justify-center text-xs ml-1">
+                    <span className="bg-white text-[#004a93] rounded-full w-4 h-4 flex items-center justify-center text-[10px] ml-1">
                       1
                     </span>
                   )}
                 </div>
               ) : (
                 <>
-                  <Star className="h-5 w-5" />
-                  <span className="text-xs mt-1">Precio</span>
+                  <Star className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <span className="text-[9px] sm:text-[10px] md:text-xs mt-0.5">Precio</span>
                   {(priceRange[0] > 0 || priceRange[1] < 100) && (
-                    <span className="absolute -top-1 -right-1 bg-white text-[#004a93] border border-[#004a93] rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                    <span className="absolute -top-1 -right-1 bg-white text-[#004a93] border border-[#004a93] rounded-full w-4 h-4 flex items-center justify-center text-[10px]">
                       1
                     </span>
                   )}
@@ -285,24 +291,29 @@ export function ProductFilters({ compact = false, onFilterChange }: ProductFilte
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-80 p-0" align="start">
-            <div className="p-4 border-b">
-              <h3 className="font-medium uppercase">RANGO DE PRECIO</h3>
+          <PopoverContent className="w-[45vw] sm:w-56 p-0 shadow-md" align="end" sideOffset={5}>
+            <div className="p-1.5 sm:p-2 border-b bg-gray-50">
+              <h3 className="font-medium text-xs uppercase text-[#004a93]">RANGO DE PRECIO</h3>
             </div>
-            <div className="p-4">
-              <div className="space-y-4">
-                <Slider value={priceRange} min={0} max={100} step={1} onValueChange={setPriceRange} />
-                <div className="flex items-center justify-between">
+            <div className="p-2">
+              <div className="space-y-2">
+                <Slider value={priceRange} min={0} max={100} step={1} onValueChange={setPriceRange} className="mt-4" />
+                <div className="flex items-center justify-between text-[10px] sm:text-xs">
                   <span>{formatCurrency(priceRange[0])}</span>
                   <span>{formatCurrency(priceRange[1])}</span>
                 </div>
               </div>
             </div>
-            <div className="p-4 border-t flex justify-between">
-              <Button variant="outline" size="sm" onClick={() => setPriceRange([0, 100])}>
+            <div className="p-1.5 sm:p-2 border-t bg-gray-50 flex justify-between">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPriceRange([0, 100])}
+                className="h-6 text-[10px] px-1.5"
+              >
                 LIMPIAR
               </Button>
-              <Button size="sm" onClick={() => setActiveFilter(null)}>
+              <Button size="sm" onClick={() => setActiveFilter(null)} className="h-6 text-[10px] px-1.5 bg-[#004a93]">
                 APLICAR
               </Button>
             </div>
@@ -342,13 +353,13 @@ export function ActiveFilters({
   if (totalFiltersApplied === 0) return null
 
   return (
-    <div className="w-full bg-gray-50 p-3 rounded-lg mb-4 border border-gray-200">
+    <div className="w-full bg-gray-50 p-2 sm:p-3 rounded-lg mb-3 sm:mb-4 border border-gray-200">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-medium uppercase">FILTROS APLICADOS:</h3>
+        <h3 className="text-xs sm:text-sm font-medium uppercase">FILTROS APLICADOS:</h3>
         <Button
           variant="outline"
           size="sm"
-          className="text-xs h-7 uppercase"
+          className="text-xs h-6 sm:h-7 uppercase px-1.5 sm:px-2"
           onClick={() => {
             setPriceRange([0, 100])
             selectedCategories.forEach((id) => handleCategoryChange(id))
@@ -360,17 +371,17 @@ export function ActiveFilters({
           }}
         >
           <CircleSlash className="h-3 w-3 mr-1" />
-          LIMPIAR TODOS
+          LIMPIAR
         </Button>
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5 sm:gap-2">
         {selectedCategories.map((catId) => {
           const category = categories.find((c) => c.id === catId)
           return category ? (
             <Badge
               key={catId}
               variant="secondary"
-              className="pl-2 pr-1 py-1 flex items-center gap-1 bg-blue-50 text-[#004a93]"
+              className="pl-2 pr-1 py-0.5 flex items-center gap-1 bg-blue-50 text-[#004a93] text-xs"
             >
               {category.label}
               <Button
@@ -391,7 +402,7 @@ export function ActiveFilters({
             <Badge
               key={colorId}
               variant="secondary"
-              className="pl-2 pr-1 py-1 flex items-center gap-1 bg-blue-50 text-[#004a93]"
+              className="pl-2 pr-1 py-0.5 flex items-center gap-1 bg-blue-50 text-[#004a93] text-xs"
             >
               {color.label}
               <Button
@@ -412,7 +423,7 @@ export function ActiveFilters({
             <Badge
               key={materialId}
               variant="secondary"
-              className="pl-2 pr-1 py-1 flex items-center gap-1 bg-blue-50 text-[#004a93]"
+              className="pl-2 pr-1 py-0.5 flex items-center gap-1 bg-blue-50 text-[#004a93] text-xs"
             >
               {material.label}
               <Button
@@ -428,7 +439,10 @@ export function ActiveFilters({
         })}
 
         {(priceRange[0] > 0 || priceRange[1] < 100) && (
-          <Badge variant="secondary" className="pl-2 pr-1 py-1 flex items-center gap-1 bg-blue-50 text-[#004a93]">
+          <Badge
+            variant="secondary"
+            className="pl-2 pr-1 py-0.5 flex items-center gap-1 bg-blue-50 text-[#004a93] text-xs"
+          >
             {formatCurrency(priceRange[0])} - {formatCurrency(priceRange[1])}
             <Button variant="ghost" size="icon" className="h-4 w-4 p-0 ml-1" onClick={() => setPriceRange([0, 100])}>
               <X className="h-3 w-3" />
@@ -445,7 +459,7 @@ export function ActiveFilters({
               <Badge
                 key={`${attributeName}-${optionId}`}
                 variant="secondary"
-                className="pl-2 pr-1 py-1 flex items-center gap-1 bg-blue-50 text-[#004a93]"
+                className="pl-2 pr-1 py-0.5 flex items-center gap-1 bg-blue-50 text-[#004a93] text-xs"
               >
                 {option.label}
                 <Button

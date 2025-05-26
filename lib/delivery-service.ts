@@ -28,8 +28,13 @@ export interface DeliveryInfo {
 // Definir la clave para localStorage como constante exportada
 export const DELIVERY_INFO_KEY = "holamigo_delivery_info"
 
+// Verificar si estamos en el cliente
+const isClient = typeof window !== "undefined"
+
 // Modificar la función saveDeliveryMethod para mejorar la sincronización
 export const saveDeliveryMethod = (deliveryInfo: DeliveryInfo): void => {
+  if (!isClient) return // Solo ejecutar en el cliente
+
   try {
     // Save all information in a single object
     localStorage.setItem(DELIVERY_INFO_KEY, JSON.stringify(deliveryInfo))
@@ -49,6 +54,11 @@ export const saveDeliveryMethod = (deliveryInfo: DeliveryInfo): void => {
 
 // Modificar la función getDeliveryMethod para ser más robusta
 export const getDeliveryMethod = (): DeliveryInfo => {
+  if (!isClient) {
+    // Valor por defecto para el servidor
+    return { type: "sprint" }
+  }
+
   try {
     const savedInfo = localStorage.getItem(DELIVERY_INFO_KEY)
     if (savedInfo) {

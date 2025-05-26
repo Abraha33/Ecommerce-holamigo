@@ -22,6 +22,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 
+// Verificar si estamos en el cliente
+const isClient = typeof window !== "undefined"
+
 export default function PaymentPage() {
   const router = useRouter()
   const { items, subtotal, clearItems } = useCart()
@@ -81,6 +84,8 @@ export default function PaymentPage() {
 
   // Load selected address from context
   useEffect(() => {
+    if (!isClient) return
+
     // Try to get address from multiple possible sources
     const headerAddress = localStorage.getItem("deliveryAddress")
     const deliveryInfoAddress = localStorage.getItem("holamigo_delivery_address")
@@ -148,6 +153,8 @@ export default function PaymentPage() {
   }, [])
 
   useEffect(() => {
+    if (!isClient) return
+
     // Load saved delivery method
     const savedDeliveryType = localStorage.getItem("deliveryType") || "sprint"
     setDeliveryType(savedDeliveryType)
@@ -179,29 +186,29 @@ export default function PaymentPage() {
 
   // Effect to set address from header if no address selected
   useEffect(() => {
-    if (!selectedAddress) {
-      // Try to get address from multiple sources
-      const headerAddress = localStorage.getItem("deliveryAddress")
-      const deliveryInfoAddress = localStorage.getItem("holamigo_delivery_address")
+    if (!isClient || selectedAddress) return
 
-      // Use first available address
-      const address = headerAddress || deliveryInfoAddress || "Calle 31#15-09, Centro"
+    // Try to get address from multiple sources
+    const headerAddress = localStorage.getItem("deliveryAddress")
+    const deliveryInfoAddress = localStorage.getItem("holamigo_delivery_address")
 
-      // Create address object with found address
-      const defaultAddress = {
-        fullName: "Delivery Address",
-        address: address,
-        city: "Bucaramanga",
-        state: "",
-        postalCode: "",
-        country: "Colombia",
-        phone: "",
-      }
+    // Use first available address
+    const address = headerAddress || deliveryInfoAddress || "Calle 31#15-09, Centro"
 
-      // Set address in state safely
-      setSelectedAddress(defaultAddress)
-      console.log("Address set from header:", defaultAddress)
+    // Create address object with found address
+    const defaultAddress = {
+      fullName: "Delivery Address",
+      address: address,
+      city: "Bucaramanga",
+      state: "",
+      postalCode: "",
+      country: "Colombia",
+      phone: "",
     }
+
+    // Set address in state safely
+    setSelectedAddress(defaultAddress)
+    console.log("Address set from header:", defaultAddress)
   }, [selectedAddress]) // Only runs when selectedAddress changes or is null
 
   const shipping = deliveryType === "sprint" ? 7500 : deliveryType === "programada" ? 5000 : 0
@@ -222,6 +229,8 @@ export default function PaymentPage() {
   }
 
   const handleCompletePurchase = async () => {
+    if (!isClient) return
+
     // Check if user is logged in
     if (!user) {
       setIsAuthRequired(true)
@@ -257,6 +266,8 @@ export default function PaymentPage() {
   }
 
   const processOrder = async (address: ShippingAddress) => {
+    if (!isClient) return
+
     setIsProcessing(true)
 
     try {
@@ -334,9 +345,22 @@ export default function PaymentPage() {
   }
 
   const handleLoginRedirect = () => {
+    if (!isClient) return
+
     // Save current path for redirect after login
     localStorage.setItem("loginRedirect", "/checkout/payment")
     router.push("/login")
+  }
+
+  // Renderizado condicional para el servidor
+  if (!isClient) {
+    return (
+      <div className="container px-4 py-8 mx-auto max-w-6xl">
+        <div className="flex items-center justify-center h-96">
+          <p>Cargando información de pago...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -390,9 +414,10 @@ export default function PaymentPage() {
                   <div>
                     <p className="font-medium">Delivery Address</p>
                     <p className="text-gray-600">
-                      {localStorage.getItem("deliveryAddress") ||
-                        localStorage.getItem("holamigo_delivery_address") ||
-                        "Calle 31#15-09, Centro"}
+                      {isClient &&
+                        (localStorage.getItem("deliveryAddress") ||
+                          localStorage.getItem("holamigo_delivery_address") ||
+                          "Calle 31#15-09, Centro")}
                     </p>
                   </div>
                   <button onClick={handleEditAddress} className="text-blue-600 flex items-center hover:underline">

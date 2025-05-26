@@ -40,3 +40,9 @@ export const signOut = async () => {
 
 // Exportamos directamente createClientComponentClient para compatibilidad
 export { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+
+// Añadimos las exportaciones faltantes
+export { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
+
+// Exportamos createClient como alias de createClientComponentClient para compatibilidad
+export const createClient = createClientComponentClient

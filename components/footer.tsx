@@ -119,7 +119,7 @@ export default function Footer() {
         href="https://wa.me/573192102438?text=Hola%2C%20estoy%20interesado%20en%20sus%20productos.%20%C2%BFPodr%C3%ADa%20darme%20m%C3%A1s%20informaci%C3%B3n%3F"
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-6 left-6 flex items-center z-[100] group"
+        className="fixed left-6 flex items-center z-[100] group md:bottom-6 bottom-24"
         aria-label="Contactar por WhatsApp"
         title="Contactar por WhatsApp"
       >

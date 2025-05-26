@@ -21,9 +21,6 @@ const getLocalDeliveryInfo = (): DeliveryInfo => {
     return {
       type: "tienda",
       storeAddress: "Calle 31#15-09, Centro",
-      scheduledDate: null,
-      scheduledTime: null,
-      address: null,
     }
   }
 
@@ -39,9 +36,6 @@ const getLocalDeliveryInfo = (): DeliveryInfo => {
   return {
     type: "tienda",
     storeAddress: "Calle 31#15-09, Centro",
-    scheduledDate: null,
-    scheduledTime: null,
-    address: null,
   }
 }
 
@@ -66,12 +60,21 @@ const DELIVERY_INFO_KEY = "deliveryInfo"
 
 export function DeliveryProvider({ children }: { children: ReactNode }) {
   // Obtener el método de envío guardado
-  const [deliveryInfo, setDeliveryInfo] = useState<DeliveryInfo>(getDeliveryMethod())
+  const [deliveryInfo, setDeliveryInfo] = useState<DeliveryInfo>(
+    isClient
+      ? getDeliveryMethod()
+      : {
+          type: "tienda",
+          storeAddress: "Calle 31#15-09, Centro",
+        },
+  )
   const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false)
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false)
 
   // Actualizar el método de envío
   const updateDeliveryType = (type: DeliveryType) => {
+    if (!isClient) return
+
     const newDeliveryInfo: DeliveryInfo = {
       ...deliveryInfo,
       type,
@@ -94,13 +97,17 @@ export function DeliveryProvider({ children }: { children: ReactNode }) {
     setDeliveryInfo(newDeliveryInfo)
 
     // Emit a custom event to synchronize other components
-    window.dispatchEvent(new CustomEvent("delivery-update", { detail: newDeliveryInfo }))
+    if (isClient) {
+      window.dispatchEvent(new CustomEvent("delivery-update", { detail: newDeliveryInfo }))
+    }
 
     console.log("Delivery type updated:", type, newDeliveryInfo)
   }
 
   // Actualizar la programación
   const updateSchedule = (day: string | null, timeSlot: string | null) => {
+    if (!isClient) return
+
     const newDeliveryInfo: DeliveryInfo = {
       ...deliveryInfo,
       type: "programada", // Si actualizamos la programación, cambiamos a tipo programada
@@ -119,11 +126,15 @@ export function DeliveryProvider({ children }: { children: ReactNode }) {
     setDeliveryInfo(newDeliveryInfo)
 
     // Emitir evento personalizado para sincronizar otros componentes
-    window.dispatchEvent(new CustomEvent("delivery-update", { detail: newDeliveryInfo }))
+    if (isClient) {
+      window.dispatchEvent(new CustomEvent("delivery-update", { detail: newDeliveryInfo }))
+    }
   }
 
   // Actualizar la dirección de la tienda
   const updateStoreAddress = (address: string) => {
+    if (!isClient) return
+
     const newDeliveryInfo: DeliveryInfo = {
       ...deliveryInfo,
       type: "tienda", // Si actualizamos la dirección de la tienda, cambiamos a tipo tienda
@@ -137,11 +148,15 @@ export function DeliveryProvider({ children }: { children: ReactNode }) {
     setDeliveryInfo(newDeliveryInfo)
 
     // Emitir evento personalizado para sincronizar otros componentes
-    window.dispatchEvent(new CustomEvent("delivery-update", { detail: newDeliveryInfo }))
+    if (isClient) {
+      window.dispatchEvent(new CustomEvent("delivery-update", { detail: newDeliveryInfo }))
+    }
   }
 
   // Add this function after the updateStoreAddress function
   const updateSelectedAddress = (address: Address) => {
+    if (!isClient) return
+
     const newDeliveryInfo = {
       ...deliveryInfo,
       selectedAddress: address,
@@ -154,7 +169,9 @@ export function DeliveryProvider({ children }: { children: ReactNode }) {
     setDeliveryInfo(newDeliveryInfo)
 
     // Emit a custom event to synchronize other components
-    window.dispatchEvent(new CustomEvent("delivery-update", { detail: newDeliveryInfo }))
+    if (isClient) {
+      window.dispatchEvent(new CustomEvent("delivery-update", { detail: newDeliveryInfo }))
+    }
   }
 
   // Abrir el modal de opciones de entrega
@@ -166,8 +183,10 @@ export function DeliveryProvider({ children }: { children: ReactNode }) {
   const closeDeliveryModal = () => {
     setIsDeliveryModalOpen(false)
     // Actualizar la información de entrega después de cerrar el modal
-    const currentInfo = getDeliveryMethod()
-    setDeliveryInfo(currentInfo)
+    if (isClient) {
+      const currentInfo = getDeliveryMethod()
+      setDeliveryInfo(currentInfo)
+    }
   }
 
   // Abrir el modal de programación
@@ -179,12 +198,16 @@ export function DeliveryProvider({ children }: { children: ReactNode }) {
   const closeScheduleModal = () => {
     setIsScheduleModalOpen(false)
     // Actualizar la información de entrega después de cerrar el modal
-    const currentInfo = getDeliveryMethod()
-    setDeliveryInfo(currentInfo)
+    if (isClient) {
+      const currentInfo = getDeliveryMethod()
+      setDeliveryInfo(currentInfo)
+    }
   }
 
   // Update the useEffect to better handle delivery info updates
   useEffect(() => {
+    if (!isClient) return
+
     // Load delivery info on startup
     const initialDeliveryInfo = getDeliveryMethod()
     setDeliveryInfo(initialDeliveryInfo)

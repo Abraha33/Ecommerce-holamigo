@@ -54,7 +54,7 @@ export function BrandCircles({ selectedBrands = [], onBrandSelect, onClose, isMo
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 py-4"
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 py-2 sm:py-4"
         >
           {brands.map((brand) => {
             const isSelected = selectedBrands.includes(brand.id)
@@ -67,7 +67,7 @@ export function BrandCircles({ selectedBrands = [], onBrandSelect, onClose, isMo
                 onClick={() => handleBrandClick(brand.id)}
               >
                 <motion.div
-                  className={`relative w-24 h-24 rounded-full overflow-hidden 
+                  className={`relative w-14 h-14 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full overflow-hidden 
                   ${
                     isSelected
                       ? "border-4 border-[#004a93] shadow-lg"
@@ -173,7 +173,9 @@ export function BrandCircles({ selectedBrands = [], onBrandSelect, onClose, isMo
                     </motion.div>
                   )}
                 </motion.div>
-                <span className={`text-sm font-medium text-center ${isSelected ? "text-[#004a93] font-bold" : ""}`}>
+                <span
+                  className={`text-[10px] sm:text-sm font-medium text-center ${isSelected ? "text-[#004a93] font-bold" : ""}`}
+                >
                   {brand.name}
                 </span>
               </motion.div>
@@ -212,12 +214,12 @@ export function BrandCircles({ selectedBrands = [], onBrandSelect, onClose, isMo
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-[800px] max-h-[80vh] overflow-y-auto"
+              className="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] max-h-[85vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-6">
+              <div className="p-3 sm:p-4 md:p-6">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-[#004a93]">Nuestras Marcas</h2>
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#004a93]">Nuestras Marcas</h2>
                   <Button variant="ghost" size="icon" onClick={() => setOpen(false)} className="rounded-full">
                     <X className="h-5 w-5" />
                   </Button>

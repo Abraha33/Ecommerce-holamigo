@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Breadcrumb } from "@/components/breadcrumb"
 import { ProductCard } from "@/components/product-card"
 import { Button } from "@/components/ui/button"
@@ -227,12 +227,6 @@ interface ShopClientProps {
 }
 
 export function ShopClient({ initialProducts }: ShopClientProps) {
-  // Verifica si este archivo está utilizando CategorySlider en lugar de CategoryNavigation
-
-  // Busca una línea como:
-  // <CategorySlider categories={categorySliderItems} />
-
-  // Si es así, necesitamos modificar el componente CategorySlider o asegurarnos de que la página esté utilizando CategoryNavigation
   const [sortOption, setSortOption] = useState("featured")
   const [viewMode, setViewMode] = useState("grid-6")
   const [activeFilterTab, setActiveFilterTab] = useState("precio")
@@ -253,6 +247,9 @@ export function ShopClient({ initialProducts }: ShopClientProps) {
   const [showFiltersModal, setShowFiltersModal] = useState(false)
   const [showBrandsModal, setShowBrandsModal] = useState(false)
   const [activeAccordion, setActiveAccordion] = useState<string | null>("precio")
+  const [windowWidth, setWindowWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 0)
+  const [isMobile, setIsMobile] = useState(false)
+  const shopContainerRef = useRef<HTMLDivElement>(null)
 
   // Map database products to the format expected by ProductCard
   const mappedProducts = initialProducts.map(mapProductForCard)
@@ -284,17 +281,19 @@ export function ShopClient({ initialProducts }: ShopClientProps) {
   const currentBrands = brandData.slice(indexOfFirstBrand, indexOfFirstBrand + brandsPerPage)
   const totalBrandPages = Math.ceil(brandData.length / brandsPerPage)
 
-  // Determine grid columns based on view mode
-  const getGridCols = () => {
-    switch (viewMode) {
-      case "grid-6":
-        return "grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6"
-      case "list":
-        return "grid-cols-1 md:grid-cols-2 gap-y-8"
-      default:
-        return "grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6"
+  // Update window width on resize
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth)
+      setIsMobile(window.innerWidth < 640)
     }
-  }
+
+    // Initial check
+    handleResize()
+
+    window.addEventListener("resize", handleResize)
+    return () => window.removeEventListener("resize", handleResize)
+  }, [])
 
   // Update price inputs when slider changes
   useEffect(() => {
@@ -398,6 +397,85 @@ export function ShopClient({ initialProducts }: ShopClientProps) {
     .category-container img {
       object-fit: cover;
     }
+    
+    /* Fix for mobile overflow */
+    body {
+      overflow-x: hidden;
+      width: 100%;
+    }
+    
+    /* Ensure container doesn't cause horizontal scroll */
+    .container {
+      width: 100%;
+      max-width: 100%;
+      padding-left: 1rem;
+      padding-right: 1rem;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    @media (min-width: 640px) {
+      .container {
+        max-width: 640px;
+      }
+    }
+    
+    @media (min-width: 768px) {
+      .container {
+        max-width: 768px;
+      }
+    }
+    
+    @media (min-width: 1024px) {
+      .container {
+        max-width: 1024px;
+      }
+    }
+    
+    @media (min-width: 1280px) {
+      .container {
+        max-width: 1280px;
+      }
+    }
+    
+    /* Ensure product grid doesn't overflow */
+    .product-grid {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.5rem;
+    }
+    
+    @media (min-width: 640px) {
+      .product-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+      }
+    }
+    
+    @media (min-width: 768px) {
+      .product-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+    
+    @media (min-width: 1024px) {
+      .product-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+    }
+    
+    @media (min-width: 1280px) {
+      .product-grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+      }
+    }
+    
+    @media (min-width: 1536px) {
+      .product-grid {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+      }
+    }
   `
     document.head.appendChild(style)
 
@@ -407,57 +485,68 @@ export function ShopClient({ initialProducts }: ShopClientProps) {
   }, [])
 
   return (
-    <div className="bg-gray-50">
+    <div className="bg-gray-50 w-full overflow-x-hidden" ref={shopContainerRef}>
       {/* Banner de categoría AGRANDADO */}
-      <div className="w-full bg-gradient-to-r from-[#004a93] to-[#0071bc] py-16">
-        <div className="container mx-auto px-4">
+      <div className="w-full bg-gradient-to-r from-[#004a93] to-[#0071bc] py-6 sm:py-8 md:py-12 lg:py-16">
+        <div className="container mx-auto px-3 sm:px-4">
           <Breadcrumb
             items={[
               { label: "Inicio", href: "/" },
               { label: "Tienda", href: "/shop", active: true },
             ]}
-            className="text-white/80 mb-6"
+            className="text-white/80 mb-3 sm:mb-4 md:mb-6 text-sm"
           />
 
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="text-center md:text-left mb-6 md:mb-0">
-              <h1 className="text-5xl font-bold text-white mb-4">Productos Sostenibles</h1>
-              <p className="text-white/90 max-w-2xl text-xl">Soluciones eco-amigables para todas tus necesidades</p>
+            <div className="text-center md:text-left mb-3 md:mb-0">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2 md:mb-4">
+                Productos Sostenibles
+              </h1>
+              <p className="text-white/90 max-w-2xl text-sm sm:text-base md:text-lg lg:text-xl">
+                Soluciones eco-amigables para todas tus necesidades
+              </p>
             </div>
-            <Badge variant="outline" className="text-2xl px-6 py-3 bg-white text-[#004a93] font-semibold">
+            <Badge
+              variant="outline"
+              className="text-base sm:text-lg md:text-2xl px-3 sm:px-4 md:px-6 py-1 sm:py-2 md:py-3 bg-white text-[#004a93] font-semibold mt-2 md:mt-0"
+            >
               {sortedProducts.length} productos
             </Badge>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
-        <Breadcrumb
-          items={[
-            { label: "Home", href: "/" },
-            { label: "Tienda", href: "/shop", active: true },
-          ]}
-        />
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8">
+        <div className="hidden sm:block">
+          <Breadcrumb
+            items={[
+              { label: "Home", href: "/" },
+              { label: "Tienda", href: "/shop", active: true },
+            ]}
+          />
+        </div>
 
-        {/* Slider de categorías */}
-        <CategorySlider categories={categorySliderItems} />
+        {/* Slider de categorías - Mobile Optimized */}
+        <div className="mb-4 sm:mb-6 md:mb-8 -mx-3 sm:mx-0 overflow-hidden">
+          <CategorySlider categories={categorySliderItems} className="category-slider-container" />
+        </div>
 
-        {/* Barra de herramientas simplificada */}
-        <div className="flex flex-wrap items-center justify-between mt-6 mb-8 gap-2 border-b pb-6">
-          <div className="flex items-center gap-4 w-full justify-between">
-            {/* Botones de filtro vertical */}
-            <div className="flex items-center gap-4">
+        {/* Barra de herramientas simplificada - Mobile First */}
+        <div className="flex flex-wrap items-center justify-between mt-2 sm:mt-4 mb-4 sm:mb-6 gap-2 sm:gap-3 border-b pb-4 sm:pb-6">
+          <div className="flex flex-col sm:flex-row w-full gap-2 sm:gap-3 sm:items-center sm:justify-between">
+            {/* Botones de filtro - Stack en móvil, horizontal en desktop */}
+            <div className="flex gap-2 w-full sm:w-auto">
               {/* Botón de Filtros */}
-              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="flex-1 sm:flex-none">
                 <Button
                   variant="outline"
-                  className="flex items-center gap-2 bg-gradient-to-r from-[#004a93] to-[#0071bc] text-white hover:from-[#003a73] hover:to-[#005a99] text-base px-6 py-6 h-auto rounded-xl shadow-md border-0"
+                  className="flex items-center justify-center gap-2 bg-gradient-to-r from-[#004a93] to-[#0071bc] text-white hover:from-[#003a73] hover:to-[#005a99] text-xs sm:text-sm md:text-base px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 h-auto rounded-lg sm:rounded-xl shadow-md border-0 w-full"
                   onClick={() => setShowFiltersModal(true)}
                 >
-                  <SlidersHorizontal className="h-5 w-5 mr-1" />
+                  <SlidersHorizontal className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 mr-1" />
                   <span className="font-medium">Filtros</span>
                   {totalFiltersApplied > 0 && (
-                    <span className="ml-2 bg-white text-[#004a93] rounded-full text-xs px-2 py-0.5 font-bold">
+                    <span className="ml-1 sm:ml-2 bg-white text-[#004a93] rounded-full text-xs px-1.5 py-0.5 font-bold">
                       {totalFiltersApplied}
                     </span>
                   )}
@@ -465,16 +554,16 @@ export function ShopClient({ initialProducts }: ShopClientProps) {
               </motion.div>
 
               {/* Botón de Marcas */}
-              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="flex-1 sm:flex-none">
                 <Button
                   variant="outline"
-                  className="flex items-center gap-2 bg-white border-2 border-[#004a93] text-[#004a93] hover:bg-blue-50 text-base px-6 py-6 h-auto rounded-xl shadow-md"
+                  className="flex items-center justify-center gap-2 bg-white border-2 border-[#004a93] text-[#004a93] hover:bg-blue-50 text-xs sm:text-sm md:text-base px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 h-auto rounded-lg sm:rounded-xl shadow-md w-full"
                   onClick={() => setShowBrandsModal(true)}
                 >
-                  <Tag className="h-5 w-5 mr-1" />
+                  <Tag className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 mr-1" />
                   <span className="font-medium">Marcas</span>
                   {selectedBrands.length > 0 && (
-                    <span className="ml-2 bg-[#004a93] text-white rounded-full text-xs px-2 py-0.5 font-bold">
+                    <span className="ml-1 sm:ml-2 bg-[#004a93] text-white rounded-full text-xs px-1.5 py-0.5 font-bold">
                       {selectedBrands.length}
                     </span>
                   )}
@@ -482,12 +571,12 @@ export function ShopClient({ initialProducts }: ShopClientProps) {
               </motion.div>
             </div>
 
-            {/* Ordenar por y vista */}
-            <div className="flex items-center gap-8">
-              <div className="flex items-center gap-3">
-                <span className="text-base font-medium">Ordenar por:</span>
+            {/* Ordenar por y vista - Responsive stackable */}
+            <div className="flex flex-row w-full sm:w-auto gap-2 sm:gap-3 md:gap-8 mt-2 sm:mt-0 justify-between">
+              <div className="flex items-center gap-1 sm:gap-2 flex-1 sm:flex-auto">
+                <span className="text-xs sm:text-sm md:text-base font-medium whitespace-nowrap">Ordenar:</span>
                 <select
-                  className="border rounded p-2 text-base"
+                  className="border rounded p-1 sm:p-2 text-xs sm:text-sm flex-1 sm:flex-auto"
                   value={sortOption}
                   onChange={(e) => setSortOption(e.target.value)}
                 >
@@ -499,30 +588,30 @@ export function ShopClient({ initialProducts }: ShopClientProps) {
                 </select>
               </div>
 
-              <div className="flex items-center gap-3 border-l pl-8">
-                <span className="text-base font-medium">Vista:</span>
-                <div className="flex items-center bg-gray-100 p-1.5 rounded-lg">
+              <div className="flex items-center justify-end sm:justify-center gap-1 sm:gap-2 sm:border-l sm:pl-2 md:pl-4">
+                <span className="text-xs sm:text-sm md:text-base font-medium hidden xs:inline">Vista:</span>
+                <div className="flex items-center bg-gray-100 p-1 rounded-lg">
                   <Button
                     variant={viewMode === "grid-6" ? "default" : "ghost"}
                     size="icon"
                     onClick={() => setViewMode("grid-6")}
-                    className={`h-10 w-10 rounded-lg mx-1 ${
+                    className={`h-7 w-7 sm:h-8 sm:w-8 md:h-10 md:w-10 rounded-lg mx-0.5 sm:mx-1 ${
                       viewMode === "grid-6" ? "bg-[#004a93] text-white" : "text-gray-600"
-                    } hover:bg-[#003a73] hover:text-white`}
+                    } hover:bg-[#003a73] hover:text-white touch-target`}
                     title="Vista de cuadrícula"
                   >
-                    <Grid className="h-5 w-5" />
+                    <Grid className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" />
                   </Button>
                   <Button
                     variant={viewMode === "list" ? "default" : "ghost"}
                     size="icon"
                     onClick={() => setViewMode("list")}
-                    className={`h-10 w-10 rounded-lg mx-1 ${
+                    className={`h-7 w-7 sm:h-8 sm:w-8 md:h-10 md:w-10 rounded-lg mx-0.5 sm:mx-1 ${
                       viewMode === "list" ? "bg-[#004a93] text-white" : "text-gray-600"
-                    } hover:bg-[#003a73] hover:text-white`}
+                    } hover:bg-[#003a73] hover:text-white touch-target`}
                     title="Vista de lista"
                   >
-                    <List className="h-5 w-5" />
+                    <List className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" />
                   </Button>
                 </div>
               </div>
@@ -530,46 +619,49 @@ export function ShopClient({ initialProducts }: ShopClientProps) {
           </div>
         </div>
 
-        {/* Productos en grid o list view */}
+        {/* Productos en grid o list view - Mobile Optimized */}
         <div className="w-full">
           {viewMode === "list" ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-3 sm:gap-4">
               {currentProducts.map((product) => (
                 <ProductCard key={product.id} product={product} viewMode="list" />
               ))}
             </div>
           ) : (
-            <div className={`grid ${getGridCols()} gap-4 sm:gap-4 gap-2`}>
+            <div className="product-grid">
               {currentProducts.map((product) => (
                 <ProductCard key={product.id} product={product} viewMode="grid" />
               ))}
             </div>
           )}
 
-          {/* Paginación mejorada */}
-          <Pagination
-            totalItems={sortedProducts.length}
-            itemsPerPage={itemsPerPage}
-            currentPage={currentPage}
-            onPageChange={setCurrentPage}
-          />
+          {/* Mejorar espacio en móvil para paginación */}
+          <div className="py-4 sm:py-6 md:py-8">
+            <Pagination
+              totalItems={sortedProducts.length}
+              itemsPerPage={itemsPerPage}
+              currentPage={currentPage}
+              onPageChange={setCurrentPage}
+            />
+          </div>
         </div>
       </div>
 
-      {/* Modal de filtros mejorado */}
+      {/* Modal de filtros optimizado para móvil */}
       {showFiltersModal && (
         <div
-          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto"
+          className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center overflow-y-auto"
           onClick={() => setShowFiltersModal(false)}
         >
           <div
-            className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
+            className="bg-white rounded-t-xl sm:rounded-xl shadow-xl w-full sm:max-w-sm h-[70vh] sm:max-h-[70vh] overflow-hidden flex flex-col mt-[15vh] sm:mt-[10vh]"
             onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: isMobile ? "100%" : "320px" }}
           >
             {/* Encabezado del modal */}
-            <div className="bg-[#004a93] text-white p-4 flex justify-between items-center">
-              <h2 className="text-xl font-bold flex items-center">
-                <SlidersHorizontal className="mr-2 h-5 w-5" /> Filtros
+            <div className="sticky top-0 z-10 bg-[#004a93] text-white p-2 sm:p-3 flex justify-between items-center">
+              <h2 className="text-base sm:text-lg md:text-xl font-bold flex items-center">
+                <SlidersHorizontal className="mr-2 h-4 w-4 sm:h-5 sm:w-5" /> Filtros
                 {totalFiltersApplied > 0 && (
                   <Badge className="ml-2 bg-white text-[#004a93]">{totalFiltersApplied}</Badge>
                 )}
@@ -578,89 +670,89 @@ export function ShopClient({ initialProducts }: ShopClientProps) {
                 variant="ghost"
                 size="icon"
                 onClick={() => setShowFiltersModal(false)}
-                className="text-white hover:bg-blue-800 rounded-full h-8 w-8"
+                className="text-white hover:bg-blue-800 rounded-full h-7 w-7 sm:h-8 sm:w-8"
               >
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
             </div>
 
             {/* Contenido del modal */}
-            <div className="flex flex-col md:flex-row h-full overflow-hidden">
-              {/* Menú lateral */}
-              <div className="w-full md:w-64 bg-gray-50 border-r">
-                <div className="p-4">
-                  <div className="space-y-1">
+            <div className="flex flex-col sm:flex-row h-full overflow-hidden">
+              {/* Menú lateral - En móvil se convierte en tabs horizontales */}
+              <div className="w-full sm:w-64 bg-gray-50 border-r overflow-x-auto sm:overflow-x-visible">
+                <div className="p-2 sm:p-3">
+                  <div className="flex sm:flex-col space-x-2 sm:space-x-0 sm:space-y-1 overflow-x-auto sm:overflow-x-visible pb-1 sm:pb-0">
                     <Button
                       variant="ghost"
-                      className={`w-full justify-start text-left ${
+                      className={`whitespace-nowrap sm:whitespace-normal sm:w-full justify-start text-left text-xs sm:text-sm ${
                         activeAccordion === "precio" ? "bg-blue-50 text-[#004a93] font-medium" : ""
                       }`}
                       onClick={() => toggleAccordion("precio")}
                     >
                       {activeAccordion === "precio" ? (
-                        <ChevronDown className="h-5 w-5 mr-2" />
+                        <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
                       ) : (
-                        <ChevronRight className="h-5 w-5 mr-2" />
+                        <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
                       )}
                       Precio
                     </Button>
 
                     <Button
                       variant="ghost"
-                      className={`w-full justify-start text-left ${
+                      className={`whitespace-nowrap sm:whitespace-normal sm:w-full justify-start text-left text-xs sm:text-sm ${
                         activeAccordion === "colores" ? "bg-blue-50 text-[#004a93] font-medium" : ""
                       }`}
                       onClick={() => toggleAccordion("colores")}
                     >
                       {activeAccordion === "colores" ? (
-                        <ChevronDown className="h-5 w-5 mr-2" />
+                        <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
                       ) : (
-                        <ChevronRight className="h-5 w-5 mr-2" />
+                        <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
                       )}
                       Colores
                     </Button>
 
                     <Button
                       variant="ghost"
-                      className={`w-full justify-start text-left ${
+                      className={`whitespace-nowrap sm:whitespace-normal sm:w-full justify-start text-left text-xs sm:text-sm ${
                         activeAccordion === "tamanos" ? "bg-blue-50 text-[#004a93] font-medium" : ""
                       }`}
                       onClick={() => toggleAccordion("tamanos")}
                     >
                       {activeAccordion === "tamanos" ? (
-                        <ChevronDown className="h-5 w-5 mr-2" />
+                        <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
                       ) : (
-                        <ChevronRight className="h-5 w-5 mr-2" />
+                        <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
                       )}
                       Tamaños
                     </Button>
 
                     <Button
                       variant="ghost"
-                      className={`w-full justify-start text-left ${
+                      className={`whitespace-nowrap sm:whitespace-normal sm:w-full justify-start text-left text-xs sm:text-sm ${
                         activeAccordion === "modelos" ? "bg-blue-50 text-[#004a93] font-medium" : ""
                       }`}
                       onClick={() => toggleAccordion("modelos")}
                     >
                       {activeAccordion === "modelos" ? (
-                        <ChevronDown className="h-5 w-5 mr-2" />
+                        <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
                       ) : (
-                        <ChevronRight className="h-5 w-5 mr-2" />
+                        <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
                       )}
                       Modelos
                     </Button>
 
                     <Button
                       variant="ghost"
-                      className={`w-full justify-start text-left ${
+                      className={`whitespace-nowrap sm:whitespace-normal sm:w-full justify-start text-left text-xs sm:text-sm ${
                         activeAccordion === "marcas" ? "bg-blue-50 text-[#004a93] font-medium" : ""
                       }`}
                       onClick={() => toggleAccordion("marcas")}
                     >
                       {activeAccordion === "marcas" ? (
-                        <ChevronDown className="h-5 w-5 mr-2" />
+                        <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
                       ) : (
-                        <ChevronRight className="h-5 w-5 mr-2" />
+                        <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
                       )}
                       Marcas
                     </Button>
@@ -669,79 +761,89 @@ export function ShopClient({ initialProducts }: ShopClientProps) {
               </div>
 
               {/* Contenido del filtro seleccionado */}
-              <div className="flex-1 p-6 overflow-y-auto">
+              <div className="flex-1 p-2 overflow-y-auto">
                 {/* Filtro de precio mejorado */}
                 {activeAccordion === "precio" && (
                   <div>
-                    <h3 className="text-lg font-medium mb-4">Rango de precio</h3>
-                    <div className="space-y-6">
+                    <h3 className="text-base sm:text-lg font-medium mb-3 sm:mb-4">Rango de precio</h3>
+                    <div className="space-y-4 sm:space-y-6">
                       {/* Slider con valores visuales */}
-                      <div className="relative pt-6 pb-10">
+                      <div className="relative pt-4 sm:pt-6 pb-8 sm:pb-10">
                         <Slider
                           value={priceRange}
                           min={0}
                           max={100}
                           step={1}
                           onValueChange={setPriceRange}
-                          className="mb-6"
+                          className="mb-4 sm:mb-6"
                         />
 
                         {/* Marcas de valores */}
                         <div className="absolute left-0 right-0 bottom-0 flex justify-between text-xs text-gray-500">
                           <span>$0</span>
-                          <span>$25.000</span>
+                          <span className="hidden xs:inline">$25.000</span>
                           <span>$50.000</span>
-                          <span>$75.000</span>
+                          <span className="hidden xs:inline">$75.000</span>
                           <span>$100.000</span>
                         </div>
                       </div>
 
                       {/* Inputs de precio */}
-                      <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center justify-between gap-2 sm:gap-4">
                         <div className="flex-1">
-                          <label htmlFor="min-price" className="block text-sm font-medium text-gray-700 mb-1">
+                          <label
+                            htmlFor="min-price"
+                            className="block text-xs sm:text-sm font-medium text-gray-700 mb-1"
+                          >
                             Precio mínimo
                           </label>
                           <div className="relative">
-                            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                            <span className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                              $
+                            </span>
                             <input
                               id="min-price"
                               type="number"
                               value={minPrice}
                               onChange={handleMinPriceChange}
-                              className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full pl-5 sm:pl-7 pr-2 sm:pr-3 py-1 sm:py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-xs sm:text-sm"
                             />
                           </div>
                         </div>
 
                         <div className="flex items-center justify-center">
-                          <span className="text-gray-500 mx-2">-</span>
+                          <span className="text-gray-500 mx-1 sm:mx-2">-</span>
                         </div>
 
                         <div className="flex-1">
-                          <label htmlFor="max-price" className="block text-sm font-medium text-gray-700 mb-1">
+                          <label
+                            htmlFor="max-price"
+                            className="block text-xs sm:text-sm font-medium text-gray-700 mb-1"
+                          >
                             Precio máximo
                           </label>
                           <div className="relative">
-                            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                            <span className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                              $
+                            </span>
                             <input
                               id="max-price"
                               type="number"
                               value={maxPrice}
                               onChange={handleMaxPriceChange}
-                              className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full pl-5 sm:pl-7 pr-2 sm:pr-3 py-1 sm:py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-xs sm:text-sm"
                             />
                           </div>
                         </div>
                       </div>
 
                       {/* Rangos predefinidos */}
-                      <div className="mt-6">
-                        <h4 className="text-sm font-medium text-gray-700 mb-3">Rangos populares</h4>
-                        <div className="grid grid-cols-2 gap-2">
+                      <div className="mt-4 sm:mt-6">
+                        <h4 className="text-xs sm:text-sm font-medium text-gray-700 mb-2 sm:mb-3">Rangos populares</h4>
+                        <div className="grid grid-cols-2 gap-1 sm:gap-2">
                           <Button
                             variant="outline"
-                            className="justify-start text-left"
+                            className="justify-start text-left text-xs sm:text-sm py-1 sm:py-2 h-auto"
                             onClick={() => {
                               setPriceRange([0, 25])
                               setMinPrice("0")
@@ -752,7 +854,7 @@ export function ShopClient({ initialProducts }: ShopClientProps) {
                           </Button>
                           <Button
                             variant="outline"
-                            className="justify-start text-left"
+                            className="justify-start text-left text-xs sm:text-sm py-1 sm:py-2 h-auto"
                             onClick={() => {
                               setPriceRange([25, 50])
                               setMinPrice("25000")
@@ -763,7 +865,7 @@ export function ShopClient({ initialProducts }: ShopClientProps) {
                           </Button>
                           <Button
                             variant="outline"
-                            className="justify-start text-left"
+                            className="justify-start text-left text-xs sm:text-sm py-1 sm:py-2 h-auto"
                             onClick={() => {
                               setPriceRange([50, 75])
                               setMinPrice("50000")
@@ -774,7 +876,7 @@ export function ShopClient({ initialProducts }: ShopClientProps) {
                           </Button>
                           <Button
                             variant="outline"
-                            className="justify-start text-left"
+                            className="justify-start text-left text-xs sm:text-sm py-1 sm:py-2 h-auto"
                             onClick={() => {
                               setPriceRange([75, 100])
                               setMinPrice("75000")
@@ -792,12 +894,12 @@ export function ShopClient({ initialProducts }: ShopClientProps) {
                 {/* Filtro de colores */}
                 {activeAccordion === "colores" && (
                   <div>
-                    <h3 className="text-lg font-medium mb-4">Colores</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <h3 className="text-base sm:text-lg font-medium mb-3 sm:mb-4">Colores</h3>
+                    <div className="grid grid-cols-2 gap-1 sm:gap-2">
                       {colorData.map((color) => (
                         <div
                           key={color.id}
-                          className={`flex items-center p-3 rounded-lg cursor-pointer transition-all ${
+                          className={`flex items-center p-2 sm:p-3 rounded-lg cursor-pointer transition-all ${
                             selectedColors.includes(color.id)
                               ? "bg-blue-50 border border-[#004a93]"
                               : "border border-gray-200 hover:border-gray-300"
@@ -805,11 +907,13 @@ export function ShopClient({ initialProducts }: ShopClientProps) {
                           onClick={() => toggleColor(color.id)}
                         >
                           <div
-                            className="h-6 w-6 rounded-full mr-3 flex-shrink-0 border border-gray-200"
+                            className="h-4 w-4 sm:h-6 sm:w-6 rounded-full mr-2 sm:mr-3 flex-shrink-0 border border-gray-200"
                             style={{ backgroundColor: color.hex }}
                           ></div>
-                          <span className="flex-grow">{color.name}</span>
-                          {selectedColors.includes(color.id) && <Check className="h-5 w-5 text-[#004a93]" />}
+                          <span className="flex-grow text-xs sm:text-sm">{color.name}</span>
+                          {selectedColors.includes(color.id) && (
+                            <Check className="h-4 w-4 sm:h-5 sm:w-5 text-[#004a93]" />
+                          )}
                         </div>
                       ))}
                     </div>
@@ -819,20 +923,22 @@ export function ShopClient({ initialProducts }: ShopClientProps) {
                 {/* Filtro de tamaños */}
                 {activeAccordion === "tamanos" && (
                   <div>
-                    <h3 className="text-lg font-medium mb-4">Tamaños</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <h3 className="text-base sm:text-lg font-medium mb-3 sm:mb-4">Tamaños</h3>
+                    <div className="grid grid-cols-2 gap-1 sm:gap-2">
                       {sizeData.map((size) => (
                         <div
                           key={size.id}
-                          className={`flex items-center p-3 rounded-lg cursor-pointer transition-all ${
+                          className={`flex items-center p-2 sm:p-3 rounded-lg cursor-pointer transition-all ${
                             selectedSizes.includes(size.id)
                               ? "bg-blue-50 border border-[#004a93]"
                               : "border border-gray-200 hover:border-gray-300"
                           }`}
                           onClick={() => toggleSize(size.id)}
                         >
-                          <span className="flex-grow">{size.name}</span>
-                          {selectedSizes.includes(size.id) && <Check className="h-5 w-5 text-[#004a93]" />}
+                          <span className="flex-grow text-xs sm:text-sm">{size.name}</span>
+                          {selectedSizes.includes(size.id) && (
+                            <Check className="h-4 w-4 sm:h-5 sm:w-5 text-[#004a93]" />
+                          )}
                         </div>
                       ))}
                     </div>
@@ -842,20 +948,22 @@ export function ShopClient({ initialProducts }: ShopClientProps) {
                 {/* Filtro de modelos */}
                 {activeAccordion === "modelos" && (
                   <div>
-                    <h3 className="text-lg font-medium mb-4">Modelos</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <h3 className="text-base sm:text-lg font-medium mb-3 sm:mb-4">Modelos</h3>
+                    <div className="grid grid-cols-2 gap-1 sm:gap-2">
                       {modelData.map((model) => (
                         <div
                           key={model.id}
-                          className={`flex items-center p-3 rounded-lg cursor-pointer transition-all ${
+                          className={`flex items-center p-2 sm:p-3 rounded-lg cursor-pointer transition-all ${
                             selectedModels.includes(model.id)
                               ? "bg-blue-50 border border-[#004a93]"
                               : "border border-gray-200 hover:border-gray-300"
                           }`}
                           onClick={() => toggleModel(model.id)}
                         >
-                          <span className="flex-grow">{model.name}</span>
-                          {selectedModels.includes(model.id) && <Check className="h-5 w-5 text-[#004a93]" />}
+                          <span className="flex-grow text-xs sm:text-sm">{model.name}</span>
+                          {selectedModels.includes(model.id) && (
+                            <Check className="h-4 w-4 sm:h-5 sm:w-5 text-[#004a93]" />
+                          )}
                         </div>
                       ))}
                     </div>
@@ -865,32 +973,33 @@ export function ShopClient({ initialProducts }: ShopClientProps) {
                 {/* Filtro de marcas */}
                 {activeAccordion === "marcas" && (
                   <div>
-                    <h3 className="text-lg font-medium mb-4">Marcas</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <h3 className="text-base sm:text-lg font-medium mb-3 sm:mb-4">Marcas</h3>
+                    <div className="grid grid-cols-2 gap-1 sm:gap-2">
                       {brandData.map((brand) => (
                         <div
                           key={brand.id}
-                          className={`flex flex-col items-center p-4 rounded-lg cursor-pointer transition-all ${
+                          className={`flex flex-col items-center p-2 sm:p-4 rounded-lg cursor-pointer transition-all ${
                             selectedBrands.includes(brand.id)
                               ? "bg-blue-50 border-2 border-[#004a93] shadow-md transform scale-105"
                               : "border border-gray-200 hover:border-gray-300 hover:shadow"
                           }`}
                           onClick={() => toggleBrand(brand.id)}
                         >
-                          <div className="relative mb-2 h-16 w-full flex items-center justify-center">
+                          <div className="relative mb-1 sm:mb-2 h-10 sm:h-16 w-full flex items-center justify-center">
                             <img
                               src={brand.logo || "/placeholder.svg"}
                               alt={brand.name}
                               className="max-h-full max-w-full object-contain"
+                              loading="lazy"
                             />
                             {selectedBrands.includes(brand.id) && (
-                              <div className="absolute top-0 right-0 bg-[#004a93] text-white rounded-full p-1">
-                                <Check className="h-4 w-4" />
+                              <div className="absolute top-0 right-0 bg-[#004a93] text-white rounded-full p-0.5 sm:p-1">
+                                <Check className="h-3 w-3 sm:h-4 sm:w-4" />
                               </div>
                             )}
                           </div>
-                          <span className="text-center font-medium">{brand.name}</span>
-                          <span className="text-xs text-gray-500">({brand.count})</span>
+                          <span className="text-center font-medium text-xs sm:text-sm">{brand.name}</span>
+                          <span className="text-xs text-gray-500 mt-0.5 sm:mt-1">({brand.count})</span>
                         </div>
                       ))}
                     </div>
@@ -899,16 +1008,27 @@ export function ShopClient({ initialProducts }: ShopClientProps) {
               </div>
             </div>
 
-            {/* Pie del modal */}
-            <div className="border-t p-4 flex justify-between items-center bg-gray-50">
-              <Button variant="outline" onClick={clearAllFilters} className="text-[#004a93] border-[#004a93]">
+            {/* Pie del modal - sticky para mejor acceso en mobile */}
+            <div className="sticky bottom-0 border-t p-3 sm:p-4 flex justify-between items-center bg-gray-50 shadow-inner">
+              <Button
+                variant="outline"
+                onClick={clearAllFilters}
+                className="text-[#004a93] border-[#004a93] text-xs sm:text-sm py-1 px-2 sm:py-2 sm:px-3 h-auto"
+              >
                 Limpiar filtros
               </Button>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setShowFiltersModal(false)}>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowFiltersModal(false)}
+                  className="text-xs sm:text-sm py-1 px-2 sm:py-2 sm:px-3 h-auto"
+                >
                   Cancelar
                 </Button>
-                <Button className="bg-[#004a93] hover:bg-[#003a73]" onClick={() => setShowFiltersModal(false)}>
+                <Button
+                  className="bg-[#004a93] hover:bg-[#003a73] text-xs sm:text-sm py-1 px-2 sm:py-2 sm:px-3 h-auto"
+                  onClick={() => setShowFiltersModal(false)}
+                >
                   Aplicar filtros
                 </Button>
               </div>
@@ -917,20 +1037,21 @@ export function ShopClient({ initialProducts }: ShopClientProps) {
         </div>
       )}
 
-      {/* Modal de marcas mejorado */}
+      {/* Modal de marcas optimizado para móvil */}
       {showBrandsModal && (
         <div
-          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto"
+          className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center overflow-y-auto"
           onClick={() => setShowBrandsModal(false)}
         >
           <div
-            className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
+            className="bg-white rounded-t-xl sm:rounded-xl shadow-xl w-full sm:max-w-sm h-[70vh] sm:max-h-[70vh] overflow-hidden flex flex-col mt-[15vh] sm:mt-[10vh]"
             onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: isMobile ? "100%" : "320px" }}
           >
             {/* Encabezado del modal */}
-            <div className="bg-gradient-to-r from-[#004a93] to-[#0071bc] text-white p-4 flex justify-between items-center">
-              <h2 className="text-xl font-bold flex items-center">
-                <Tag className="mr-2 h-5 w-5" /> Nuestras Marcas
+            <div className="sticky top-0 z-10 bg-gradient-to-r from-[#004a93] to-[#0071bc] text-white p-3 sm:p-4 flex justify-between items-center">
+              <h2 className="text-base sm:text-lg md:text-xl font-bold flex items-center">
+                <Tag className="mr-2 h-4 w-4 sm:h-5 sm:w-5" /> Nuestras Marcas
                 {selectedBrands.length > 0 && (
                   <Badge className="ml-2 bg-white text-[#004a93]">{selectedBrands.length}</Badge>
                 )}
@@ -939,32 +1060,33 @@ export function ShopClient({ initialProducts }: ShopClientProps) {
                 variant="ghost"
                 size="icon"
                 onClick={() => setShowBrandsModal(false)}
-                className="text-white hover:bg-blue-800/30 rounded-full h-8 w-8"
+                className="text-white hover:bg-blue-800/30 rounded-full h-7 w-7 sm:h-8 sm:w-8"
               >
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
             </div>
 
             {/* Contenido del modal */}
-            <div className="p-6 overflow-y-auto bg-gradient-to-b from-blue-50 to-white">
-              <div className="mb-6">
+            <div className="p-2 overflow-y-auto bg-gradient-to-b from-blue-50 to-white">
+              <div className="mb-2">
                 <div className="relative">
                   <input
                     type="text"
                     placeholder="Buscar marcas..."
-                    className="w-full p-3 pl-10 border rounded-full shadow-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition-all"
+                    className="w-full p-2 sm:p-2 md:p-3 pl-8 sm:pl-10 border rounded-full shadow-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition-all text-xs sm:text-sm"
                   />
-                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                  <div className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      width="18"
-                      height="18"
+                      width="16"
+                      height="16"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
+                      className="sm:w-[18px] sm:h-[18px]"
                     >
                       <circle cx="11" cy="11" r="8"></circle>
                       <path d="m21 21-4.3-4.3"></path>
@@ -973,11 +1095,11 @@ export function ShopClient({ initialProducts }: ShopClientProps) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+              <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-3 gap-2 sm:gap-3">
                 {currentBrands.map((brand) => (
                   <motion.div
                     key={brand.id}
-                    whileHover={{ y: -5 }}
+                    whileHover={{ y: -3 }}
                     whileTap={{ scale: 0.95 }}
                     className="flex flex-col items-center"
                   >
@@ -992,57 +1114,60 @@ export function ShopClient({ initialProducts }: ShopClientProps) {
                     >
                       <div
                         className={`
-                        relative overflow-hidden rounded-full h-24 w-24 flex items-center justify-center
-                        ${selectedBrands.includes(brand.id) ? "border-2 border-white" : ""}
-                      `}
+                          relative overflow-hidden rounded-full h-10 w-10 sm:h-12 sm:w-12 flex items-center justify-center
+                          ${selectedBrands.includes(brand.id) ? "border-2 border-white" : ""}
+                        `}
                       >
-                        <div className="absolute inset-0 bg-white flex items-center justify-center p-3">
+                        <div className="absolute inset-0 bg-white flex items-center justify-center p-2 sm:p-3">
                           <img
                             src={brand.logo || "/placeholder.svg"}
                             alt={brand.name}
                             className="max-h-full max-w-full object-contain"
+                            loading="lazy"
                           />
                         </div>
 
                         {selectedBrands.includes(brand.id) && (
                           <div className="absolute inset-0 bg-blue-500/10 flex items-center justify-center">
-                            <div className="absolute bottom-0 right-0 bg-[#004a93] text-white rounded-full p-1 m-1 shadow-md">
-                              <Check className="h-4 w-4" />
+                            <div className="absolute bottom-0 right-0 bg-[#004a93] text-white rounded-full p-0.5 sm:p-1 m-0.5 sm:m-1 shadow-md">
+                              <Check className="h-3 w-3 sm:h-4 sm:w-4" />
                             </div>
                           </div>
                         )}
                       </div>
                     </div>
-                    <div className="mt-3 text-center">
+                    <div className="mt-1 sm:mt-2 md:mt-3 text-center">
                       <span
-                        className={`font-medium text-sm ${selectedBrands.includes(brand.id) ? "text-[#004a93]" : ""}`}
+                        className={`font-medium text-xs sm:text-sm ${selectedBrands.includes(brand.id) ? "text-[#004a93]" : ""}`}
                       >
                         {brand.name}
                       </span>
-                      <span className="block text-xs text-gray-500 mt-1">({brand.count} productos)</span>
+                      <span className="block text-[10px] sm:text-xs text-gray-500 mt-0.5">({brand.count})</span>
                     </div>
                   </motion.div>
                 ))}
               </div>
 
               {/* Paginación estilo testimonios */}
-              <div className="flex justify-center items-center mt-8 mb-4">
+              <div className="flex justify-center items-center mt-4 sm:mt-6 md:mt-8 mb-1 sm:mb-2 md:mb-4">
                 <Button
                   variant="outline"
                   size="icon"
                   onClick={() => setCurrentBrandPage(Math.max(1, currentBrandPage - 1))}
                   disabled={currentBrandPage === 1}
-                  className="h-10 w-10 rounded-full border-gray-300 shadow-sm mr-4"
+                  className="h-7 w-7 sm:h-8 sm:w-8 md:h-10 md:w-10 rounded-full border-gray-300 shadow-sm mr-1 sm:mr-2 md:mr-4"
                 >
-                  <ChevronLeft className="h-5 w-5 text-[#004a93]" />
+                  <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 text-[#004a93]" />
                 </Button>
 
-                <div className="flex justify-center items-center gap-2">
+                <div className="flex justify-center items-center gap-1 sm:gap-2">
                   {Array.from({ length: totalBrandPages }).map((_, index) => (
                     <motion.button
                       key={index}
-                      className={`h-3 rounded-full transition-all duration-300 ${
-                        index === currentBrandPage - 1 ? "bg-[#004a93] w-8" : "bg-gray-300 w-3"
+                      className={`h-1.5 sm:h-2 md:h-3 rounded-full transition-all duration-300 ${
+                        index === currentBrandPage - 1
+                          ? "bg-[#004a93] w-4 sm:w-6 md:w-8"
+                          : "bg-gray-300 w-1.5 sm:w-2 md:w-3"
                       }`}
                       onClick={() => setCurrentBrandPage(index + 1)}
                       aria-label={`Ir a la página ${index + 1}`}
@@ -1057,31 +1182,35 @@ export function ShopClient({ initialProducts }: ShopClientProps) {
                   size="icon"
                   onClick={() => setCurrentBrandPage(Math.min(totalBrandPages, currentBrandPage + 1))}
                   disabled={currentBrandPage === totalBrandPages}
-                  className="h-10 w-10 rounded-full border-gray-300 shadow-sm ml-4"
+                  className="h-7 w-7 sm:h-8 sm:w-8 md:h-10 md:w-10 rounded-full border-gray-300 shadow-sm ml-1 sm:ml-2 md:ml-4"
                 >
-                  <ChevronRight className="h-5 w-5 text-[#004a93]" />
+                  <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 text-[#004a93]" />
                 </Button>
               </div>
             </div>
 
-            {/* Pie del modal */}
-            <div className="border-t p-4 flex justify-between items-center bg-gray-50">
+            {/* Pie del modal - sticky para mejor acceso en mobile */}
+            <div className="sticky bottom-0 border-t p-3 sm:p-4 flex justify-between items-center bg-gray-50 shadow-inner">
               <Button
                 variant="outline"
                 onClick={() => setSelectedBrands([])}
-                className="text-[#004a93] border-[#004a93] hover:bg-blue-50"
+                className="text-[#004a93] border-[#004a93] hover:bg-blue-50 text-xs sm:text-sm py-1 px-2 sm:py-2 sm:px-3 h-auto"
               >
-                Limpiar selección
+                Limpiar
               </Button>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setShowBrandsModal(false)}>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowBrandsModal(false)}
+                  className="text-xs sm:text-sm py-1 px-2 sm:py-2 sm:px-3 h-auto"
+                >
                   Cancelar
                 </Button>
                 <Button
-                  className="bg-gradient-to-r from-[#004a93] to-[#0071bc] hover:from-[#003a73] hover:to-[#005a99] text-white"
+                  className="bg-gradient-to-r from-[#004a93] to-[#0071bc] hover:from-[#003a73] hover:to-[#005a99] text-white text-xs sm:text-sm py-1 px-2 sm:py-2 sm:px-3 h-auto"
                   onClick={() => setShowBrandsModal(false)}
                 >
-                  Aplicar selección ({selectedBrands.length})
+                  Aplicar ({selectedBrands.length})
                 </Button>
               </div>
             </div>

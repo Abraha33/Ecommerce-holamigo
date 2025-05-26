@@ -62,6 +62,21 @@ export function TestimonialSection() {
   const [isDragging, setIsDragging] = useState(false)
   const [startX, setStartX] = useState(0)
   const [currentTranslate, setCurrentTranslate] = useState(0)
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Detectar si es móvil
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+
+    checkMobile()
+    window.addEventListener("resize", checkMobile)
+
+    return () => {
+      window.removeEventListener("resize", checkMobile)
+    }
+  }, [])
 
   // Effect to update translation position when page changes
   useEffect(() => {
@@ -72,27 +87,29 @@ export function TestimonialSection() {
   useEffect(() => {
     const interval = setInterval(() => {
       if (!isDragging) {
-        setCurrentPage((prev) => (prev + 1) % Math.ceil(testimonials.length / 3))
+        setCurrentPage((prev) => (prev + 1) % Math.ceil(testimonials.length / (isMobile ? 1 : 3)))
       }
     }, 8000)
 
     return () => clearInterval(interval)
-  }, [isDragging])
+  }, [isDragging, isMobile])
 
   // Calculate testimonials per page
-  const testimonialsPerPage = 3
+  const testimonialsPerPage = isMobile ? 1 : 3
   const totalPages = Math.ceil(testimonials.length / testimonialsPerPage)
 
   // Get testimonials for current page
   const getCurrentPageTestimonials = useCallback(() => {
     const start = currentPage * testimonialsPerPage
     return testimonials.slice(start, start + testimonialsPerPage)
-  }, [currentPage])
+  }, [currentPage, testimonialsPerPage])
 
   return (
-    <section className="py-12 bg-gray-50">
-      <div className="container mx-auto px-4">
-        <h2 className="text-2xl md:text-3xl font-bold text-center mb-10">Lo que dicen nuestros clientes</h2>
+    <section className="py-6 sm:py-8 md:py-12 bg-gray-50">
+      <div className="container mx-auto px-3 sm:px-4">
+        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-center mb-4 sm:mb-6 md:mb-10">
+          Lo que dicen nuestros clientes
+        </h2>
 
         <div
           className="relative overflow-hidden"
@@ -100,18 +117,18 @@ export function TestimonialSection() {
             touchAction: "pan-y",
           }}
         >
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-6">
             {getCurrentPageTestimonials().map((testimonial, index) => (
               <div
                 key={index}
                 className="bg-white rounded-lg shadow-md overflow-hidden transition-transform hover:translate-y-[-5px] h-full"
               >
-                <div className="p-6 flex flex-col h-full">
-                  <div className="flex items-center mb-4">
+                <div className="p-3 sm:p-6 flex flex-col h-full">
+                  <div className="flex items-center mb-2 sm:mb-4">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <svg
                         key={i}
-                        className={`h-5 w-5 ${i < testimonial.rating ? "text-[#004a93] fill-[#004a93]" : "text-gray-300"}`}
+                        className={`h-3 w-3 sm:h-5 sm:w-5 ${i < testimonial.rating ? "text-[#004a93] fill-[#004a93]" : "text-gray-300"}`}
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 24 24"
                       >
@@ -119,9 +136,11 @@ export function TestimonialSection() {
                       </svg>
                     ))}
                   </div>
-                  <p className="text-gray-700 mb-6 italic flex-grow">"{testimonial.content}"</p>
+                  <p className="text-gray-700 mb-3 sm:mb-6 italic flex-grow text-xs sm:text-sm">
+                    "{testimonial.content}"
+                  </p>
                   <div className="flex items-center mt-auto">
-                    <div className="h-12 w-12 rounded-full overflow-hidden mr-4">
+                    <div className="h-8 w-8 sm:h-12 sm:w-12 rounded-full overflow-hidden mr-2 sm:mr-4">
                       <Image
                         src={testimonial.avatar || "/placeholder.svg"}
                         alt={testimonial.name}
@@ -131,8 +150,8 @@ export function TestimonialSection() {
                       />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-[#004a93]">{testimonial.name}</h4>
-                      <p className="text-sm text-gray-600">{testimonial.role}</p>
+                      <h4 className="font-semibold text-[#004a93] text-xs sm:text-sm">{testimonial.name}</h4>
+                      <p className="text-xs text-gray-600">{testimonial.role}</p>
                     </div>
                   </div>
                 </div>
@@ -142,33 +161,33 @@ export function TestimonialSection() {
 
           {/* Navigation controls */}
           <button
-            className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-2 shadow-md z-10 hidden md:block"
+            className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-1 sm:p-2 shadow-md z-10 hidden md:block"
             onClick={() => {
               const newPage = currentPage === 0 ? totalPages - 1 : currentPage - 1
               setCurrentPage(newPage)
             }}
           >
-            <ChevronLeft className="h-6 w-6 text-[#004a93]" />
+            <ChevronLeft className="h-4 w-4 sm:h-6 sm:w-6 text-[#004a93]" />
           </button>
 
           <button
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-2 shadow-md z-10 hidden md:block"
+            className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-1 sm:p-2 shadow-md z-10 hidden md:block"
             onClick={() => {
               const newPage = (currentPage + 1) % totalPages
               setCurrentPage(newPage)
             }}
           >
-            <ChevronRight className="h-6 w-6 text-[#004a93]" />
+            <ChevronRight className="h-4 w-4 sm:h-6 sm:w-6 text-[#004a93]" />
           </button>
         </div>
 
         {/* Indicators */}
-        <div className="flex justify-center mt-6">
+        <div className="flex justify-center mt-3 sm:mt-6">
           {Array.from({ length: totalPages }).map((_, index) => (
             <button
               key={index}
-              className={`h-3 w-3 mx-1 rounded-full transition-all duration-300 ${
-                index === currentPage ? "bg-[#004a93] w-8" : "bg-gray-300"
+              className={`h-2 w-2 sm:h-3 sm:w-3 mx-1 rounded-full transition-all duration-300 ${
+                index === currentPage ? "bg-[#004a93] w-6 sm:w-8" : "bg-gray-300"
               }`}
               onClick={() => setCurrentPage(index)}
               aria-label={`Ir al testimonio ${index + 1}`}

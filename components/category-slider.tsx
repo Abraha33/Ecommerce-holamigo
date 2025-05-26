@@ -238,10 +238,10 @@ export default function CategorySlider({ categories = [] }: CategorySliderProps)
   }, [])
 
   return (
-    <div className="my-8 bg-white rounded-xl shadow-sm py-6 overflow-hidden">
-      <div className="w-full mx-auto px-4">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-800">Explorar categorías</h2>
+    <div className="my-4 sm:my-6 md:my-8 bg-white rounded-lg sm:rounded-xl shadow-sm py-4 sm:py-6 overflow-hidden">
+      <div className="w-full mx-auto px-3 sm:px-4">
+        <div className="flex justify-between items-center mb-3 sm:mb-4">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-800">Explorar categorías</h2>
         </div>
 
         <div className="relative">

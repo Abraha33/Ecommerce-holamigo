@@ -310,9 +310,9 @@ export default function PromosPage() {
 
   return (
     <div className="bg-gray-50 min-h-screen pb-16">
-      {/* Breadcrumb */}
-      <div className="bg-white border-b">
-        <div className="container mx-auto px-4 py-1">
+      {/* Breadcrumb - Oculto en móviles */}
+      <div className="bg-white border-b hidden sm:block">
+        <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-3 md:py-4">
           <Breadcrumb
             items={[
               { label: "Inicio", href: "/" },
@@ -323,7 +323,7 @@ export default function PromosPage() {
       </div>
 
       {/* Hero Banner */}
-      <div className="relative h-[350px] w-full mb-8">
+      <div className="relative h-[250px] sm:h-[300px] md:h-[350px] w-full mb-4 sm:mb-6 md:mb-8">
         <Image
           src="/abstract-blue-white-waves.png"
           alt="Promociones especiales"
@@ -332,7 +332,7 @@ export default function PromosPage() {
           priority
         />
         <div className="absolute inset-0 bg-gradient-to-r from-[#004a93]/90 to-[#004a93]/80">
-          <div className="container mx-auto px-4 h-full flex flex-col justify-center">
+          <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8 h-full flex flex-col justify-center">
             <div className="max-w-3xl">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -378,7 +378,7 @@ export default function PromosPage() {
       </div>
 
       {/* Contador de tiempo MEJORADO Y MÁS PROMINENTE */}
-      <div className="container mx-auto px-4 -mt-4 mb-12 relative z-10">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8 -mt-4 mb-8 sm:mb-12 relative z-10">
         <div className="bg-gradient-to-r from-white to-blue-50 rounded-xl shadow-xl p-6 md:p-8 border border-blue-100">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex flex-col md:flex-row items-center gap-4 md:gap-5">
@@ -402,7 +402,7 @@ export default function PromosPage() {
       </div>
 
       {/* Filtros y controles */}
-      <div className="container mx-auto px-4 mb-8">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8 mb-6 sm:mb-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -538,7 +538,7 @@ export default function PromosPage() {
       </div>
 
       {/* Productos en oferta */}
-      <div className="container mx-auto px-4 mb-16">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8 mb-6 sm:mb-8">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.3 }}>
           {viewMode === "list" ? (
             <div className="space-y-4">
@@ -571,7 +571,7 @@ export default function PromosPage() {
       </div>
 
       {/* Banners promocionales */}
-      <div className="container mx-auto px-4 mb-16">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8 mb-6 sm:mb-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -598,7 +598,7 @@ export default function PromosPage() {
       </div>
 
       {/* Sección de ahorro */}
-      <div className="container mx-auto px-4 mb-16">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8 mb-6 sm:mb-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

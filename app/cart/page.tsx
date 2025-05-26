@@ -11,6 +11,7 @@ import { useCart } from "@/components/cart-provider"
 import { formatCurrency } from "@/lib/utils"
 import { Trash2, Plus, Minus, ShoppingBag } from "lucide-react"
 import { toast } from "sonner"
+import { MobileCart } from "./mobile-cart"
 
 export default function CartPage() {
   const router = useRouter()
@@ -18,6 +19,22 @@ export default function CartPage() {
   const [couponCode, setCouponCode] = useState("")
   const [isClient, setIsClient] = useState(false)
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+
+    // Initial check
+    checkMobile()
+
+    // Add event listener for window resize
+    window.addEventListener("resize", checkMobile)
+
+    // Cleanup
+    return () => window.removeEventListener("resize", checkMobile)
+  }, [])
 
   // Ensure the component only renders completely on the client
   useEffect(() => {
@@ -86,6 +103,10 @@ export default function CartPage() {
         </div>
       </div>
     )
+  }
+
+  if (isMobile) {
+    return <MobileCart />
   }
 
   return (

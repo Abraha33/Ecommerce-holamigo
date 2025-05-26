@@ -1,14 +1,15 @@
 "use client"
 
+import type React from "react"
 import { createContext, useContext, useEffect, useState } from "react"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import type { User } from "@supabase/auth-helpers-nextjs"
+import type { User } from "@supabase/supabase-js"
 
 type AuthContextType = {
   user: User | null
   isLoading: boolean
   isAuthenticated: boolean
   signOut: () => Promise<void>
+  error: string | null
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -16,52 +17,81 @@ const AuthContext = createContext<AuthContextType>({
   isLoading: true,
   isAuthenticated: false,
   signOut: async () => {},
+  error: null,
 })
 
 export const useAuth = () => useContext(AuthContext)
 
-export function AuthProvider({ children }) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const supabase = createClientComponentClient()
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const fetchUser = async () => {
+    // Solo ejecutamos esto en el cliente
+    if (typeof window === "undefined") return
+
+    let mounted = true
+    let subscription: { unsubscribe: () => void } | null = null
+
+    const initializeAuth = async () => {
       try {
+        // Importamos dinámicamente para evitar errores de SSR
+        const { getSupabaseClient } = await import("@/lib/supabase")
+
+        const supabase = getSupabaseClient()
+
+        // Obtenemos el usuario actual
         const {
           data: { user },
         } = await supabase.auth.getUser()
-        setUser(user)
-      } catch (error) {
-        console.error("Error fetching user:", error)
-      } finally {
-        setIsLoading(false)
+
+        if (mounted) {
+          setUser(user)
+          setIsLoading(false)
+        }
+
+        // Configuramos el listener de cambios de autenticación
+        const { data } = supabase.auth.onAuthStateChange((event, session) => {
+          if (!mounted) return
+
+          if (event === "SIGNED_IN" && session?.user) {
+            setUser(session.user)
+          } else if (event === "SIGNED_OUT") {
+            setUser(null)
+          }
+        })
+
+        subscription = data.subscription
+      } catch (err) {
+        console.error("Error initializing auth:", err)
+        if (mounted) {
+          setError("Error al inicializar la autenticación")
+          setIsLoading(false)
+        }
       }
     }
 
-    fetchUser()
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" && session?.user) {
-        setUser(session.user)
-      } else if (event === "SIGNED_OUT") {
-        setUser(null)
-      }
-    })
+    initializeAuth()
 
     return () => {
-      subscription.unsubscribe()
+      mounted = false
+      if (subscription) {
+        subscription.unsubscribe()
+      }
     }
-  }, [supabase])
+  }, [])
 
   const signOut = async () => {
     try {
-      await supabase.auth.signOut()
+      // Importamos dinámicamente para evitar errores de SSR
+      const { signOut: supabaseSignOut } = await import("@/lib/supabase")
+
+      await supabaseSignOut()
       setUser(null)
-    } catch (error) {
-      console.error("Error signing out:", error)
+    } catch (err) {
+      console.error("Error signing out:", err)
+      setError("Error al cerrar sesión")
     }
   }
 
@@ -72,6 +102,7 @@ export function AuthProvider({ children }) {
         isLoading,
         isAuthenticated: !!user,
         signOut,
+        error,
       }}
     >
       {children}

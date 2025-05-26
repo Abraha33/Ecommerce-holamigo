@@ -20,6 +20,10 @@ import { DeliveryProvider } from "@/contexts/delivery-context"
 import { AuthProvider } from "@/components/auth-provider"
 import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
+import { EnvScript } from "./env-script"
+import { SupabaseErrorFallback } from "@/components/supabase-error-fallback"
+import { ViewportMeta } from "@/components/viewport-meta"
+import { MobileBottomNav } from "@/components/mobile-bottom-nav"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -34,9 +38,62 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  // Precargar recursos críticos
+  const criticalResources = ["/fonts/inter.woff2", "/colorful-supermarket.png"]
   return (
     <html lang="es" suppressHydrationWarning>
+      <head>
+        {/* Inyectamos las variables de entorno como variables globales */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.__SUPABASE_URL = "${process.env.NEXT_PUBLIC_SUPABASE_URL}";
+              window.__SUPABASE_ANON_KEY = "${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}";
+            `,
+          }}
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              // Detectar dispositivos móviles
+              const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+              document.documentElement.classList.toggle('is-mobile', isMobile);
+              
+              // Detectar conexión lenta
+              if ('connection' in navigator) {
+                const connection = navigator.connection;
+                if (connection && (connection.effectiveType === '2g' || connection.saveData)) {
+                  document.documentElement.classList.add('slow-connection');
+                }
+              }
+              
+              // Optimizar carga de recursos
+              function loadDeferredResources() {
+                window.addEventListener('load', () => {
+                  setTimeout(() => {
+                    const deferredScripts = document.querySelectorAll('script[data-defer="true"]');
+                    deferredScripts.forEach(script => {
+                      const newScript = document.createElement('script');
+                      Array.from(script.attributes).forEach(attr => {
+                        if (attr.name !== 'data-defer') {
+                          newScript.setAttribute(attr.name, attr.value);
+                        }
+                      });
+                      script.parentNode?.replaceChild(newScript, script);
+                    });
+                  }, 1000);
+                });
+              }
+              
+              loadDeferredResources();
+            `,
+          }}
+        />
+        <ViewportMeta />
+      </head>
       <body className={inter.className}>
+        <EnvScript />
+        <SupabaseErrorFallback />
         <AuthProvider>
           <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
             <DeliveryProvider>
@@ -48,7 +105,9 @@ export default function RootLayout({
                         <Header />
                         <div className="flex flex-1">
                           <main className="flex-1 relative">
-                            <Suspense>{children}</Suspense>
+                            <Suspense>
+                              <div className="overflow-x-hidden w-full max-w-[100vw]">{children}</div>
+                            </Suspense>
                             <div
                               id="order-creation-overlay"
                               className="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center"
@@ -96,6 +155,7 @@ export default function RootLayout({
                           </main>
                           <PersistentCartSidebar />
                         </div>
+                        <MobileBottomNav />
                         <Footer />
                       </div>
                       <ScrollToTopButton />

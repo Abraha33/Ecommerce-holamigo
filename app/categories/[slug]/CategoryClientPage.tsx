@@ -198,11 +198,11 @@ export default function CategoryClientPage({ params }: { params: { slug: string 
   const getGridCols = () => {
     switch (viewMode) {
       case "grid-6":
-        return "grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6"
+        return "grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-2 gap-y-4 sm:gap-4"
       case "list":
-        return "grid-cols-1 md:grid-cols-2 gap-y-8"
+        return "grid-cols-1 gap-y-4 sm:gap-y-8"
       default:
-        return "grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6"
+        return "grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-2 gap-y-4 sm:gap-4"
     }
   }
 
@@ -223,53 +223,57 @@ export default function CategoryClientPage({ params }: { params: { slug: string 
   return (
     <div className="bg-gray-50">
       {/* Banner de categoría AGRANDADO */}
-      <div className="w-full bg-gradient-to-r from-[#004a93] to-[#0071bc] py-16">
-        <div className="container mx-auto px-4">
-          <Breadcrumb
-            items={[
-              { label: "Inicio", href: "/" },
-              { label: "Categorías", href: "/categories" },
-              { label: category.title, href: `/categories/${category.slug}`, active: true },
-            ]}
-            className="text-white/80 mb-6"
-          />
-
+      <div className="w-full bg-gradient-to-r from-[#004a93] to-[#0071bc] py-4 sm:py-6 md:py-16">
+        <div className="container mx-auto px-2 sm:px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="text-center md:text-left mb-6 md:mb-0">
-              <h1 className="text-5xl font-bold text-white mb-4">{category.title}</h1>
-              <p className="text-white/90 max-w-2xl text-xl">{category.description}</p>
+            <div className="text-center md:text-left mb-4 md:mb-0">
+              <h1 className="text-2xl sm:text-3xl md:text-5xl font-bold text-white mb-2 md:mb-4">{category.title}</h1>
+              <p className="text-white/90 max-w-2xl text-sm sm:text-base md:text-xl">{category.description}</p>
             </div>
-            <Badge variant="outline" className="text-2xl px-6 py-3 bg-white text-[#004a93] font-semibold">
+            <Badge
+              variant="outline"
+              className="text-base sm:text-lg md:text-2xl px-3 sm:px-4 md:px-6 py-1 sm:py-2 md:py-3 bg-white text-[#004a93] font-semibold"
+            >
               {productCount} productos
             </Badge>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8">
+        <div className="hidden sm:block">
+          <Breadcrumb
+            items={[
+              { label: "Inicio", href: "/" },
+              { label: "Categorías", href: "/categories" },
+              { label: category.title, href: `/categories/${category.slug}`, active: true },
+            ]}
+          />
+        </div>
+
         {/* Navegación de subcategorías con círculos - Similar a shop */}
-        <div className="my-6 overflow-hidden">
+        <div className="my-3 sm:my-6 overflow-hidden">
           <div className="w-full max-w-[1600px] mx-auto">
             <CategoryNavigation categories={subcategoryCircles} />
           </div>
         </div>
 
-        {/* Barra de herramientas simplificada */}
-        <div className="flex flex-wrap items-center justify-between mt-6 mb-8 gap-2 border-b pb-6">
-          <div className="flex items-center gap-4 w-full justify-between">
-            {/* Botones de filtro vertical */}
-            <div className="flex items-center gap-4">
+        {/* Barra de herramientas simplificada - Mobile First */}
+        <div className="flex flex-wrap items-center justify-between mt-2 sm:mt-4 mb-4 sm:mb-6 gap-2 sm:gap-3 border-b pb-4 sm:pb-6">
+          <div className="flex flex-col sm:flex-row w-full gap-2 sm:gap-3 sm:items-center sm:justify-between">
+            {/* Botones de filtro - Stack en móvil, horizontal en desktop */}
+            <div className="flex gap-2 w-full sm:w-auto">
               {/* Botón de Filtros */}
-              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="flex-1 sm:flex-none">
                 <Button
                   variant="outline"
-                  className="flex items-center gap-2 bg-gradient-to-r from-[#004a93] to-[#0071bc] text-white hover:from-[#003a73] hover:to-[#005a99] text-base px-6 py-6 h-auto rounded-xl shadow-md border-0"
+                  className="flex items-center justify-center gap-2 bg-gradient-to-r from-[#004a93] to-[#0071bc] text-white hover:from-[#003a73] hover:to-[#005a99] text-xs sm:text-sm md:text-base px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 h-auto rounded-lg sm:rounded-xl shadow-md border-0 w-full"
                   onClick={() => setShowFiltersModal(true)}
                 >
-                  <SlidersHorizontal className="h-5 w-5 mr-1" />
+                  <SlidersHorizontal className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 mr-1" />
                   <span className="font-medium">Filtros</span>
                   {totalFiltersApplied > 0 && (
-                    <span className="ml-2 bg-white text-[#004a93] rounded-full text-xs px-2 py-0.5 font-bold">
+                    <span className="ml-1 sm:ml-2 bg-white text-[#004a93] rounded-full text-xs px-1.5 py-0.5 font-bold">
                       {totalFiltersApplied}
                     </span>
                   )}
@@ -277,16 +281,16 @@ export default function CategoryClientPage({ params }: { params: { slug: string 
               </motion.div>
 
               {/* Botón de Marcas */}
-              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="flex-1 sm:flex-none">
                 <Button
                   variant="outline"
-                  className="flex items-center gap-2 bg-white border-2 border-[#004a93] text-[#004a93] hover:bg-blue-50 text-base px-6 py-6 h-auto rounded-xl shadow-md"
+                  className="flex items-center justify-center gap-2 bg-white border-2 border-[#004a93] text-[#004a93] hover:bg-blue-50 text-xs sm:text-sm md:text-base px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 h-auto rounded-lg sm:rounded-xl shadow-md w-full"
                   onClick={() => setShowBrandsModal(true)}
                 >
-                  <Tag className="h-5 w-5 mr-1" />
+                  <Tag className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 mr-1" />
                   <span className="font-medium">Marcas</span>
                   {selectedBrands.length > 0 && (
-                    <span className="ml-2 bg-[#004a93] text-white rounded-full text-xs px-2 py-0.5 font-bold">
+                    <span className="ml-1 sm:ml-2 bg-[#004a93] text-white rounded-full text-xs px-1.5 py-0.5 font-bold">
                       {selectedBrands.length}
                     </span>
                   )}
@@ -294,12 +298,12 @@ export default function CategoryClientPage({ params }: { params: { slug: string 
               </motion.div>
             </div>
 
-            {/* Ordenar por y vista */}
-            <div className="flex items-center gap-8">
-              <div className="flex items-center gap-3">
-                <span className="text-base font-medium">Ordenar por:</span>
+            {/* Ordenar por y vista - Responsive stackable */}
+            <div className="flex flex-row w-full sm:w-auto gap-2 sm:gap-3 md:gap-8 mt-2 sm:mt-0 justify-between">
+              <div className="flex items-center gap-1 sm:gap-2 flex-1 sm:flex-auto">
+                <span className="text-xs sm:text-sm md:text-base font-medium whitespace-nowrap">Ordenar:</span>
                 <select
-                  className="border rounded p-2 text-base"
+                  className="border rounded p-1 sm:p-2 text-xs sm:text-sm flex-1 sm:flex-auto"
                   value={sortOption}
                   onChange={(e) => setSortOption(e.target.value)}
                 >
@@ -311,30 +315,30 @@ export default function CategoryClientPage({ params }: { params: { slug: string 
                 </select>
               </div>
 
-              <div className="flex items-center gap-3 border-l pl-8">
-                <span className="text-base font-medium">Vista:</span>
-                <div className="flex items-center bg-gray-100 p-1.5 rounded-lg">
+              <div className="flex items-center justify-end sm:justify-center gap-1 sm:gap-2 sm:border-l sm:pl-2 md:pl-4">
+                <span className="text-xs sm:text-sm md:text-base font-medium hidden xs:inline">Vista:</span>
+                <div className="flex items-center bg-gray-100 p-1 rounded-lg">
                   <Button
                     variant={viewMode === "grid-6" ? "default" : "ghost"}
                     size="icon"
                     onClick={() => setViewMode("grid-6")}
-                    className={`h-10 w-10 rounded-lg mx-1 ${
+                    className={`h-7 w-7 sm:h-8 sm:w-8 md:h-10 md:w-10 rounded-lg mx-0.5 sm:mx-1 ${
                       viewMode === "grid-6" ? "bg-[#004a93] text-white" : "text-gray-600"
-                    } hover:bg-[#003a73] hover:text-white`}
+                    } hover:bg-[#003a73] hover:text-white touch-target`}
                     title="Vista de cuadrícula"
                   >
-                    <Grid className="h-5 w-5" />
+                    <Grid className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" />
                   </Button>
                   <Button
                     variant={viewMode === "list" ? "default" : "ghost"}
                     size="icon"
                     onClick={() => setViewMode("list")}
-                    className={`h-10 w-10 rounded-lg mx-1 ${
+                    className={`h-7 w-7 sm:h-8 sm:w-8 md:h-10 md:w-10 rounded-lg mx-0.5 sm:mx-1 ${
                       viewMode === "list" ? "bg-[#004a93] text-white" : "text-gray-600"
-                    } hover:bg-[#003a73] hover:text-white`}
+                    } hover:bg-[#003a73] hover:text-white touch-target`}
                     title="Vista de lista"
                   >
-                    <List className="h-5 w-5" />
+                    <List className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" />
                   </Button>
                 </div>
               </div>
@@ -344,18 +348,18 @@ export default function CategoryClientPage({ params }: { params: { slug: string 
 
         {/* Active Filters - Display below filters but above products */}
         {totalFiltersApplied > 0 && (
-          <div className="mb-6">
-            <div className="flex flex-wrap gap-2">
+          <div className="mb-3 sm:mb-6 overflow-x-auto pb-2">
+            <div className="flex flex-nowrap gap-2 min-w-max">
               {(priceRange[0] > 0 || priceRange[1] < 100) && (
                 <Badge
                   variant="secondary"
-                  className="pl-3 pr-1 py-2 flex items-center gap-1 bg-blue-50 text-[#004a93] text-base"
+                  className="pl-2 sm:pl-3 pr-1 py-1 sm:py-2 flex items-center gap-1 bg-blue-50 text-[#004a93] text-sm sm:text-base whitespace-nowrap"
                 >
                   {formatCurrency(priceRange[0] * 1000)} - {formatCurrency(priceRange[1] * 1000)}
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-5 w-5 p-0 ml-1"
+                    className="h-4 w-4 sm:h-5 sm:w-5 p-0 ml-1"
                     onClick={() => setPriceRange([0, 100])}
                   >
                     <X className="h-3 w-3" />
@@ -367,7 +371,7 @@ export default function CategoryClientPage({ params }: { params: { slug: string 
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-sm text-[#004a93] border-[#004a93]"
+                  className="text-xs sm:text-sm text-[#004a93] border-[#004a93] whitespace-nowrap"
                   onClick={() => {
                     setPriceRange([0, 100])
                     setSelectedBrands([])
@@ -381,20 +385,22 @@ export default function CategoryClientPage({ params }: { params: { slug: string 
         )}
 
         {/* Productos en grid o list view */}
-        <div className="w-full">
-          <div className={`grid ${getGridCols()} gap-4 sm:gap-4 gap-2`}>
+        <div className="w-full bg-white rounded-lg sm:rounded-xl shadow-sm py-4 sm:py-6 px-3 sm:px-4 overflow-hidden my-4 sm:my-6 md:my-8">
+          <div className={`grid ${getGridCols()} gap-2 sm:gap-4`}>
             {currentProducts.map((product) => (
               <ProductCard key={product.id} product={product} viewMode={viewMode} />
             ))}
           </div>
 
           {/* Paginación mejorada */}
-          <Pagination
-            totalItems={sortedProducts.length}
-            itemsPerPage={itemsPerPage}
-            currentPage={currentPage}
-            onPageChange={setCurrentPage}
-          />
+          <div className="mt-6 sm:mt-8">
+            <Pagination
+              totalItems={sortedProducts.length}
+              itemsPerPage={itemsPerPage}
+              currentPage={currentPage}
+              onPageChange={setCurrentPage}
+            />
+          </div>
         </div>
       </div>
 
@@ -411,11 +417,11 @@ export default function CategoryClientPage({ params }: { params: { slug: string 
             initial={{ scale: 0.9, y: 20 }}
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.9, y: 20 }}
-            className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
+            className="bg-white rounded-xl shadow-xl w-full max-w-sm max-h-[70vh] overflow-hidden flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Encabezado del modal */}
-            <div className="bg-[#004a93] text-white p-4 flex justify-between items-center">
+            <div className="bg-[#004a93] text-white p-3 flex justify-between items-center">
               <h2 className="text-xl font-bold flex items-center">
                 <SlidersHorizontal className="mr-2 h-5 w-5" /> Filtros
                 {totalFiltersApplied > 0 && (
@@ -517,7 +523,7 @@ export default function CategoryClientPage({ params }: { params: { slug: string 
               </div>
 
               {/* Contenido del filtro seleccionado */}
-              <div className="flex-1 p-6 overflow-y-auto">
+              <div className="p-2 overflow-y-auto">
                 {/* Filtro de precio mejorado */}
                 {activeAccordion === "precio" && (
                   <div>
@@ -586,7 +592,7 @@ export default function CategoryClientPage({ params }: { params: { slug: string 
                       {/* Rangos predefinidos */}
                       <div className="mt-6">
                         <h4 className="text-sm font-medium text-gray-700 mb-3">Rangos populares</h4>
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-2 gap-1 sm:gap-2">
                           <Button
                             variant="outline"
                             className="justify-start text-left"
@@ -641,7 +647,7 @@ export default function CategoryClientPage({ params }: { params: { slug: string 
                 {activeAccordion === "colores" && (
                   <div>
                     <h3 className="text-lg font-medium mb-4">Colores</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 gap-1 sm:gap-2">
                       {colorData.map((color) => (
                         <div
                           key={color.id}
@@ -668,7 +674,7 @@ export default function CategoryClientPage({ params }: { params: { slug: string 
                 {activeAccordion === "tamanos" && (
                   <div>
                     <h3 className="text-lg font-medium mb-4">Tamaños</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 gap-1 sm:gap-2">
                       {sizeData.map((size) => (
                         <div
                           key={size.id}
@@ -691,7 +697,7 @@ export default function CategoryClientPage({ params }: { params: { slug: string 
                 {activeAccordion === "modelos" && (
                   <div>
                     <h3 className="text-lg font-medium mb-4">Modelos</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 gap-1 sm:gap-2">
                       {modelData.map((model) => (
                         <div
                           key={model.id}
@@ -714,7 +720,7 @@ export default function CategoryClientPage({ params }: { params: { slug: string 
                 {activeAccordion === "marcas" && (
                   <div>
                     <h3 className="text-lg font-medium mb-4">Marcas</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-2 gap-1 sm:gap-2">
                       {brandData.map((brand) => (
                         <div
                           key={brand.id}
@@ -772,7 +778,7 @@ export default function CategoryClientPage({ params }: { params: { slug: string 
           onClick={() => setShowBrandsModal(false)}
         >
           <div
-            className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
+            className="bg-white rounded-xl shadow-xl w-full max-w-sm max-h-[70vh] overflow-hidden flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Encabezado del modal */}
@@ -794,8 +800,8 @@ export default function CategoryClientPage({ params }: { params: { slug: string 
             </div>
 
             {/* Contenido del modal */}
-            <div className="p-6 overflow-y-auto bg-gradient-to-b from-blue-50 to-white">
-              <div className="mb-6">
+            <div className="p-2 overflow-y-auto bg-gradient-to-b from-blue-50 to-white">
+              <div className="mb-2">
                 <div className="relative">
                   <input
                     type="text"
@@ -821,7 +827,7 @@ export default function CategoryClientPage({ params }: { params: { slug: string 
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {currentBrands.map((brand) => (
                   <motion.div
                     key={brand.id}
@@ -840,7 +846,7 @@ export default function CategoryClientPage({ params }: { params: { slug: string 
                     >
                       <div
                         className={`
-                        relative overflow-hidden rounded-full h-24 w-24 flex items-center justify-center
+                        relative overflow-hidden rounded-full h-12 w-12 flex items-center justify-center
                         ${selectedBrands.includes(brand.id) ? "border-2 border-white" : ""}
                       `}
                       >

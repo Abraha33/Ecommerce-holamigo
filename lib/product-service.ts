@@ -131,8 +131,31 @@ export async function getProducts(): Promise<Product[]> {
   }
 }
 
-// El resto de las funciones se mantienen igual pero con manejo de errores mejorado
-// y retorno de datos de fallback cuando sea necesario
+// Añadimos la función getProductBySlug que falta
+export async function getProductBySlug(slug: string): Promise<Product | null> {
+  try {
+    const supabase = createServerSupabaseClient()
+
+    const { data, error } = await supabase
+      .from("products")
+      .select("*, images:product_images(*), category:categories(*), brand:brands(*)")
+      .eq("slug", slug)
+      .eq("is_active", true)
+      .single()
+
+    if (error) {
+      console.error("Error fetching product by slug:", error)
+      // Buscar en los productos de fallback
+      const fallbackProduct = fallbackProducts.find((p) => p.slug === slug)
+      return fallbackProduct || null
+    }
+
+    return data
+  } catch (error) {
+    console.error("Error in getProductBySlug:", error)
+    return null
+  }
+}
 
 export async function getFeaturedProducts(limit = 8): Promise<Product[]> {
   try {

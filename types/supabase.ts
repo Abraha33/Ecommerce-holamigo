@@ -51,7 +51,7 @@ export interface Database {
           description?: string | null
           price?: number
           sale_price?: number | null
-          cost?: number | null
+          cost?: string | null
           sku?: string | null
           barcode?: string | null
           stock?: number | null
@@ -165,6 +165,15 @@ export interface Database {
         }
       }
       // Add other tables as needed
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      [_ in never]: never
     }
   }
 }

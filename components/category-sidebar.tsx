@@ -236,17 +236,17 @@ export function CategorySidebar() {
       <Button
         variant="ghost"
         size="icon"
-        className="mr-2 text-gray-700 relative overflow-hidden group"
+        className="mr-2 relative overflow-hidden group md:h-10 md:w-10 h-12 w-12 flex items-center justify-center md:text-gray-700 text-[#0A3D91]"
         onClick={toggleMenu}
         aria-expanded={isMenuOpen}
         aria-label="Menú principal"
       >
         {isMenuOpen ? (
-          <X className="h-6 w-6 transition-transform duration-300 group-hover:scale-110" />
+          <X className="h-6 w-6 md:h-6 md:w-6 h-8 w-8 transition-transform duration-300 group-hover:scale-110 md:drop-shadow-none drop-shadow-md" />
         ) : (
-          <Menu className="h-6 w-6 transition-transform duration-300 group-hover:scale-110" />
+          <Menu className="h-6 w-6 md:h-6 md:w-6 h-8 w-8 transition-transform duration-300 group-hover:scale-110 md:drop-shadow-none drop-shadow-md" />
         )}
-        <span className="absolute inset-0 bg-blue-50 transform scale-0 rounded-full transition-transform duration-300 group-hover:scale-100"></span>
+        <span className="absolute inset-0 bg-blue-100 transform scale-0 rounded-full transition-transform duration-300 group-hover:scale-100"></span>
       </Button>
 
       {/* Overlay para el fondo cuando el menú está abierto */}
