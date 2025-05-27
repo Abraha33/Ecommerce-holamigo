@@ -22,7 +22,7 @@ export default function Footer() {
       {/* Top navigation */}
       <div className="border-b border-blue-900">
         <div className="container mx-auto px-4 py-3">
-          <nav className="flex flex-wrap justify-center gap-8 text-sm">
+          <nav className="flex flex-wrap justify-center gap-4 md:gap-8 text-xs sm:text-sm">
             <Link href="/" className="hover:text-blue-300 transition-colors">
               INICIO
             </Link>
@@ -43,17 +43,17 @@ export default function Footer() {
       </div>
 
       {/* Address and contact */}
-      <div className="container mx-auto px-4 py-6 text-center">
-        <p className="mb-2">Envax - Calle 31#15-19, piso 1, Bucaramanga, Santander - Colombia</p>
-        <p className="mb-4">Contáctanos: +57 319 210 24 38 - 670 55 56</p>
+      <div className="container mx-auto px-4 py-4 md:py-6 text-center">
+        <p className="mb-1 md:mb-2">Envax - Calle 31#15-19, piso 1, Bucaramanga, Santander - Colombia</p>
+        <p className="mb-2 md:mb-4">Contáctanos: +57 319 210 24 38 - 670 55 56</p>
 
         {/* Social media icons */}
-        <div className="flex justify-center gap-4 mb-6">
+        <div className="flex justify-center gap-3 md:gap-4 mb-4 md:mb-6">
           <a
             href="https://wa.me/573192102438"
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-green-500 hover:bg-green-600 transition-colors p-2 rounded-full"
+            className="bg-green-500 hover:bg-green-600 transition-colors p-1.5 md:p-2 rounded-full"
             aria-label="WhatsApp"
           >
             <svg
@@ -77,7 +77,7 @@ export default function Footer() {
             href="https://www.facebook.com/envax.santander.3"
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-blue-600 hover:bg-blue-700 transition-colors p-2 rounded-full"
+            className="bg-blue-600 hover:bg-blue-700 transition-colors p-1.5 md:p-2 rounded-full"
             aria-label="Facebook"
           >
             <Facebook size={20} />
@@ -86,7 +86,7 @@ export default function Footer() {
             href="https://www.instagram.com/desechables.envax/"
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-pink-600 hover:bg-pink-700 transition-colors p-2 rounded-full"
+            className="bg-pink-600 hover:bg-pink-700 transition-colors p-1.5 md:p-2 rounded-full"
             aria-label="Instagram"
           >
             <Instagram size={20} />
@@ -123,11 +123,13 @@ export default function Footer() {
         aria-label="Contactar por WhatsApp"
         title="Contactar por WhatsApp"
       >
-        <div className="bg-green-500 p-5 rounded-full flex items-center justify-center shadow-lg hover:bg-green-600 transition-all duration-300 hover:scale-105 active:scale-95">
+        <div className="bg-green-500 p-3 md:p-5 rounded-full flex items-center justify-center shadow-lg hover:bg-green-600 transition-all duration-300 hover:scale-105 active:scale-95">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="40"
-            height="40"
+            width="32"
+            height="32"
+            md:width="40"
+            md:height="40"
             viewBox="0 0 24 24"
             fill="white"
             stroke="currentColor"
@@ -143,7 +145,8 @@ export default function Footer() {
           </svg>
         </div>
         <div className="bg-white text-gray-800 py-3 px-5 rounded-l-full rounded-r-sm shadow-lg mr-1 opacity-0 w-0 overflow-hidden group-hover:opacity-100 group-hover:w-auto transition-all duration-300 transform -translate-x-5 group-hover:translate-x-0">
-          <span className="font-medium whitespace-nowrap text-lg">¿Necesitas ayuda?</span>
+          <span className="font-medium whitespace-nowrap text-lg hidden sm:inline">¿Necesitas ayuda?</span>
+          <span className="font-medium whitespace-nowrap text-md sm:hidden">¿Ayuda?</span>
         </div>
       </a>
     </footer>

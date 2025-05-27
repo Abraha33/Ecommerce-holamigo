@@ -6,161 +6,117 @@ import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { LayoutDashboard, Package, ShoppingCart, Users, Settings, Menu, BarChart3, Tags, LogOut } from "lucide-react"
+import { LayoutDashboard, Package, ShoppingCart, Users, FolderTree, BarChart3, Settings, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-const navigation = [
+const sidebarItems = [
   {
-    name: "Dashboard",
+    title: "Dashboard",
     href: "/admin",
     icon: LayoutDashboard,
   },
   {
-    name: "Productos",
+    title: "Productos",
     href: "/admin/products",
     icon: Package,
   },
   {
-    name: "Pedidos",
+    title: "Pedidos",
     href: "/admin/orders",
     icon: ShoppingCart,
   },
   {
-    name: "Usuarios",
+    title: "Usuarios",
     href: "/admin/users",
     icon: Users,
   },
   {
-    name: "Categorías",
+    title: "Categorías",
     href: "/admin/categories",
-    icon: Tags,
+    icon: FolderTree,
   },
   {
-    name: "Reportes",
+    title: "Reportes",
     href: "/admin/reports",
     icon: BarChart3,
   },
   {
-    name: "Configuración",
+    title: "Configuración",
     href: "/admin/settings",
     icon: Settings,
   },
 ]
+
+function SidebarContent() {
+  const pathname = usePathname()
+
+  return (
+    <div className="flex h-full flex-col">
+      <div className="flex h-14 items-center border-b px-4">
+        <Link href="/admin" className="flex items-center space-x-2">
+          <Package className="h-6 w-6" />
+          <span className="font-bold">Admin Panel</span>
+        </Link>
+      </div>
+      <nav className="flex-1 min-h-0 overflow-y-auto p-4 max-h-full">
+        <div className="space-y-1">
+          {sidebarItems.map((item) => {
+            const Icon = item.icon
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
+                  pathname === item.href ? "bg-primary text-primary-foreground" : "text-muted-foreground",
+                )}
+              >
+                <Icon className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate">{item.title}</span>
+              </Link>
+            )
+          })}
+        </div>
+      </nav>
+      <div className="border-t p-4">
+        <Button variant="ghost" className="w-full justify-start" size="sm">
+          <LogOut className="h-4 w-4 mr-2" />
+          Cerrar Sesión
+        </Button>
+      </div>
+    </div>
+  )
+}
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Mobile sidebar */}
-      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetContent side="left" className="w-64 p-0">
-          <div className="flex h-full flex-col">
-            <div className="flex h-16 items-center border-b px-6">
-              <h2 className="text-lg font-semibold">Panel Admin</h2>
-            </div>
-            <nav className="flex-1 space-y-1 px-3 py-4">
-              {navigation.map((item) => {
-                const isActive = pathname === item.href
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className={cn(
-                      "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                      isActive ? "bg-blue-100 text-blue-700" : "text-gray-700 hover:bg-gray-100",
-                    )}
-                    onClick={() => setSidebarOpen(false)}
-                  >
-                    <item.icon className="mr-3 h-5 w-5" />
-                    {item.name}
-                  </Link>
-                )
-              })}
-            </nav>
-            <div className="border-t p-4">
-              <Button variant="ghost" className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50">
-                <LogOut className="mr-3 h-5 w-5" />
-                Cerrar Sesión
-              </Button>
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
-
-      {/* Desktop sidebar */}
-      <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
-        <div className="flex min-h-0 flex-1 flex-col border-r border-gray-200 bg-white">
-          <div className="flex h-16 flex-shrink-0 items-center border-b border-gray-200 px-6">
-            <h2 className="text-lg font-semibold text-gray-900">Panel Admin</h2>
-          </div>
-          <div className="flex flex-1 flex-col overflow-y-auto">
-            <nav className="flex-1 space-y-1 px-3 py-4">
-              {navigation.map((item) => {
-                const isActive = pathname === item.href
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className={cn(
-                      "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                      isActive ? "bg-blue-100 text-blue-700" : "text-gray-700 hover:bg-gray-100",
-                    )}
-                  >
-                    <item.icon className="mr-3 h-5 w-5" />
-                    {item.name}
-                  </Link>
-                )
-              })}
-            </nav>
-            <div className="border-t p-4">
-              <Button variant="ghost" className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50">
-                <LogOut className="mr-3 h-5 w-5" />
-                Cerrar Sesión
-              </Button>
-            </div>
-          </div>
+    <div className="flex h-screen bg-gray-100">
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:flex lg:w-72 lg:flex-col lg:fixed lg:inset-y-0">
+        <div className="flex flex-col flex-grow bg-white border-r">
+          <SidebarContent />
         </div>
       </div>
 
-      {/* Main content */}
-      <div className="lg:pl-64">
-        {/* Top bar */}
-        <div className="sticky top-0 z-40 flex h-16 flex-shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="lg:hidden">
-              <Menu className="h-6 w-6" />
-            </Button>
-          </SheetTrigger>
+      {/* Mobile Sidebar */}
 
-          <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-            <div className="flex flex-1 items-center">
-              <h1 className="text-lg font-semibold text-gray-900">
-                {navigation.find((item) => item.href === pathname)?.name || "Dashboard"}
-              </h1>
-            </div>
-            <div className="flex items-center gap-x-4 lg:gap-x-6">
-              <div className="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-200" />
-              <div className="flex items-center gap-x-4">
-                <span className="text-sm text-gray-700">Admin</span>
-                <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center">
-                  <span className="text-sm font-medium text-white">A</span>
-                </div>
-              </div>
+      {/* Main Content */}
+      <div className="flex flex-col flex-1 lg:pl-72">
+        <header className="bg-white border-b px-6 py-4">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-semibold text-gray-900">Panel de Administración</h1>
+            <div className="flex items-center space-x-4">
+              <span className="text-sm text-gray-600">Administrador</span>
             </div>
           </div>
-        </div>
-
-        {/* Page content */}
-        <main className="py-6">
-          <div className="px-4 sm:px-6 lg:px-8">{children}</div>
-        </main>
+        </header>
+        <main className="flex-1 overflow-auto p-6">{children}</main>
       </div>
     </div>
   )

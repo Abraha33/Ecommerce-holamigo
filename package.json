@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@auth0/nextjs-auth0": "latest",
     "@emotion/is-prop-valid": "latest",
     "@floating-ui/react": "latest",
     "@hookform/resolvers": "latest",

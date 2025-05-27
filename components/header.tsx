@@ -37,6 +37,7 @@ import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { MainNavigation } from "@/components/main-navigation"
 import { CategorySidebar } from "@/components/category-sidebar"
+import { HelpModal } from "@/components/help-modal"
 
 // Add this type at the top of the file, after other imports
 type Address = {
@@ -121,6 +122,7 @@ export default function Header() {
   const [flashMessage, setFlashMessage] = useState(
     '⚡ FLASH SALE: 40% DESCUENTO EN PRODUCTOS SELECCIONADOS | USA CÓDIGO "FLASH40"',
   )
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false)
 
   // Número de teléfono para WhatsApp
   const phoneNumber = "+573192102438"
@@ -399,21 +401,18 @@ export default function Header() {
       <div className={`bg-[#1e3a8a] text-white ${isScrolled ? "py-1" : "py-2"} px-4 transition-all duration-300`}>
         <div className="container mx-auto flex justify-between items-center">
           <div className="hidden md:flex space-x-6">
-            <Link href="/help" className="text-sm hover:text-gray-300 transition-colors">
+            <button onClick={() => setIsHelpModalOpen(true)} className="text-sm hover:text-gray-300 transition-colors">
               Ayuda
-            </Link>
+            </button>
             {/* <Link href="/about" className="text-sm hover:text-gray-300 transition-colors">
               Nosotros
             </Link> */}
             <Link href="/contact" className="text-sm hover:text-gray-300 transition-colors">
               Contacto
             </Link>
-            <Link href="/blog" className="text-sm hover:text-gray-300 transition-colors">
-              Blog
-            </Link>
           </div>
 
-          <div className="flex-1 text-center overflow-hidden">
+          <div className="flex-1 text-center overflow-hidden mx-4">
             <div className="animate-marquee whitespace-nowrap">
               <span className="text-sm font-medium">{flashMessage}</span>
             </div>
@@ -488,11 +487,21 @@ export default function Header() {
             </Link>
 
             {/* Selector de categorías y barra de búsqueda - DISEÑO MEJORADO */}
-            <div className="hidden md:flex h-12 items-stretch mr-4 rounded-md flex-1 max-w-2xl shadow-sm overflow-hidden border border-gray-200">
+            <div className="hidden lg:flex h-12 items-stretch mr-4 rounded-md flex-1 max-w-2xl shadow-sm overflow-hidden border border-gray-200">
               {/* Selector de categorías con fondo azul */}
               <div className="relative group h-full" ref={categoryMenuRef}>
                 <button
                   onClick={toggleCategoryMenu}
+                  onMouseEnter={() => setIsCategoryMenuOpen(true)}
+                  onMouseLeave={() => {
+                    // Delay closing to allow mouse movement to submenu
+                    setTimeout(() => {
+                      if (!categoryMenuRef.current?.matches(":hover")) {
+                        setIsCategoryMenuOpen(false)
+                        setSelectedCategory(null)
+                      }
+                    }, 100)
+                  }}
                   className="flex items-center h-full px-4 py-2 bg-[#1e3a8a] text-white rounded-l-md"
                   aria-haspopup="true"
                   aria-expanded={isCategoryMenuOpen}
@@ -503,7 +512,14 @@ export default function Header() {
 
                 {/* Menú desplegable de categorías con subcategorías */}
                 {isCategoryMenuOpen && (
-                  <div className="absolute left-0 mt-1 w-[600px] bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200 flex">
+                  <div
+                    className="absolute left-0 mt-1 w-[600px] bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200 flex"
+                    onMouseEnter={() => setIsCategoryMenuOpen(true)}
+                    onMouseLeave={() => {
+                      setIsCategoryMenuOpen(false)
+                      setSelectedCategory(null)
+                    }}
+                  >
                     {/* Columna de categorías */}
                     <div className="w-1/3 border-r border-gray-200">
                       {categoriesData.map((category, index) => (
@@ -657,8 +673,7 @@ export default function Header() {
               </Link>
 
               {/* Carrito - visible en todos los dispositivos */}
-              <Link
-                href="/shop"
+              <button
                 onClick={(e) => {
                   e.preventDefault()
                   toggleCart()
@@ -674,7 +689,7 @@ export default function Header() {
                   )}
                 </div>
                 <span className="text-xs mt-1 hidden md:block">{formatCurrency(subtotal)}</span>
-              </Link>
+              </button>
 
               {/* Botón de menú móvil con icono más grande */}
               <Button
@@ -914,6 +929,9 @@ export default function Header() {
           </div>
         </>
       )}
+
+      {/* Modal de ayuda */}
+      <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} />
 
       <style jsx global>{`
         @keyframes fadeIn {

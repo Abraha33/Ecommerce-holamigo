@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 
 export function AboutUsSection() {
   return (
-    <section className="relative h-[50vh] sm:h-[60vh] md:min-h-screen flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-[70vh] sm:min-h-[80vh] md:min-h-[90vh] flex items-center justify-center overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0">
         <Image
@@ -16,11 +16,11 @@ export function AboutUsSection() {
           className="object-cover brightness-[0.7]"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-900/40 to-blue-800/60" />
+        <div className="absolute inset-0 h-full bg-gradient-to-b from-blue-900/40 to-blue-800/60" />
       </div>
 
       {/* Content */}
-      <div className="relative z-10 container mx-auto px-4 py-6 sm:py-8 md:py-16">
+      <div className="relative z-10 container mx-auto px-4 py-12 sm:py-16 md:py-24">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}

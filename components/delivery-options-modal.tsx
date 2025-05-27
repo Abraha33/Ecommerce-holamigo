@@ -122,16 +122,16 @@ export function DeliveryOptionsModal({ isOpen, onClose }: DeliveryOptionsModalPr
     // Update the delivery type in the context
     updateDeliveryType(option as DeliveryType)
 
-    // If it's store pickup, update the store address
+    // If it's store pickup, update the store address with the correct address
     if (option === "tienda") {
-      updateStoreAddress("Calle 31#15-09, Centro")
+      updateStoreAddress("Calle 31# 15-09, Centro")
+      // Close the modal immediately for store pickup since no additional steps are needed
+      onClose()
+      return
     }
 
     if (selectedOpt?.requiresAddress) {
       setStep("address")
-    } else if (option === "tienda") {
-      // If it's store pickup, we don't need an address or schedule
-      onClose()
     }
   }
 

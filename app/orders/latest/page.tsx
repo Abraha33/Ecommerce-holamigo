@@ -111,10 +111,10 @@ const OrderMap = () => {
 // Iconos personalizados para cada estado del pedido
 const statusIcons = {
   Creado: <ShoppingBag className="text-white" size={16} />,
-  Asignado: <Clipboard className="text-white" size={16} />,
-  Recogido: <Package className="text-white" size={16} />,
-  "En camino": <Truck className="text-white" size={16} />,
-  Entregado: <CheckCircle className="text-white" size={16} />,
+  Armado: <Clipboard className="text-white" size={16} />,
+  Enviado: <Package className="text-white" size={16} />,
+  Entregado: <Truck className="text-white" size={16} />,
+  Recibido: <CheckCircle className="text-white" size={16} />,
 }
 
 // Colores personalizados para cada estado
@@ -127,35 +127,35 @@ const statusColors = {
     inactive: "bg-gray-300",
     inactiveText: "text-gray-400",
   },
-  Asignado: {
-    bg: "bg-gray-700",
-    text: "text-gray-700",
-    light: "bg-gray-100",
-    border: "border-gray-200",
+  Armado: {
+    bg: "bg-blue-600",
+    text: "text-blue-600",
+    light: "bg-blue-100",
+    border: "border-blue-200",
     inactive: "bg-gray-300",
     inactiveText: "text-gray-400",
   },
-  Recogido: {
-    bg: "bg-gray-700",
-    text: "text-gray-700",
-    light: "bg-gray-100",
-    border: "border-gray-200",
-    inactive: "bg-gray-300",
-    inactiveText: "text-gray-400",
-  },
-  "En camino": {
-    bg: "bg-gray-800",
-    text: "text-gray-800",
-    light: "bg-gray-100",
-    border: "border-gray-200",
+  Enviado: {
+    bg: "bg-purple-600",
+    text: "text-purple-600",
+    light: "bg-purple-100",
+    border: "border-purple-200",
     inactive: "bg-gray-300",
     inactiveText: "text-gray-400",
   },
   Entregado: {
-    bg: "bg-gray-900",
-    text: "text-gray-900",
-    light: "bg-gray-100",
-    border: "border-gray-200",
+    bg: "bg-orange-600",
+    text: "text-orange-600",
+    light: "bg-orange-100",
+    border: "border-orange-200",
+    inactive: "bg-gray-300",
+    inactiveText: "text-gray-400",
+  },
+  Recibido: {
+    bg: "bg-green-600",
+    text: "text-green-600",
+    light: "bg-green-100",
+    border: "border-green-200",
     inactive: "bg-gray-300",
     inactiveText: "text-gray-400",
   },
@@ -167,7 +167,7 @@ const OrderProgressBar = ({
   isCancelled = false,
   className = "",
 }: { currentStep?: string; isCancelled?: boolean; className?: string }) => {
-  const statuses = ["Creado", "Asignado", "Recogido", "En camino", "Entregado"]
+  const statuses = ["Creado", "Armado", "Enviado", "Entregado", "Recibido"]
   const currentIndex = statuses.indexOf(currentStep)
 
   // Colores para estado normal y cancelado - Usando paleta azul
@@ -442,7 +442,7 @@ export default function LatestOrderPage() {
   const router = useRouter()
   const [showDetails, setShowDetails] = useState(false)
   const [isCancelled, setIsCancelled] = useState(false)
-  const [currentStep, setCurrentStep] = useState("Recogido")
+  const [currentStep, setCurrentStep] = useState("Armado")
   const [loading, setLoading] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
 
@@ -479,7 +479,7 @@ export default function LatestOrderPage() {
     // Simulación de progreso del pedido para demostración
     const demoTimer = setTimeout(() => {
       if (!isCancelled) {
-        setCurrentStep("En camino")
+        setCurrentStep("Enviado")
         toast({
           title: "¡Tu pedido está en camino!",
           description: "El domiciliario se dirige a tu ubicación",
@@ -560,8 +560,30 @@ export default function LatestOrderPage() {
     router.push("/shop")
   }
 
+  // Remover la verificación de autenticación y mostrar el contenido directamente
+  // Comentar o eliminar estas líneas:
+  // if (!isMounted) {
+  //   return <div className="container mx-auto py-8 px-4 md:px-6 max-w-6xl">Cargando...</div>
+  // }
+
+  // Asegurar que el componente se renderice sin verificación de autenticación
+
+  // Asegurar que el componente siempre se monte
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
   if (!isMounted) {
-    return <div className="container mx-auto py-8 px-4 md:px-6 max-w-6xl">Cargando...</div>
+    return (
+      <div className="container mx-auto py-8 px-4 md:px-6 max-w-6xl">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Cargando información del pedido...</p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -605,7 +627,7 @@ export default function LatestOrderPage() {
             {!isCancelled && <EstimatedDeliveryTime deliveryTime="15:30" />}
 
             {/* Información del repartidor */}
-            {!isCancelled && currentStep !== "Creado" && currentStep !== "Asignado" && <DeliveryPersonInfo />}
+            {!isCancelled && currentStep !== "Creado" && currentStep !== "Armado" && <DeliveryPersonInfo />}
 
             {/* Barra de progreso */}
             <OrderProgressBar currentStep={currentStep} isCancelled={isCancelled} className="my-8 px-4" />

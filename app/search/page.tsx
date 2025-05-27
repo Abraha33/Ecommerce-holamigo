@@ -7,13 +7,11 @@ import { SearchBar } from "@/components/search-bar"
 import { ProductCard } from "@/components/product-card"
 import { products } from "@/lib/products"
 import { Button } from "@/components/ui/button"
-import { Grid, List, LayoutGrid } from "lucide-react"
 
 export default function SearchPage() {
   const searchParams = useSearchParams()
   const query = searchParams.get("q") || ""
   const [filteredProducts, setFilteredProducts] = useState([])
-  const [viewMode, setViewMode] = useState("grid-3")
   const [sortOption, setSortOption] = useState("relevance")
 
   useEffect(() => {
@@ -46,22 +44,6 @@ export default function SearchPage() {
     }
   })
 
-  // Determinar el número de columnas según el modo de vista
-  const getGridCols = () => {
-    switch (viewMode) {
-      case "grid-2":
-        return "grid-cols-1 sm:grid-cols-2"
-      case "grid-3":
-        return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-      case "grid-4":
-        return "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-      case "list":
-        return "grid-cols-1"
-      default:
-        return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-    }
-  }
-
   return (
     <div className="container px-4 py-8 mx-auto">
       <Breadcrumb
@@ -84,48 +66,7 @@ export default function SearchPage() {
             </p>
 
             <div className="flex items-center gap-4">
-              {/* Botones de vista */}
-              <div className="flex items-center border rounded-md overflow-hidden">
-                <Button
-                  variant={viewMode === "list" ? "default" : "ghost"}
-                  size="icon"
-                  onClick={() => setViewMode("list")}
-                  className="h-9 w-9 rounded-none"
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === "grid-2" ? "default" : "ghost"}
-                  size="icon"
-                  onClick={() => setViewMode("grid-2")}
-                  className="h-9 w-9 rounded-none"
-                >
-                  <Grid className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === "grid-3" ? "default" : "ghost"}
-                  size="icon"
-                  onClick={() => setViewMode("grid-3")}
-                  className="h-9 w-9 rounded-none"
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === "grid-4" ? "default" : "ghost"}
-                  size="icon"
-                  onClick={() => setViewMode("grid-4")}
-                  className="h-9 w-9 rounded-none"
-                >
-                  <div className="grid grid-cols-2 gap-0.5">
-                    <div className="w-1.5 h-1.5 bg-current rounded-sm"></div>
-                    <div className="w-1.5 h-1.5 bg-current rounded-sm"></div>
-                    <div className="w-1.5 h-1.5 bg-current rounded-sm"></div>
-                    <div className="w-1.5 h-1.5 bg-current rounded-sm"></div>
-                  </div>
-                </Button>
-              </div>
-
-              {/* Selector de ordenamiento */}
+              {/* Solo mantener el selector de ordenamiento */}
               <select
                 className="border rounded p-2 text-sm"
                 value={sortOption}
@@ -141,9 +82,9 @@ export default function SearchPage() {
           </div>
 
           {sortedProducts.length > 0 ? (
-            <div className={`grid ${getGridCols()} gap-4`}>
+            <div className="product-grid">
               {sortedProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard key={product.id} product={product} viewMode="grid" />
               ))}
             </div>
           ) : (
@@ -165,6 +106,46 @@ export default function SearchPage() {
           <p className="text-gray-600 mb-6">Escribe en la barra de búsqueda para encontrar productos</p>
         </div>
       )}
+      {/* Add styles for product grid */}
+      <style jsx global>{`
+        .product-grid {
+          width: 100%;
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 0.5rem;
+        }
+        
+        @media (min-width: 640px) {
+          .product-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+          }
+        }
+        
+        @media (min-width: 768px) {
+          .product-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+          }
+        }
+        
+        @media (min-width: 1024px) {
+          .product-grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+          }
+        }
+        
+        @media (min-width: 1280px) {
+          .product-grid {
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+          }
+        }
+        
+        @media (min-width: 1536px) {
+          .product-grid {
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+          }
+        }
+      `}</style>
     </div>
   )
 }

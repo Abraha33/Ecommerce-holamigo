@@ -4,12 +4,11 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
-import { Globe, Bell, Lock, Moon, Sun, Smartphone, Mail, ShieldAlert, Trash2 } from "lucide-react"
+import { Globe, Bell, Lock, Smartphone, Mail, ShieldAlert, Trash2 } from "lucide-react"
 import AccountSidebar from "@/components/account-sidebar"
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState({
-    darkMode: false,
     emailNotifications: true,
     pushNotifications: true,
     smsNotifications: false,
@@ -44,20 +43,6 @@ export default function SettingsPage() {
               <h2 className="text-xl font-semibold mb-6 pb-2 border-b">Apariencia</h2>
 
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {settings.darkMode ? <Moon className="text-indigo-600" /> : <Sun className="text-amber-500" />}
-                    <div>
-                      <h3 className="font-medium">Modo oscuro</h3>
-                      <p className="text-sm text-gray-500">Cambia la apariencia de la aplicación</p>
-                    </div>
-                  </div>
-                  <Switch
-                    checked={settings.darkMode}
-                    onCheckedChange={(checked) => handleToggle("darkMode", checked)}
-                  />
-                </div>
-
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Globe className="text-blue-500" />

@@ -85,6 +85,24 @@ export default function AccountPage() {
                 </Button>
               </div>
 
+              {/* Pestañas de navegación */}
+              <div className="border-b border-gray-200 mb-6">
+                <nav className="-mb-px flex space-x-8">
+                  <button className="border-b-2 border-blue-500 py-2 px-1 text-sm font-medium text-blue-600">
+                    Información Personal
+                  </button>
+                  <button className="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                    Mis Pedidos
+                  </button>
+                  <button className="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                    Direcciones
+                  </button>
+                  <button className="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                    Métodos de Pago
+                  </button>
+                </nav>
+              </div>
+
               {/* Foto de perfil */}
               <Card>
                 <CardHeader>
