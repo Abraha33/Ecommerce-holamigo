@@ -17,15 +17,15 @@ export function TourButton() {
             <Button
               variant="ghost"
               size="icon"
-              className="fixed bottom-4 right-4 z-50 bg-white shadow-md rounded-full h-12 w-12 flex items-center justify-center hover:bg-gray-100"
+              className="fixed bottom-20 right-4 z-50 bg-blue-600 hover:bg-blue-700 shadow-lg rounded-full h-14 w-14 flex items-center justify-center text-white"
               onClick={() => setIsTourOpen(true)}
             >
-              <HelpCircle className="h-6 w-6 text-blue-600" />
+              <HelpCircle className="h-7 w-7" />
               <span className="sr-only">Iniciar tour del sitio</span>
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Tour del sitio</p>
+            <p>🎯 Tour guiado del sitio</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

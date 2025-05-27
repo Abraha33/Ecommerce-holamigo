@@ -102,22 +102,22 @@ export function SiteTour({ isOpen = false, onClose }: SiteTourProps) {
       ...commonSteps,
       {
         targetSelector: ".hero-section",
-        content: "Descubre nuestras ofertas destacadas y novedades en esta sección principal.",
+        content: "🏠 Descubre nuestras ofertas destacadas y novedades en esta sección principal.",
         placement: "bottom",
       },
       {
         targetSelector: ".category-circles",
-        content: "Accede rápidamente a nuestras categorías principales desde estos círculos.",
+        content: "🎯 Accede rápidamente a nuestras categorías principales desde estos círculos.",
         placement: "top",
       },
       {
         targetSelector: ".featured-products",
-        content: "Estos son nuestros productos más populares y recomendados.",
+        content: "⭐ Estos son nuestros productos más populares y recomendados.",
         placement: "top",
       },
       {
         targetSelector: ".newsletter-section",
-        content: "Suscríbete a nuestro boletín para recibir ofertas exclusivas y novedades.",
+        content: "📧 Suscríbete a nuestro boletín para recibir ofertas exclusivas y novedades.",
         placement: "top",
       },
     ]
@@ -229,7 +229,7 @@ export function SiteTour({ isOpen = false, onClose }: SiteTourProps) {
           <div
             ref={refs.setFloating}
             style={floatingStyles}
-            className="z-[10000] bg-white rounded-lg shadow-lg p-4 max-w-[350px]"
+            className="z-[10000] bg-white rounded-xl shadow-2xl p-6 max-w-[380px] border border-blue-200"
             aria-labelledby={headingId}
             aria-describedby={descriptionId}
             {...getFloatingProps()}
@@ -237,31 +237,34 @@ export function SiteTour({ isOpen = false, onClose }: SiteTourProps) {
             <FloatingArrow ref={arrowRef} context={context} fill="#ffffff" />
 
             <div className="mb-4">
-              <p id={headingId} className="text-lg font-medium text-gray-900">
-                Paso {currentStepIndex + 1} de {steps.length}
+              <p id={headingId} className="text-lg font-semibold text-blue-600 mb-2">
+                🎯 Paso {currentStepIndex + 1} de {steps.length}
               </p>
-              <p id={descriptionId} className="text-gray-700 mt-1">
+              <p id={descriptionId} className="text-gray-700 leading-relaxed">
                 {currentStep.content}
               </p>
             </div>
 
             <div className="flex justify-between items-center">
-              <button onClick={handleSkip} className="text-sm text-gray-500 hover:text-gray-700">
-                Saltar tour
+              <button onClick={handleSkip} className="text-sm text-gray-500 hover:text-gray-700 px-3 py-1 rounded">
+                ⏭️ Saltar tour
               </button>
 
               <div className="flex space-x-2">
                 {!isFirstStep && (
-                  <button onClick={handlePrev} className="px-3 py-1 text-sm text-blue-600 hover:text-blue-800">
-                    Anterior
+                  <button
+                    onClick={handlePrev}
+                    className="px-4 py-2 text-sm text-blue-600 hover:text-blue-800 border border-blue-200 rounded-lg"
+                  >
+                    ← Anterior
                   </button>
                 )}
 
                 <button
                   onClick={handleNext}
-                  className="px-4 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                  className="px-6 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
                 >
-                  {isLastStep ? "Finalizar" : "Siguiente"}
+                  {isLastStep ? "🎉 Finalizar" : "Siguiente →"}
                 </button>
               </div>
             </div>
