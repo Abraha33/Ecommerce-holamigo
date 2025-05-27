@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 
 export function AboutUsSection() {
   return (
-    <section className="relative min-h-[70vh] sm:min-h-[80vh] md:min-h-[90vh] flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-[50vh] sm:min-h-[60vh] md:min-h-[70vh] flex items-center justify-center overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0">
         <Image
@@ -16,7 +16,7 @@ export function AboutUsSection() {
           className="object-cover brightness-[0.7]"
           priority
         />
-        <div className="absolute inset-0 h-full bg-gradient-to-b from-blue-900/40 to-blue-800/60" />
+        <div className="absolute inset-0 h-full bg-gradient-to-b from-blue-900/40 via-white/20 to-blue-800/60" />
       </div>
 
       {/* Content */}

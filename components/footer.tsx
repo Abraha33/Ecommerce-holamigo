@@ -22,7 +22,7 @@ export default function Footer() {
       {/* Top navigation */}
       <div className="border-b border-blue-900">
         <div className="container mx-auto px-4 py-3">
-          <nav className="flex flex-wrap justify-center gap-4 md:gap-8 text-xs sm:text-sm">
+          <nav className="flex justify-center gap-2 md:gap-6 text-xs">
             <Link href="/" className="hover:text-blue-300 transition-colors">
               INICIO
             </Link>

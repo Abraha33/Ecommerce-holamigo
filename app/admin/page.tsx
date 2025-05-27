@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { TrendingUp, DollarSign, ShoppingCart, Users, Package, Eye, ArrowUpRight } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
-import { useRouter } from "next/navigation"
 
 // Datos de ejemplo para el dashboard
 const dashboardStats = {
@@ -119,7 +118,6 @@ const getStatusText = (status: string) => {
 }
 
 export default function AdminDashboard() {
-  const router = useRouter()
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
@@ -275,19 +273,19 @@ export default function AdminDashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Button
-              className="h-20 flex-col space-y-2"
-              variant="outline"
-              onClick={() => router.push("/admin/order-control")}
-            >
+            <Button className="h-20 flex-col space-y-2" variant="outline">
+              <Package className="h-6 w-6" />
+              <span>Añadir Producto</span>
+            </Button>
+            <Button className="h-20 flex-col space-y-2" variant="outline">
               <ShoppingCart className="h-6 w-6" />
               <span>Ver Pedidos</span>
             </Button>
-            <Button className="h-20 flex-col space-y-2" variant="outline" onClick={() => router.push("/admin/users")}>
+            <Button className="h-20 flex-col space-y-2" variant="outline">
               <Users className="h-6 w-6" />
               <span>Gestionar Usuarios</span>
             </Button>
-            <Button className="h-20 flex-col space-y-2" variant="outline" onClick={() => router.push("/admin/reports")}>
+            <Button className="h-20 flex-col space-y-2" variant="outline">
               <TrendingUp className="h-6 w-6" />
               <span>Ver Reportes</span>
             </Button>
