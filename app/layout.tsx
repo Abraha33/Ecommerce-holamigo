@@ -28,8 +28,8 @@ import { MobileBottomNav } from "@/components/mobile-bottom-nav"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
-  title: "EcoPlast - Sustainable Plastic Solutions",
-  description: "Quality eco-friendly plastic products for your needs",
+  title: "Envax - Soluciones Ecológicas",
+  description: "Productos ecológicos de calidad para tus necesidades",
     generator: 'v0.dev'
 }
 
