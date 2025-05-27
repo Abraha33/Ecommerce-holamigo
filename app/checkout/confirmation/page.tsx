@@ -1,42 +1,53 @@
 "use client"
 
-import { useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { useCart } from "@/hooks/use-cart"
-import { toast } from "sonner"
+import { CheckCircle } from "lucide-react"
 import Link from "next/link"
-import { createDemoOrder, saveDemoOrder } from "@/lib/demo-order-service"
 
-const ConfirmationPage = () => {
-  const { clearItems } = useCart()
-
-  useEffect(() => {
-    // Crear y guardar un pedido demo cuando se confirma
-    const demoOrder = createDemoOrder()
-    saveDemoOrder(demoOrder)
-
-    // Limpiar el carrito
-    clearItems()
-
-    // Mostrar toast de confirmación
-    toast({
-      title: "¡Pedido confirmado!",
-      description: `Tu pedido #${demoOrder.orderNumber} ha sido creado exitosamente`,
-      variant: "default",
-    })
-  }, [clearItems])
-
+export default function CheckoutConfirmationPage() {
   return (
-    <div className="flex flex-col items-center justify-center h-full">
-      <h1 className="text-2xl font-bold">¡Gracias por tu pedido!</h1>
-      <p className="text-muted-foreground">Tu pedido ha sido confirmado y está en camino.</p>
-      <div className="mt-4">
-        <Link href="/orders/latest">
-          <Button className="w-full bg-blue-600 hover:bg-blue-700">Ver estado del pedido</Button>
-        </Link>
+    <div className="container px-4 py-16 mx-auto max-w-3xl">
+      <div className="text-center">
+        <div className="flex justify-center mb-6">
+          <CheckCircle className="h-20 w-20 text-green-500" />
+        </div>
+
+        <h1 className="text-3xl font-bold mb-4">¡Gracias por tu compra!</h1>
+        <p className="text-lg mb-8">
+          Tu pedido ha sido recibido y está siendo procesado. Recibirás una confirmación por correo electrónico.
+        </p>
+
+        <div className="bg-gray-50 p-6 rounded-lg mb-8">
+          <h2 className="text-xl font-bold mb-4">Detalles del pedido</h2>
+          <div className="grid grid-cols-2 gap-4 text-left">
+            <div>
+              <p className="text-gray-500">Número de pedido:</p>
+              <p className="font-medium">#FT-2023-0012345</p>
+            </div>
+            <div>
+              <p className="text-gray-500">Fecha:</p>
+              <p className="font-medium">11 de mayo, 2025</p>
+            </div>
+            <div>
+              <p className="text-gray-500">Total:</p>
+              <p className="font-medium">$179.530</p>
+            </div>
+            <div>
+              <p className="text-gray-500">Método de pago:</p>
+              <p className="font-medium">PSE</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row justify-center gap-4">
+          <Button asChild className="bg-blue-500 hover:bg-blue-600">
+            <Link href="/orders/latest">Ver estado del pedido</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/">Continuar comprando</Link>
+          </Button>
+        </div>
       </div>
     </div>
   )
 }
-
-export default ConfirmationPage
