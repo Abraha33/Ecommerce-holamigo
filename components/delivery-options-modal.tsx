@@ -125,6 +125,8 @@ export function DeliveryOptionsModal({ isOpen, onClose }: DeliveryOptionsModalPr
     // If it's store pickup, update the store address
     if (option === "tienda") {
       updateStoreAddress("Calle 31#15-09, Centro")
+      onClose()
+      return
     }
 
     if (selectedOpt?.requiresAddress) {

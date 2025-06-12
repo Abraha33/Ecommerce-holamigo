@@ -9,6 +9,7 @@ import { MapPin, Clock, Phone, Mail, MessageSquare, Send, ChevronDown, ShoppingB
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
 
 const WHATSAPP_NUMBER = "+573001234567"
@@ -52,10 +53,24 @@ export default function ContactPage() {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [message, setMessage] = useState("")
+  const [acceptsPolicy, setAcceptsPolicy] = useState(false)
   const [expandedHours, setExpandedHours] = useState<number[]>([1])
+
+  // Validar si todos los campos están llenos y se acepta la política
+  const isFormValid = name.trim() !== "" && email.trim() !== "" && message.trim() !== "" && acceptsPolicy
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!isFormValid) {
+      toast({
+        title: "Formulario incompleto",
+        description: "Por favor completa todos los campos y acepta la política de manejo de datos.",
+        variant: "destructive",
+      })
+      return
+    }
+
     toast({
       title: "Mensaje enviado",
       description: "Hemos recibido tu mensaje. Te contactaremos pronto.",
@@ -63,6 +78,7 @@ export default function ContactPage() {
     setName("")
     setEmail("")
     setMessage("")
+    setAcceptsPolicy(false)
   }
 
   const toggleHoursExpand = (id: number) => {
@@ -288,7 +304,7 @@ export default function ContactPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label htmlFor="name" className="text-sm font-medium text-gray-700">
-                        Nombre completo
+                        Nombre completo *
                       </label>
                       <Input
                         id="name"
@@ -302,7 +318,7 @@ export default function ContactPage() {
 
                     <div className="space-y-2">
                       <label htmlFor="email" className="text-sm font-medium text-gray-700">
-                        Correo electrónico
+                        Correo electrónico *
                       </label>
                       <Input
                         id="email"
@@ -318,7 +334,7 @@ export default function ContactPage() {
 
                   <div className="space-y-2">
                     <label htmlFor="message" className="text-sm font-medium text-gray-700">
-                      Mensaje
+                      Mensaje *
                     </label>
                     <Textarea
                       id="message"
@@ -330,9 +346,31 @@ export default function ContactPage() {
                     />
                   </div>
 
+                  {/* Checkbox para política de datos */}
+                  <div className="flex items-start space-x-2">
+                    <Checkbox
+                      id="policy"
+                      checked={acceptsPolicy}
+                      onCheckedChange={(checked) => setAcceptsPolicy(checked as boolean)}
+                      className="mt-1"
+                    />
+                    <label htmlFor="policy" className="text-sm text-gray-700 leading-relaxed">
+                      Acepto la{" "}
+                      <Link href="/politica-datos" className="text-blue-600 hover:underline">
+                        política de manejo de datos personales
+                      </Link>{" "}
+                      y autorizo el tratamiento de mi información para fines comerciales. *
+                    </label>
+                  </div>
+
                   <Button
                     type="submit"
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2 py-6"
+                    disabled={!isFormValid}
+                    className={`w-full flex items-center justify-center gap-2 py-6 ${
+                      isFormValid
+                        ? "bg-blue-600 hover:bg-blue-700 text-white"
+                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    }`}
                   >
                     <Send className="h-4 w-4" />
                     Enviar mensaje

@@ -51,11 +51,20 @@ const OrderMap = () => {
             }}
           />
 
-          {/* Ruta simplificada */}
+          {/* Google Maps Embed */}
           <div className="absolute top-0 left-0 w-full h-full z-[5]">
-            <svg width="100%" height="100%" viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M50,150 C100,50 200,250 350,150" stroke="#3B82F6" strokeWidth="4" strokeDasharray="8,8" />
-            </svg>
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3959.0538893173584!2d-73.12292!3d7.119489!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8e683f0aaaaaaaa%3A0xaaaaaaaaaaaaaa!2sCalle%2031%20%2315-19%2C%20Bucaramanga%2C%20Santander!5e0!3m2!1ses!2sco!4v1621436289693!5m2!1ses!2sco"
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              allowFullScreen
+              loading="lazy"
+              aria-hidden="false"
+              tabIndex={0}
+              title="Ubicación de entrega"
+              className="rounded-lg"
+            ></iframe>
           </div>
 
           {/* Marcador de tienda */}
@@ -65,7 +74,7 @@ const OrderMap = () => {
             </div>
             <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-blue-500 rotate-45"></div>
             <div className="absolute -top-10 -left-10 bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs shadow-md whitespace-nowrap">
-              Punto de recogida
+              Calle 31#15-09, Centro
             </div>
           </div>
 
@@ -76,7 +85,7 @@ const OrderMap = () => {
             </div>
             <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-green-500 rotate-45"></div>
             <div className="absolute -top-10 -left-10 bg-green-100 text-green-800 px-2 py-1 rounded text-xs shadow-md whitespace-nowrap">
-              Tu ubicación
+              Calle 10 #18-24, Laureles
             </div>
           </div>
 
@@ -100,7 +109,7 @@ const OrderMap = () => {
           {/* Tiempo estimado de llegada */}
           <div className="absolute top-4 right-4 bg-white px-3 py-2 rounded-lg shadow-lg z-20 flex items-center">
             <Clock size={16} className="text-blue-500 mr-2" />
-            <span className="text-sm font-medium">Llegada: 15 min</span>
+            <span className="text-sm font-medium">Llegada: 15 min (2.3 km)</span>
           </div>
         </div>
       </div>

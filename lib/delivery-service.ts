@@ -99,8 +99,21 @@ export const getDeliveryTitle = (type: DeliveryType): string => {
     case "programada":
       return "Entrega programada"
     case "tienda":
-      return "Recoge en tienda"
+      return "Retiro en tienda"
     default:
       return "Envío express"
   }
+}
+
+// Obtener la dirección de entrega según el tipo
+export const getDeliveryAddress = (deliveryInfo: DeliveryInfo): string => {
+  if (deliveryInfo.type === "tienda") {
+    return deliveryInfo.storeAddress || "Calle 31#15-09, Centro"
+  }
+
+  if (deliveryInfo.selectedAddress) {
+    return deliveryInfo.selectedAddress.address
+  }
+
+  return ""
 }

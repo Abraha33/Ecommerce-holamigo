@@ -472,7 +472,9 @@ export default function Header() {
         </div>
 
         <div className={`container mx-auto px-4`}>
-          <div className={`flex items-center ${isScrolled ? "h-16" : "h-20"} py-4 transition-all duration-300`}>
+          <div
+            className={`flex items-center justify-center md:justify-start ${isScrolled ? "h-16" : "h-20"} py-4 transition-all duration-300`}
+          >
             {/* Hamburger menu for categories sidebar - Larger for mobile */}
             <div className="flex items-center">
               <CategorySidebar className="text-2xl md:text-base" />
@@ -617,10 +619,10 @@ export default function Header() {
                 </Link>
                 {/* Cuenta de usuario */}
                 <div className="relative group">
-                  <Link href={user ? "/account" : "/login"} className="flex flex-col items-center">
+                  <Link href="/account" className="flex flex-col items-center">
                     <User className="h-6 w-6" />
                     <span className="text-xs mt-1 hidden md:block">
-                      {persistentUsername ? persistentUsername : user ? "Mi perfil" : "Mi cuenta"}
+                      {persistentUsername ? persistentUsername : "Mi cuenta"}
                     </span>
                   </Link>
 
@@ -707,6 +709,67 @@ export default function Header() {
 
       {/* Navegación principal con mega menús */}
       <MainNavigation />
+
+      {/* Mobile Header - New Design */}
+      <div className="md:hidden bg-white border-b shadow-sm">
+        <div className="flex items-center justify-between px-4 py-3">
+          {/* User Icon */}
+          <Link href="/account" className="flex items-center">
+            <User className="h-6 w-6 text-gray-600" />
+          </Link>
+
+          {/* Logo */}
+          <Link href="/inicio" className="flex items-center">
+            <div className="relative h-8 w-8 mr-2">
+              <Image src={logoSrc || "/placeholder.svg"} alt="Envax Logo" fill className="object-contain" />
+            </div>
+            <span className="text-xl font-bold text-[#1e3a8a]">Envax</span>
+          </Link>
+
+          {/* Right Icons */}
+          <div className="flex items-center space-x-4">
+            {/* Notifications */}
+            <Link href="/account/notifications" className="relative">
+              <Bell className="h-6 w-6 text-gray-600" />
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                3
+              </span>
+            </Link>
+
+            {/* Wishlist Icon */}
+            <Link href="/wishlists" className="relative">
+              <Heart className="h-6 w-6 text-gray-600" />
+              {wishlistCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                  {wishlistCount}
+                </span>
+              )}
+            </Link>
+
+            {/* Cart */}
+            <button onClick={toggleCart} className="relative">
+              <ShoppingCart className="h-6 w-6 text-gray-600" />
+              {cartItemsCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                  {cartItemsCount}
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Search Bar */}
+        <div className="px-4 pb-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Busca aquí tu producto"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+        </div>
+      </div>
 
       {/* Menú móvil */}
       {isMobileMenuOpen && false && (

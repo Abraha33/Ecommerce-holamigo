@@ -2,10 +2,9 @@
 
 import { useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
-import { Home, Search, ShoppingCart } from "lucide-react"
+import { Home, ShoppingCart, Menu, Settings, Phone } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useCart } from "@/components/cart-provider"
-import { SearchModal } from "@/components/search-modal"
 
 export function MobileBottomNav() {
   const pathname = usePathname()
@@ -19,14 +18,16 @@ export function MobileBottomNav() {
   }
 
   const navItems = [
-    { href: "/", icon: <Home className="h-5 w-5" />, label: "Inicio" },
-    { href: "#", icon: <Search className="h-5 w-5" />, label: "Buscar", onClick: () => setShowSearch(true) },
+    { href: "/", icon: <Home className="h-5 w-5" />, label: "Home" },
+    { href: "/categories", icon: <Menu className="h-5 w-5" />, label: "Categorías" },
     {
       href: "/cart",
       icon: <ShoppingCart className="h-5 w-5" />,
       label: "Carrito",
       count: itemCount > 0 ? itemCount : null,
     },
+    { href: "/promos", icon: <Settings className="h-5 w-5" />, label: "Ofertas" },
+    { href: "/contact", icon: <Phone className="h-5 w-5" />, label: "Soporte" },
   ]
 
   return (
@@ -63,9 +64,6 @@ export function MobileBottomNav() {
           </div>
         ))}
       </nav>
-
-      {/* Modal de búsqueda */}
-      <SearchModal isOpen={showSearch} onClose={() => setShowSearch(false)} />
     </div>
   )
 }
